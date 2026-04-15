@@ -6,18 +6,29 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE_DIR="$(cd "${ROOT_DIR}/../.." && pwd)"
 SEED_SQL="${ROOT_DIR}/scripts/sql/001_orders_demo.sql"
 TMP_DIR="$(mktemp -d)"
+ENV_FILE="${WORKSPACE_DIR}/.env"
+
+if [[ -f "${ENV_FILE}" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "${ENV_FILE}"
+  set +a
+fi
 
 BFF_URL="${BFF_URL:-http://127.0.0.1:3000}"
 PORT="${PORT:-3000}"
 RUN_ID="${RUN_ID:-$(date +%s)}"
+NODE_ENV="${NODE_ENV:-development}"
+LC_DB_BOOTSTRAP_MODE="${LC_DB_BOOTSTRAP_MODE:-auto}"
 
 LC_DB_HOST="${LC_DB_HOST:-127.0.0.1}"
 LC_DB_PORT="${LC_DB_PORT:-5432}"
 LC_DB_USER="${LC_DB_USER:-lowcode}"
 LC_DB_PASSWORD="${LC_DB_PASSWORD:-lowcode}"
-LC_DB_NAME="${LC_DB_NAME:-meta_lc}"
+LC_DB_NAME="${LC_DB_NAME:-business_db}"
+LC_DB_META_NAME="${LC_DB_META_NAME:-meta_db}"
 LC_DB_BUSINESS_NAME="${LC_DB_BUSINESS_NAME:-${LC_DB_NAME}}"
-LC_DB_AUDIT_NAME="${LC_DB_AUDIT_NAME:-${LC_DB_NAME}}"
+LC_DB_AUDIT_NAME="${LC_DB_AUDIT_NAME:-audit_db}"
 LC_DB_SSL="${LC_DB_SSL:-false}"
 
 BFF_PID=""
@@ -25,6 +36,7 @@ BFF_PID=""
 cleanup() {
   if [[ -n "${BFF_PID}" ]] && kill -0 "${BFF_PID}" >/dev/null 2>&1; then
     kill "${BFF_PID}" >/dev/null 2>&1 || true
+    wait "${BFF_PID}" 2>/dev/null || true
   fi
   rm -rf "${TMP_DIR}"
 }
@@ -113,22 +125,9 @@ assert_audit_record() {
   local request_id="$1"
   local status="$2"
   local expected_row_count="$3"
-  local row_count_clause
-
-  if [[ "${expected_row_count}" == "NULL" ]]; then
-    row_count_clause="row_count IS NULL"
-  else
-    row_count_clause="row_count = ${expected_row_count}::INT"
-  fi
 
   local count
-  count="$(PGPASSWORD="${LC_DB_PASSWORD}" psql \
-    -h "${LC_DB_HOST}" \
-    -p "${LC_DB_PORT}" \
-    -U "${LC_DB_USER}" \
-    -d "${LC_DB_AUDIT_NAME}" \
-    -t -A \
-    -c "SELECT COUNT(*)::INT FROM bff_query_audit_logs WHERE request_id='${request_id}' AND status='${status}' AND ${row_count_clause};" | tr -d '\r')"
+  count="$(query_audit_count "${request_id}" "${status}" "${expected_row_count}" | tr -d '\r')"
 
   if [[ "${count}" -lt 1 ]]; then
     log "audit assertion failed for request_id=${request_id}, status=${status}"
@@ -138,7 +137,6 @@ assert_audit_record() {
 
 require_cmd node
 require_cmd curl
-require_cmd psql
 
 if [[ ! -f "${SEED_SQL}" ]]; then
   echo "seed sql not found: ${SEED_SQL}" >&2
@@ -150,32 +148,149 @@ if [[ ! -d "${ROOT_DIR}/node_modules" ]]; then
   (cd "${WORKSPACE_DIR}" && pnpm install)
 fi
 
-if [[ ! -f "${ROOT_DIR}/dist/bff/src/main.js" ]]; then
-  log "building bff"
-  (cd "${WORKSPACE_DIR}" && pnpm --filter @meta-lc/bff run build)
+if [[ ! -f "${WORKSPACE_DIR}/apps/bff-server/dist/apps/bff-server/src/main.js" ]]; then
+  log "building bff-server and dependencies"
+  (cd "${WORKSPACE_DIR}" && pnpm --filter @meta-lc/bff-server... build)
 fi
 
-log "seeding demo data"
-PGPASSWORD="${LC_DB_PASSWORD}" psql \
-  -h "${LC_DB_HOST}" \
-  -p "${LC_DB_PORT}" \
-  -U "${LC_DB_USER}" \
-  -d "${LC_DB_BUSINESS_NAME}" \
-  -f "${SEED_SQL}" >/dev/null
+run_sql_file() {
+  local database="$1"
+  local sql_file="$2"
+
+  (
+    cd "${ROOT_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${database}" "${LC_DB_SSL}" "${sql_file}" <<'NODE'
+const { Client } = require("pg");
+const fs = require("node:fs");
+
+const [host, port, user, password, database, sslRaw, sqlFile] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+(async () => {
+  await client.connect();
+  try {
+    await client.query(fs.readFileSync(sqlFile, "utf8"));
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
+
+query_audit_count() {
+  local request_id="$1"
+  local status="$2"
+  local expected_row_count="$3"
+
+  (
+    cd "${ROOT_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${LC_DB_AUDIT_NAME}" "${LC_DB_SSL}" "${request_id}" "${status}" "${expected_row_count}" <<'NODE'
+const { Client } = require("pg");
+
+const [host, port, user, password, database, sslRaw, requestId, status, expectedRowCount] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+(async () => {
+  await client.connect();
+  try {
+    const rowCountCondition =
+      expectedRowCount === "NULL"
+        ? "row_count IS NULL"
+        : "row_count = $3::INT";
+    const params = expectedRowCount === "NULL"
+      ? [requestId, status]
+      : [requestId, status, Number(expectedRowCount)];
+    const result = await client.query(
+      `SELECT COUNT(*)::INT AS count
+       FROM bff_query_audit_logs
+       WHERE request_id = $1
+         AND status = $2
+         AND ${rowCountCondition};`,
+      params
+    );
+    process.stdout.write(String(result.rows[0]?.count ?? 0));
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
+
+print_audit_snapshot() {
+  (
+    cd "${ROOT_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${LC_DB_AUDIT_NAME}" "${LC_DB_SSL}" <<'NODE'
+const { Client } = require("pg");
+
+const [host, port, user, password, database, sslRaw] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+(async () => {
+  await client.connect();
+  try {
+    const result = await client.query(
+      `SELECT request_id, tenant_id, status, row_count, created_at
+       FROM bff_query_audit_logs
+       ORDER BY id DESC
+       LIMIT 6;`
+    );
+    console.table(result.rows);
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
 
 log "starting bff"
 (
   cd "${WORKSPACE_DIR}"
+  NODE_ENV="${NODE_ENV}" \
+  LC_DB_BOOTSTRAP_MODE="${LC_DB_BOOTSTRAP_MODE}" \
   LC_DB_HOST="${LC_DB_HOST}" \
   LC_DB_PORT="${LC_DB_PORT}" \
   LC_DB_USER="${LC_DB_USER}" \
   LC_DB_PASSWORD="${LC_DB_PASSWORD}" \
   LC_DB_NAME="${LC_DB_NAME}" \
+  LC_DB_META_NAME="${LC_DB_META_NAME}" \
   LC_DB_BUSINESS_NAME="${LC_DB_BUSINESS_NAME}" \
   LC_DB_AUDIT_NAME="${LC_DB_AUDIT_NAME}" \
   LC_DB_SSL="${LC_DB_SSL}" \
   PORT="${PORT}" \
-  pnpm --filter @meta-lc/bff run start > "${TMP_DIR}/bff.log" 2>&1
+  pnpm --filter @meta-lc/bff-server run start > "${TMP_DIR}/bff.log" 2>&1
 ) &
 BFF_PID="$!"
 
@@ -184,6 +299,9 @@ if ! wait_for_health; then
   cat "${TMP_DIR}/bff.log"
   exit 1
 fi
+
+log "seeding demo data"
+run_sql_file "${LC_DB_BUSINESS_NAME}" "${SEED_SQL}"
 
 log "validating tenant-a"
 tenant_a_request_id="$(run_query_and_assert "tenant-a" "demo-tenant-a-user" "SO-A")"
@@ -208,11 +326,6 @@ fi
 assert_audit_record "${failure_request_id}" "failure" "NULL"
 
 log "audit snapshot"
-PGPASSWORD="${LC_DB_PASSWORD}" psql \
-  -h "${LC_DB_HOST}" \
-  -p "${LC_DB_PORT}" \
-  -U "${LC_DB_USER}" \
-  -d "${LC_DB_AUDIT_NAME}" \
-  -c "SELECT request_id, tenant_id, status, row_count, created_at FROM bff_query_audit_logs ORDER BY id DESC LIMIT 6;"
+print_audit_snapshot
 
 log "query gate passed"
