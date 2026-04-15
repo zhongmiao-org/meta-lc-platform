@@ -23,7 +23,7 @@ jobs:
       - run: pnpm -r test
       - run: pnpm lint
 
-  query-gate-minimal:
+  query-gate-e2e:
     runs-on: ubuntu-latest
     needs: build-test
     steps:
@@ -36,5 +36,16 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: query-gate (minimal)
-        run: pnpm --filter @meta-lc/bff... test
+      - name: query-gate (e2e)
+        env:
+          NODE_ENV: development
+          LC_DB_BOOTSTRAP_MODE: ${{ vars.LC_DB_BOOTSTRAP_MODE || 'auto' }}
+          LC_DB_HOST: ${{ vars.LC_DB_HOST }}
+          LC_DB_PORT: ${{ vars.LC_DB_PORT || '5432' }}
+          LC_DB_USER: ${{ secrets.LC_DB_USER }}
+          LC_DB_PASSWORD: ${{ secrets.LC_DB_PASSWORD }}
+          LC_DB_META_NAME: ${{ vars.LC_DB_META_NAME }}
+          LC_DB_BUSINESS_NAME: ${{ vars.LC_DB_BUSINESS_NAME }}
+          LC_DB_AUDIT_NAME: ${{ vars.LC_DB_AUDIT_NAME }}
+          LC_DB_SSL: ${{ vars.LC_DB_SSL || 'false' }}
+        run: pnpm query-gate

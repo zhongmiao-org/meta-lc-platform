@@ -2,6 +2,7 @@ node_modules/
 dist/
 .nx/
 .pnpm-store/
+.idea/
 .DS_Store
 .env
 .env.*
