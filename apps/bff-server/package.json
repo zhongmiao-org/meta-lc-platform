@@ -1,0 +1,23 @@
+{
+  "name": "@meta-lc/bff-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/bff-server/src/main.js",
+    "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
+    "test:query-gate": "bash ../../packages/bff/scripts/e2e-query-isolation.sh",
+    "lint": "echo lint:bff-server"
+  },
+  "dependencies": {
+    "@meta-lc/bff": "workspace:*",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "main": "dist/bff-server/src/main.js",
+  "types": "dist/bff-server/src/main.d.ts"
+}

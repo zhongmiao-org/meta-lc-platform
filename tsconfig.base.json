@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "declaration": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@meta-lc/query": [
+        "packages/query/src"
+      ],
+      "@meta-lc/permission": [
+        "packages/permission/src"
+      ],
+      "@meta-lc/datasource": [
+        "packages/datasource/src"
+      ],
+      "@meta-lc/kernel": [
+        "packages/kernel/src"
+      ],
+      "@meta-lc/migration": [
+        "packages/migration/src"
+      ],
+      "@meta-lc/audit": [
+        "packages/audit/src"
+      ],
+      "@meta-lc/contracts": [
+        "packages/contracts/src"
+      ],
+      "@meta-lc/shared": [
+        "packages/shared/src"
+      ],
+      "@meta-lc/bff": [
+        "packages/bff/src"
+      ]
+    }
+  }
+}

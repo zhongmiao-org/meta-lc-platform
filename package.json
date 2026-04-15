@@ -1,0 +1,17 @@
+{
+  "name": "meta-lc-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.14.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm run lint:boundaries && pnpm -r lint",
+    "query-gate": "pnpm --filter @meta-lc/bff-server run test:query-gate",
+    "lint:boundaries": "node scripts/check-boundaries.mjs"
+  },
+  "devDependencies": {
+    "nx": "^20.0.0",
+    "typescript": "^5.7.2"
+  }
+}

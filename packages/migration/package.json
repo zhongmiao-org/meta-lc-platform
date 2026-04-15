@@ -1,0 +1,20 @@
+{
+  "name": "@meta-lc/migration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
+    "lint": "echo lint:migration"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@meta-lc/kernel": "workspace:*"
+  },
+  "main": "dist/migration/src/index.js",
+  "types": "dist/migration/src/index.d.ts"
+}

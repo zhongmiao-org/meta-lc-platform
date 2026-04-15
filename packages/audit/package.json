@@ -1,0 +1,22 @@
+{
+  "name": "@meta-lc/audit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
+    "lint": "echo lint:audit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "@types/pg": "^8.11.10"
+  },
+  "dependencies": {
+    "@meta-lc/contracts": "workspace:*",
+    "pg": "^8.13.1"
+  },
+  "main": "dist/audit/src/index.js",
+  "types": "dist/audit/src/index.d.ts"
+}

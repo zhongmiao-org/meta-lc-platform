@@ -1,0 +1,17 @@
+{
+  "name": "@meta-lc/permission",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
+    "lint": "echo lint:permission"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts"
+}
