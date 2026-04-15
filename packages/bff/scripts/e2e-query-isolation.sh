@@ -66,6 +66,17 @@ wait_for_health() {
   return 1
 }
 
+run_mutation_request() {
+  local request_id="$1"
+  local payload="$2"
+  local output_file="$3"
+
+  curl -sS -o "${output_file}" -w "%{http_code}" -X POST "${BFF_URL}/mutation" \
+    -H "content-type: application/json" \
+    -H "x-request-id: ${request_id}" \
+    -d "${payload}"
+}
+
 run_query_and_assert() {
   local tenant_id="$1"
   local user_id="$2"
@@ -123,6 +134,110 @@ process.stdout.write(String(data.rows.length));
   printf "%s %s\n" "${request_id}" "${row_count}"
 }
 
+query_order_and_assert() {
+  local tenant_id="$1"
+  local user_id="$2"
+  local order_id="$3"
+  local expected_owner="$4"
+  local expected_channel="$5"
+  local expected_priority="$6"
+  local expected_status="$7"
+  local output_file="${TMP_DIR}/query-${order_id}.json"
+  local request_id="e2e-order-${order_id}-${RUN_ID}"
+
+  curl -fsS -X POST "${BFF_URL}/query" \
+    -H "content-type: application/json" \
+    -H "x-request-id: ${request_id}" \
+    -d "$(cat <<JSON
+{
+  "table": "orders",
+  "fields": ["id", "owner", "channel", "priority", "status", "tenant_id", "created_by"],
+  "filters": {
+    "keyword": "${order_id}"
+  },
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ["USER"],
+  "limit": 20
+}
+JSON
+)" > "${output_file}"
+
+  local row_count
+  row_count="$(node -e '
+const fs = require("node:fs");
+const [file, orderId, tenantId, owner, channel, priority, status] = process.argv.slice(1);
+const data = JSON.parse(fs.readFileSync(file, "utf8"));
+if (!Array.isArray(data.rows)) {
+  console.error("rows is not an array");
+  process.exit(1);
+}
+if (data.rows.length !== 1) {
+  console.error("unexpected row count", data.rows.length);
+  process.exit(1);
+}
+const [row] = data.rows;
+if (
+  row.id !== orderId ||
+  row.tenant_id !== tenantId ||
+  row.owner !== owner ||
+  row.channel !== channel ||
+  row.priority !== priority ||
+  row.status !== status
+) {
+  console.error("unexpected row payload", row);
+  process.exit(1);
+}
+process.stdout.write(String(data.rows.length));
+' "${output_file}" "${order_id}" "${tenant_id}" "${expected_owner}" "${expected_channel}" "${expected_priority}" "${expected_status}")"
+
+  printf "%s %s\n" "${request_id}" "${row_count}"
+}
+
+query_order_and_assert_missing() {
+  local tenant_id="$1"
+  local user_id="$2"
+  local order_id="$3"
+  local output_file="${TMP_DIR}/query-missing-${order_id}.json"
+  local request_id="e2e-order-missing-${order_id}-${RUN_ID}"
+
+  curl -fsS -X POST "${BFF_URL}/query" \
+    -H "content-type: application/json" \
+    -H "x-request-id: ${request_id}" \
+    -d "$(cat <<JSON
+{
+  "table": "orders",
+  "fields": ["id", "owner", "channel", "priority", "status", "tenant_id", "created_by"],
+  "filters": {
+    "keyword": "${order_id}"
+  },
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ["USER"],
+  "limit": 20
+}
+JSON
+)" > "${output_file}"
+
+  local row_count
+  row_count="$(node -e '
+const fs = require("node:fs");
+const file = process.argv[1];
+const data = JSON.parse(fs.readFileSync(file, "utf8"));
+if (!Array.isArray(data.rows)) {
+  console.error("rows is not an array");
+  process.exit(1);
+}
+if (data.rows.length !== 0) {
+  console.error("expected no rows", data.rows);
+  process.exit(1);
+}
+process.stdout.write("0");
+' "${output_file}")"
+
+  printf "%s %s\n" "${request_id}" "${row_count}"
+}
+
 assert_audit_record() {
   local request_id="$1"
   local status="$2"
@@ -133,6 +248,22 @@ assert_audit_record() {
 
   if [[ "${count}" -lt 1 ]]; then
     log "audit assertion failed for request_id=${request_id}, status=${status}"
+    exit 1
+  fi
+}
+
+assert_mutation_audit_record() {
+  local request_id="$1"
+  local operation="$2"
+  local status="$3"
+  local tenant_id="$4"
+  local user_id="$5"
+
+  local count
+  count="$(query_mutation_audit_count "${request_id}" "${operation}" "${status}" "${tenant_id}" "${user_id}" | tr -d '\r')"
+
+  if [[ "${count}" -lt 1 ]]; then
+    log "mutation audit assertion failed for request_id=${request_id}, operation=${operation}, status=${status}"
     exit 1
   fi
 }
@@ -240,6 +371,53 @@ NODE
   )
 }
 
+query_mutation_audit_count() {
+  local request_id="$1"
+  local operation="$2"
+  local status="$3"
+  local tenant_id="$4"
+  local user_id="$5"
+
+  (
+    cd "${ROOT_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${LC_DB_AUDIT_NAME}" "${LC_DB_SSL}" "${request_id}" "${operation}" "${status}" "${tenant_id}" "${user_id}" <<'NODE'
+const { Client } = require("pg");
+
+const [host, port, user, password, database, sslRaw, requestId, operation, status, tenantId, userId] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+(async () => {
+  await client.connect();
+  try {
+    const result = await client.query(
+      `SELECT COUNT(*)::INT AS count
+       FROM mutation_logs
+       WHERE request_id = $1
+         AND operation = $2
+         AND status = $3
+         AND tenant_id = $4
+         AND user_id = $5;`,
+      [requestId, operation, status, tenantId, userId]
+    );
+    process.stdout.write(String(result.rows[0]?.count ?? 0));
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
+
 print_audit_snapshot() {
   (
     cd "${ROOT_DIR}"
@@ -259,13 +437,22 @@ const client = new Client({
 (async () => {
   await client.connect();
   try {
-    const result = await client.query(
+    const queryAudit = await client.query(
       `SELECT request_id, tenant_id, status, row_count, created_at
        FROM bff_query_audit_logs
        ORDER BY id DESC
        LIMIT 6;`
     );
-    console.table(result.rows);
+    const mutationAudit = await client.query(
+      `SELECT request_id, tenant_id, user_id, operation, status, created_at
+       FROM mutation_logs
+       ORDER BY id DESC
+       LIMIT 6;`
+    );
+    console.log("query audit");
+    console.table(queryAudit.rows);
+    console.log("mutation audit");
+    console.table(mutationAudit.rows);
   } finally {
     await client.end();
   }
@@ -327,7 +514,140 @@ fi
 
 assert_audit_record "${failure_request_id}" "failure" "NULL"
 
+tenant_id="tenant-a"
+user_id="demo-tenant-a-user"
+test_order_id="SO-AE2E-${RUN_ID}"
+
+log "validating mutation create success"
+create_request_id="e2e-mutation-create-${RUN_ID}"
+create_status_code="$(run_mutation_request "${create_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "create",
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ["USER"],
+  "data": {
+    "id": "${test_order_id}",
+    "owner": "Gate Create",
+    "channel": "web",
+    "priority": "medium",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/mutation-create.json")"
+if [[ "${create_status_code}" != "201" && "${create_status_code}" != "200" ]]; then
+  cat "${TMP_DIR}/mutation-create.json"
+  exit 1
+fi
+node -e '
+const fs = require("node:fs");
+const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+if (data.rowCount !== 1 || data.row?.id !== process.argv[2]) {
+  console.error("unexpected create response", data);
+  process.exit(1);
+}
+' "${TMP_DIR}/mutation-create.json" "${test_order_id}"
+assert_mutation_audit_record "${create_request_id}" "create" "success" "${tenant_id}" "${user_id}"
+read -r create_query_request_id create_query_row_count <<< "$(query_order_and_assert "${tenant_id}" "${user_id}" "${test_order_id}" "Gate Create" "web" "medium" "active")"
+assert_audit_record "${create_query_request_id}" "success" "${create_query_row_count}"
+
+log "validating mutation duplicate create failure"
+duplicate_request_id="e2e-mutation-duplicate-${RUN_ID}"
+duplicate_status_code="$(run_mutation_request "${duplicate_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "create",
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ["USER"],
+  "data": {
+    "id": "${test_order_id}",
+    "owner": "Gate Create",
+    "channel": "web",
+    "priority": "medium",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/mutation-duplicate.json")"
+if [[ "${duplicate_status_code}" != "409" ]]; then
+  cat "${TMP_DIR}/mutation-duplicate.json"
+  exit 1
+fi
+assert_mutation_audit_record "${duplicate_request_id}" "create" "failure" "${tenant_id}" "${user_id}"
+
+log "validating mutation update success"
+update_request_id="e2e-mutation-update-${RUN_ID}"
+update_status_code="$(run_mutation_request "${update_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "update",
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ["USER"],
+  "key": {
+    "id": "${test_order_id}"
+  },
+  "data": {
+    "id": "${test_order_id}",
+    "owner": "Gate Update",
+    "channel": "partner",
+    "priority": "high",
+    "status": "paused"
+  }
+}
+JSON
+)" "${TMP_DIR}/mutation-update.json")"
+if [[ "${update_status_code}" != "200" && "${update_status_code}" != "201" ]]; then
+  cat "${TMP_DIR}/mutation-update.json"
+  exit 1
+fi
+node -e '
+const fs = require("node:fs");
+const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+if (data.rowCount !== 1 || data.row?.owner !== process.argv[2] || data.row?.status !== process.argv[3]) {
+  console.error("unexpected update response", data);
+  process.exit(1);
+}
+' "${TMP_DIR}/mutation-update.json" "Gate Update" "paused"
+assert_mutation_audit_record "${update_request_id}" "update" "success" "${tenant_id}" "${user_id}"
+read -r update_query_request_id update_query_row_count <<< "$(query_order_and_assert "${tenant_id}" "${user_id}" "${test_order_id}" "Gate Update" "partner" "high" "paused")"
+assert_audit_record "${update_query_request_id}" "success" "${update_query_row_count}"
+
+log "validating mutation delete success"
+delete_request_id="e2e-mutation-delete-${RUN_ID}"
+delete_status_code="$(run_mutation_request "${delete_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "delete",
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ["USER"],
+  "key": {
+    "id": "${test_order_id}"
+  }
+}
+JSON
+)" "${TMP_DIR}/mutation-delete.json")"
+if [[ "${delete_status_code}" != "200" && "${delete_status_code}" != "201" ]]; then
+  cat "${TMP_DIR}/mutation-delete.json"
+  exit 1
+fi
+node -e '
+const fs = require("node:fs");
+const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+if (data.rowCount !== 1 || data.row?.id !== process.argv[2]) {
+  console.error("unexpected delete response", data);
+  process.exit(1);
+}
+' "${TMP_DIR}/mutation-delete.json" "${test_order_id}"
+assert_mutation_audit_record "${delete_request_id}" "delete" "success" "${tenant_id}" "${user_id}"
+read -r delete_query_request_id delete_query_row_count <<< "$(query_order_and_assert_missing "${tenant_id}" "${user_id}" "${test_order_id}")"
+assert_audit_record "${delete_query_request_id}" "success" "${delete_query_row_count}"
+
 log "audit snapshot"
 print_audit_snapshot
 
-log "query gate passed"
+log "query and mutation gate passed"
