@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS mutation_logs (
   operation TEXT NOT NULL,
   before_data JSONB NULL,
   after_data JSONB NULL,
+  duration_ms INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'success',
+  error_message TEXT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

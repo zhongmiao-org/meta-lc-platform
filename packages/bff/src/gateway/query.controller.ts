@@ -1,13 +1,15 @@
 import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
 import { AuditLogService } from "../common/audit-log.service";
 import { resolveRequestId } from "../common/request-id";
+import { MutationOrchestratorService } from "../orchestration/mutation-orchestrator.service";
 import { QueryOrchestratorService } from "../orchestration/query-orchestrator.service";
-import type { QueryApiRequest } from "../types";
+import type { MutationApiRequest, QueryApiRequest } from "../types";
 
 @Controller()
 export class QueryController {
   constructor(
     private readonly queryOrchestrator: QueryOrchestratorService,
+    private readonly mutationOrchestrator: MutationOrchestratorService,
     private readonly auditLogService: AuditLogService
   ) {}
 
@@ -59,6 +61,52 @@ export class QueryController {
         userId: request.userId,
         table: request.table,
         queryDsl,
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? error.message : "unknown_error"
+      });
+      throw error;
+    }
+  }
+
+  @Post("mutation")
+  async mutation(
+    @Body() request: MutationApiRequest,
+    @Req()
+    req: {
+      headers: Record<string, string | string[] | undefined>;
+    },
+    @Res({ passthrough: true })
+    res: {
+      setHeader(name: string, value: string): void;
+    }
+  ): Promise<{ rowCount: number; row: Record<string, unknown> | null }> {
+    const requestId = resolveRequestId(req.headers["x-request-id"]);
+    res.setHeader("x-request-id", requestId);
+
+    const startedAt = Date.now();
+    try {
+      const result = await this.mutationOrchestrator.execute(request);
+      await this.auditLogService.logMutationSuccess({
+        requestId,
+        tenantId: request.tenantId,
+        userId: request.userId,
+        table: request.table,
+        operation: request.operation,
+        durationMs: Date.now() - startedAt,
+        beforeData: result.beforeData,
+        afterData: result.afterData
+      });
+      return {
+        rowCount: result.rowCount,
+        row: result.afterData ?? result.beforeData
+      };
+    } catch (error) {
+      await this.auditLogService.logMutationFailure({
+        requestId,
+        tenantId: request.tenantId,
+        userId: request.userId,
+        table: request.table,
+        operation: request.operation,
         durationMs: Date.now() - startedAt,
         error: error instanceof Error ? error.message : "unknown_error"
       });

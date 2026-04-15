@@ -15,6 +15,19 @@ export interface QueryAuditRecord {
   errorMessage: string | null;
 }
 
+export interface MutationAuditRecord {
+  requestId: string;
+  tenantId: string;
+  userId: string;
+  tableName: string;
+  operation: string;
+  beforeData: Record<string, unknown> | null;
+  afterData: Record<string, unknown> | null;
+  durationMs: number;
+  status: "success" | "failure";
+  errorMessage: string | null;
+}
+
 @Injectable()
 export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger("AuditPersistence");
@@ -60,8 +73,23 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
         operation TEXT NOT NULL,
         before_data JSONB NULL,
         after_data JSONB NULL,
+        duration_ms INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'success',
+        error_message TEXT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
+    `);
+    await this.pool.query(`
+      ALTER TABLE mutation_logs
+      ADD COLUMN IF NOT EXISTS duration_ms INTEGER NOT NULL DEFAULT 0
+    `);
+    await this.pool.query(`
+      ALTER TABLE mutation_logs
+      ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'success'
+    `);
+    await this.pool.query(`
+      ALTER TABLE mutation_logs
+      ADD COLUMN IF NOT EXISTS error_message TEXT NULL
     `);
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS migration_logs (
@@ -173,6 +201,41 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.warn(
         `persist audit failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  async persistMutation(record: MutationAuditRecord): Promise<void> {
+    try {
+      await this.pool.query(
+        `INSERT INTO mutation_logs (
+          request_id,
+          tenant_id,
+          user_id,
+          table_name,
+          operation,
+          before_data,
+          after_data,
+          duration_ms,
+          status,
+          error_message
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          record.requestId,
+          record.tenantId,
+          record.userId,
+          record.tableName,
+          record.operation,
+          record.beforeData,
+          record.afterData,
+          record.durationMs,
+          record.status,
+          record.errorMessage
+        ]
+      );
+    } catch (error) {
+      this.logger.warn(
+        `persist mutation audit failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

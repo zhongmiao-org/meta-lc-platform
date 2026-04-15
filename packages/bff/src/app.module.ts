@@ -5,6 +5,7 @@ import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { QueryController } from "./gateway/query.controller";
 import { AuditPersistenceService } from "./integration/audit-persistence.service";
 import { PostgresQueryExecutorService } from "./integration/postgres-query-executor.service";
+import { MutationOrchestratorService } from "./orchestration/mutation-orchestrator.service";
 import { QueryOrchestratorService } from "./orchestration/query-orchestrator.service";
 
 @Module({
@@ -14,6 +15,7 @@ import { QueryOrchestratorService } from "./orchestration/query-orchestrator.ser
     PostgresQueryExecutorService,
     AuditPersistenceService,
     QueryOrchestratorService,
+    MutationOrchestratorService,
     AuditLogService,
     {
       provide: APP_FILTER,

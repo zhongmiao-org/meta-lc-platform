@@ -8,6 +8,18 @@ export interface QueryApiRequest {
   limit?: number;
 }
 
+export type MutationOperation = "create" | "update" | "delete";
+
+export interface MutationApiRequest {
+  table: string;
+  operation: MutationOperation;
+  tenantId: string;
+  userId: string;
+  roles: string[];
+  key?: Record<string, string | number | boolean>;
+  data?: Record<string, string | number | boolean | null>;
+}
+
 export interface DbConfig {
   url?: string;
   host: string;
