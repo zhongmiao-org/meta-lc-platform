@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "node --env-file=../../.env dist/apps/bff-server/src/main.js",
+    "start": "sh -c 'if [ -f ../../.env ]; then exec node --env-file=../../.env dist/apps/bff-server/src/main.js; else exec node dist/apps/bff-server/src/main.js; fi'",
     "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
     "test:query-gate": "bash ../../packages/bff/scripts/e2e-query-isolation.sh",
     "lint": "echo lint:bff-server"
