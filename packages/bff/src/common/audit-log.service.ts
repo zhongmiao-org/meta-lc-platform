@@ -13,6 +13,18 @@ export interface QueryAuditPayload {
   error?: string;
 }
 
+export interface MutationAuditPayload {
+  requestId: string;
+  tenantId: string;
+  userId: string;
+  table: string;
+  operation: string;
+  durationMs: number;
+  beforeData?: Record<string, unknown> | null;
+  afterData?: Record<string, unknown> | null;
+  error?: string;
+}
+
 @Injectable()
 export class AuditLogService {
   private readonly logger = new Logger("AuditLog");
@@ -71,6 +83,62 @@ export class AuditLogService {
     } catch (error) {
       this.logger.warn(
         `persist failure audit failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  async logMutationSuccess(payload: MutationAuditPayload): Promise<void> {
+    this.logger.log(
+      JSON.stringify({
+        event: "mutation.success",
+        timestamp: new Date().toISOString(),
+        ...payload
+      })
+    );
+    try {
+      await this.auditPersistenceService.persistMutation({
+        requestId: payload.requestId,
+        tenantId: payload.tenantId,
+        userId: payload.userId,
+        tableName: payload.table,
+        operation: payload.operation,
+        beforeData: payload.beforeData ?? null,
+        afterData: payload.afterData ?? null,
+        durationMs: payload.durationMs,
+        status: "success",
+        errorMessage: null
+      });
+    } catch (error) {
+      this.logger.warn(
+        `persist mutation success audit failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  async logMutationFailure(payload: MutationAuditPayload): Promise<void> {
+    this.logger.error(
+      JSON.stringify({
+        event: "mutation.failure",
+        timestamp: new Date().toISOString(),
+        ...payload
+      })
+    );
+    try {
+      await this.auditPersistenceService.persistMutation({
+        requestId: payload.requestId,
+        tenantId: payload.tenantId,
+        userId: payload.userId,
+        tableName: payload.table,
+        operation: payload.operation,
+        beforeData: payload.beforeData ?? null,
+        afterData: payload.afterData ?? null,
+        durationMs: payload.durationMs,
+        status: "failure",
+        errorMessage: payload.error ?? null
+      });
+    } catch (error) {
+      this.logger.warn(
+        `persist mutation failure audit failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

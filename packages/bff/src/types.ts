@@ -1,1 +1,8 @@
-export type { BootstrapMode, DbConfig, DbTargets, QueryApiRequest } from "@meta-lc/contracts";
+export type {
+  BootstrapMode,
+  DbConfig,
+  DbTargets,
+  MutationApiRequest,
+  MutationOperation,
+  QueryApiRequest
+} from "@meta-lc/contracts";
