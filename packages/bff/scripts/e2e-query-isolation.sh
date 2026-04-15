@@ -92,7 +92,8 @@ run_query_and_assert() {
 JSON
 )" > "${output_file}"
 
-  node -e '
+  local row_count
+  row_count="$(node -e '
 const fs = require("node:fs");
 const file = process.argv[1];
 const expectedPrefix = process.argv[2];
@@ -116,9 +117,10 @@ for (const row of data.rows) {
     process.exit(1);
   }
 }
-' "${output_file}" "${expected_prefix}" "${tenant_id}"
+process.stdout.write(String(data.rows.length));
+' "${output_file}" "${expected_prefix}" "${tenant_id}")"
 
-  printf "%s\n" "${request_id}"
+  printf "%s %s\n" "${request_id}" "${row_count}"
 }
 
 assert_audit_record() {
@@ -304,12 +306,12 @@ log "seeding demo data"
 run_sql_file "${LC_DB_BUSINESS_NAME}" "${SEED_SQL}"
 
 log "validating tenant-a"
-tenant_a_request_id="$(run_query_and_assert "tenant-a" "demo-tenant-a-user" "SO-A")"
-assert_audit_record "${tenant_a_request_id}" "success" 1
+read -r tenant_a_request_id tenant_a_row_count <<< "$(run_query_and_assert "tenant-a" "demo-tenant-a-user" "SO-A")"
+assert_audit_record "${tenant_a_request_id}" "success" "${tenant_a_row_count}"
 
 log "validating tenant-b"
-tenant_b_request_id="$(run_query_and_assert "tenant-b" "demo-tenant-b-user" "SO-B")"
-assert_audit_record "${tenant_b_request_id}" "success" 1
+read -r tenant_b_request_id tenant_b_row_count <<< "$(run_query_and_assert "tenant-b" "demo-tenant-b-user" "SO-B")"
+assert_audit_record "${tenant_b_request_id}" "success" "${tenant_b_row_count}"
 
 log "validating failure sample"
 failure_request_id="e2e-failure-${RUN_ID}"
