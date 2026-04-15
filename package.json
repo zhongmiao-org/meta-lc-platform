@@ -7,6 +7,8 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm run lint:boundaries && pnpm -r lint",
+    "start": "pnpm run start:bff",
+    "start:bff": "pnpm --filter @meta-lc/bff-server... build && sh -c 'if [ -f .env ]; then exec node --env-file=.env apps/bff-server/dist/apps/bff-server/src/main.js; else exec node apps/bff-server/dist/apps/bff-server/src/main.js; fi'",
     "query-gate": "pnpm --filter @meta-lc/bff-server run test:query-gate",
     "lint:boundaries": "node scripts/check-boundaries.mjs"
   },

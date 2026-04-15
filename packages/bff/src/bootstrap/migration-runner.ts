@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Pool } from "pg";
 import type { DbConfig } from "../types";
@@ -15,7 +15,7 @@ export class MigrationRunner {
   constructor(private readonly rootDir: string) {}
 
   async apply(target: MigrationTarget, config: DbConfig): Promise<void> {
-    const sqlFile = path.join(this.rootDir, "scripts", "sql", "bootstrap", TARGET_TO_FILE[target]);
+    const sqlFile = resolveBootstrapSqlFile(this.rootDir, target);
     const sql = readFileSync(sqlFile, "utf8");
     const pool = createPool(config);
     try {
@@ -41,4 +41,20 @@ export function createPool(config: DbConfig): Pool {
     database: config.database,
     ssl: config.ssl ? { rejectUnauthorized: false } : false
   });
+}
+
+function resolveBootstrapSqlFile(rootDir: string, target: MigrationTarget): string {
+  const relativeFile = path.join("scripts", "sql", "bootstrap", TARGET_TO_FILE[target]);
+  const candidates = [
+    path.join(rootDir, relativeFile),
+    path.join(rootDir, "packages", "bff", relativeFile),
+    path.resolve(rootDir, "..", "..", "packages", "bff", relativeFile)
+  ];
+
+  const match = candidates.find((candidate) => existsSync(candidate));
+  if (!match) {
+    throw new Error(`bootstrap sql not found for ${target}: ${candidates.join(", ")}`);
+  }
+
+  return match;
 }
