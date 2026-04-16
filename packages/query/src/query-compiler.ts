@@ -44,6 +44,7 @@ const SUPPORTED_EXACT_FILTERS = new Set([
   "owner",
   "channel",
   "priority",
+  "org_id",
   "tenant_id",
   "created_by"
 ]);

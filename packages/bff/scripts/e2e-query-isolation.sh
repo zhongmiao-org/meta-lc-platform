@@ -268,6 +268,40 @@ assert_mutation_audit_record() {
   fi
 }
 
+assert_query_denied() {
+  local request_id="$1"
+  local tenant_id="$2"
+  local user_id="$3"
+  local org_id="$4"
+  local output_file="$5"
+
+  local status_code
+  status_code="$(curl -sS -o "${output_file}" -w "%{http_code}" -X POST "${BFF_URL}/query" \
+    -H "content-type: application/json" \
+    -H "x-request-id: ${request_id}" \
+    -d "$(cat <<JSON
+{
+  "table": "orders",
+  "fields": ["id", "owner", "org_id", "tenant_id", "created_by"],
+  "filters": {
+    "org_id": "${org_id}"
+  },
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ["USER"],
+  "limit": 20
+}
+JSON
+)")"
+
+  if [[ "${status_code}" != "403" ]]; then
+    cat "${output_file}"
+    exit 1
+  fi
+
+  assert_audit_record "${request_id}" "denied" "NULL"
+}
+
 require_cmd node
 require_cmd curl
 
@@ -514,6 +548,10 @@ fi
 
 assert_audit_record "${failure_request_id}" "failure" "NULL"
 
+log "validating query permission denied sample"
+query_denied_request_id="e2e-query-denied-${RUN_ID}"
+assert_query_denied "${query_denied_request_id}" "tenant-a" "demo-tenant-a-user" "dept-b" "${TMP_DIR}/query-denied.json"
+
 tenant_id="tenant-a"
 user_id="demo-tenant-a-user"
 test_order_id="SO-AE2E-${RUN_ID}"
@@ -527,6 +565,7 @@ create_status_code="$(run_mutation_request "${create_request_id}" "$(cat <<JSON
   "tenantId": "${tenant_id}",
   "userId": "${user_id}",
   "roles": ["USER"],
+  "orgId": "dept-a",
   "data": {
     "id": "${test_order_id}",
     "owner": "Gate Create",
@@ -562,6 +601,7 @@ duplicate_status_code="$(run_mutation_request "${duplicate_request_id}" "$(cat <
   "tenantId": "${tenant_id}",
   "userId": "${user_id}",
   "roles": ["USER"],
+  "orgId": "dept-a",
   "data": {
     "id": "${test_order_id}",
     "owner": "Gate Create",
@@ -587,6 +627,7 @@ update_status_code="$(run_mutation_request "${update_request_id}" "$(cat <<JSON
   "tenantId": "${tenant_id}",
   "userId": "${user_id}",
   "roles": ["USER"],
+  "orgId": "dept-a",
   "key": {
     "id": "${test_order_id}"
   },
@@ -646,6 +687,35 @@ if (data.rowCount !== 1 || data.row?.id !== process.argv[2]) {
 assert_mutation_audit_record "${delete_request_id}" "delete" "success" "${tenant_id}" "${user_id}"
 read -r delete_query_request_id delete_query_row_count <<< "$(query_order_and_assert_missing "${tenant_id}" "${user_id}" "${test_order_id}")"
 assert_audit_record "${delete_query_request_id}" "success" "${delete_query_row_count}"
+
+log "validating mutation permission denied sample"
+mutation_denied_request_id="e2e-mutation-denied-${RUN_ID}"
+mutation_denied_status_code="$(run_mutation_request "${mutation_denied_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "update",
+  "tenantId": "tenant-a",
+  "userId": "demo-tenant-a-user",
+  "roles": ["USER"],
+  "orgId": "dept-b",
+  "key": {
+    "id": "SO-A2001"
+  },
+  "data": {
+    "id": "SO-A2001",
+    "owner": "should-fail",
+    "channel": "web",
+    "priority": "low",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/mutation-denied.json")"
+if [[ "${mutation_denied_status_code}" != "403" ]]; then
+  cat "${TMP_DIR}/mutation-denied.json"
+  exit 1
+fi
+assert_mutation_audit_record "${mutation_denied_request_id}" "update" "denied" "tenant-a" "demo-tenant-a-user"
 
 log "audit snapshot"
 print_audit_snapshot

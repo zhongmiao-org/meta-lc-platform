@@ -1,8 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildRowLevelFilter, injectPermissionClause } from "../src/permission-engine";
+import {
+  buildDataScopeFilter,
+  buildRowLevelFilter,
+  canAccessOrg,
+  injectPermissionClause,
+  resolveDataScope
+} from "../src/permission-engine";
 
-test("non-admin gets tenant and user filter", () => {
+test("non-admin defaults to SELF scope", () => {
   const filter = buildRowLevelFilter({
     tenantId: "t1",
     userId: "u1",
@@ -10,6 +16,93 @@ test("non-admin gets tenant and user filter", () => {
   });
   assert.equal(filter.clause, "tenant_id = $1 AND created_by = $2");
   assert.deepEqual(filter.params, ["t1", "u1"]);
+});
+
+test("resolveDataScope computes manager dept-children org set", () => {
+  const decision = resolveDataScope({
+    tenantId: "tenant-a",
+    userId: "manager-1",
+    roles: ["MANAGER"],
+    userOrgIds: ["dept-a"],
+    rolePolicies: [],
+    orgNodes: [
+      {
+        id: "dept-a",
+        tenantId: "tenant-a",
+        parentId: "root",
+        path: "root/dept-a",
+        name: "部门A",
+        type: "department"
+      },
+      {
+        id: "dept-a-sub",
+        tenantId: "tenant-a",
+        parentId: "dept-a",
+        path: "root/dept-a/dept-a-sub",
+        name: "部门A-子组",
+        type: "department"
+      },
+      {
+        id: "dept-b",
+        tenantId: "tenant-a",
+        parentId: "root",
+        path: "root/dept-b",
+        name: "部门B",
+        type: "department"
+      }
+    ]
+  });
+
+  assert.equal(decision.scope, "DEPT_AND_CHILDREN");
+  assert.deepEqual(new Set(decision.allowedOrgIds), new Set(["dept-a", "dept-a-sub"]));
+});
+
+test("buildDataScopeFilter uses org list and legacy fallback", () => {
+  const filter = buildDataScopeFilter(
+    {
+      scope: "DEPT",
+      allowedOrgIds: ["dept-a"],
+      tenantAll: false,
+      legacyFallbackToCreatedBy: true,
+      reason: "scope:DEPT"
+    },
+    {
+      tenantId: "tenant-a",
+      userId: "u-a",
+      roles: ["USER"]
+    }
+  );
+
+  assert.equal(
+    filter.clause,
+    "tenant_id = $1 AND (org_id = ANY($2::text[]) OR (org_id IS NULL AND created_by = $3))"
+  );
+  assert.deepEqual(filter.params, ["tenant-a", ["dept-a"], "u-a"]);
+});
+
+test("canAccessOrg denies sibling org and allows legacy fallback", () => {
+  const decision = {
+    scope: "DEPT" as const,
+    allowedOrgIds: ["dept-a"],
+    tenantAll: false,
+    legacyFallbackToCreatedBy: true,
+    reason: "scope:DEPT"
+  };
+
+  const denied = canAccessOrg(
+    decision,
+    { orgId: "dept-b", createdBy: "u-a" },
+    { tenantId: "tenant-a", userId: "u-a", roles: ["USER"] }
+  );
+  assert.equal(denied.allowed, false);
+
+  const allowedByLegacy = canAccessOrg(
+    decision,
+    { orgId: null, createdBy: "u-a" },
+    { tenantId: "tenant-a", userId: "u-a", roles: ["USER"] }
+  );
+  assert.equal(allowedByLegacy.allowed, true);
+  assert.equal(allowedByLegacy.fallbackUsed, true);
 });
 
 test("injectPermissionClause appends filter to SQL with WHERE", () => {

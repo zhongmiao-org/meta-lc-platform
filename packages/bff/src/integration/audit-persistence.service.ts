@@ -11,8 +11,12 @@ export interface QueryAuditRecord {
   finalSql: string | null;
   durationMs: number;
   resultCount: number | null;
-  status: "success" | "failure";
+  status: "success" | "failure" | "denied";
   errorMessage: string | null;
+  permissionScope: string | null;
+  permissionOrgCount: number | null;
+  permissionFallbackUsed: boolean | null;
+  permissionReason: string | null;
 }
 
 export interface MutationAuditRecord {
@@ -24,8 +28,12 @@ export interface MutationAuditRecord {
   beforeData: Record<string, unknown> | null;
   afterData: Record<string, unknown> | null;
   durationMs: number;
-  status: "success" | "failure";
+  status: "success" | "failure" | "denied";
   errorMessage: string | null;
+  permissionScope: string | null;
+  permissionOrgCount: number | null;
+  permissionFallbackUsed: boolean | null;
+  permissionReason: string | null;
 }
 
 @Injectable()
@@ -60,6 +68,10 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
         result_count INTEGER NULL,
         status TEXT NOT NULL,
         error_message TEXT NULL,
+        permission_scope TEXT NULL,
+        permission_org_count INTEGER NULL,
+        permission_fallback_used BOOLEAN NULL,
+        permission_reason TEXT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
@@ -76,8 +88,28 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
         duration_ms INTEGER NOT NULL DEFAULT 0,
         status TEXT NOT NULL DEFAULT 'success',
         error_message TEXT NULL,
+        permission_scope TEXT NULL,
+        permission_org_count INTEGER NULL,
+        permission_fallback_used BOOLEAN NULL,
+        permission_reason TEXT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
+    `);
+    await this.pool.query(`
+      ALTER TABLE query_logs
+      ADD COLUMN IF NOT EXISTS permission_scope TEXT NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE query_logs
+      ADD COLUMN IF NOT EXISTS permission_org_count INTEGER NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE query_logs
+      ADD COLUMN IF NOT EXISTS permission_fallback_used BOOLEAN NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE query_logs
+      ADD COLUMN IF NOT EXISTS permission_reason TEXT NULL
     `);
     await this.pool.query(`
       ALTER TABLE mutation_logs
@@ -90,6 +122,22 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
     await this.pool.query(`
       ALTER TABLE mutation_logs
       ADD COLUMN IF NOT EXISTS error_message TEXT NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE mutation_logs
+      ADD COLUMN IF NOT EXISTS permission_scope TEXT NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE mutation_logs
+      ADD COLUMN IF NOT EXISTS permission_org_count INTEGER NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE mutation_logs
+      ADD COLUMN IF NOT EXISTS permission_fallback_used BOOLEAN NULL
+    `);
+    await this.pool.query(`
+      ALTER TABLE mutation_logs
+      ADD COLUMN IF NOT EXISTS permission_reason TEXT NULL
     `);
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS migration_logs (
@@ -161,8 +209,12 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
           duration_ms,
           result_count,
           status,
-          error_message
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          error_message,
+          permission_scope,
+          permission_org_count,
+          permission_fallback_used,
+          permission_reason
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
         [
           record.requestId,
           record.tenantId,
@@ -173,7 +225,11 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
           record.durationMs,
           record.resultCount,
           record.status,
-          record.errorMessage
+          record.errorMessage,
+          record.permissionScope,
+          record.permissionOrgCount,
+          record.permissionFallbackUsed,
+          record.permissionReason
         ]
       );
       await this.pool.query(
@@ -218,8 +274,12 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
           after_data,
           duration_ms,
           status,
-          error_message
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          error_message,
+          permission_scope,
+          permission_org_count,
+          permission_fallback_used,
+          permission_reason
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
         [
           record.requestId,
           record.tenantId,
@@ -230,7 +290,11 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
           record.afterData,
           record.durationMs,
           record.status,
-          record.errorMessage
+          record.errorMessage,
+          record.permissionScope,
+          record.permissionOrgCount,
+          record.permissionFallbackUsed,
+          record.permissionReason
         ]
       );
     } catch (error) {

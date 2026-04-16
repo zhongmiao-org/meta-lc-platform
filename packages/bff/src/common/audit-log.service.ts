@@ -11,6 +11,10 @@ export interface QueryAuditPayload {
   durationMs: number;
   resultCount?: number;
   error?: string;
+  permissionScope?: string | null;
+  permissionOrgCount?: number | null;
+  permissionFallbackUsed?: boolean | null;
+  permissionReason?: string | null;
 }
 
 export interface MutationAuditPayload {
@@ -23,6 +27,10 @@ export interface MutationAuditPayload {
   beforeData?: Record<string, unknown> | null;
   afterData?: Record<string, unknown> | null;
   error?: string;
+  permissionScope?: string | null;
+  permissionOrgCount?: number | null;
+  permissionFallbackUsed?: boolean | null;
+  permissionReason?: string | null;
 }
 
 @Injectable()
@@ -50,7 +58,11 @@ export class AuditLogService {
         durationMs: payload.durationMs,
         resultCount: payload.resultCount ?? null,
         status: "success",
-        errorMessage: null
+        errorMessage: null,
+        permissionScope: payload.permissionScope ?? null,
+        permissionOrgCount: payload.permissionOrgCount ?? null,
+        permissionFallbackUsed: payload.permissionFallbackUsed ?? null,
+        permissionReason: payload.permissionReason ?? null
       });
     } catch (error) {
       this.logger.warn(
@@ -77,8 +89,12 @@ export class AuditLogService {
         finalSql: payload.finalSql ?? null,
         durationMs: payload.durationMs,
         resultCount: null,
-        status: "failure",
-        errorMessage: payload.error ?? null
+        status: payload.error === "data scope permission denied" ? "denied" : "failure",
+        errorMessage: payload.error ?? null,
+        permissionScope: payload.permissionScope ?? null,
+        permissionOrgCount: payload.permissionOrgCount ?? null,
+        permissionFallbackUsed: payload.permissionFallbackUsed ?? null,
+        permissionReason: payload.permissionReason ?? null
       });
     } catch (error) {
       this.logger.warn(
@@ -106,7 +122,11 @@ export class AuditLogService {
         afterData: payload.afterData ?? null,
         durationMs: payload.durationMs,
         status: "success",
-        errorMessage: null
+        errorMessage: null,
+        permissionScope: payload.permissionScope ?? null,
+        permissionOrgCount: payload.permissionOrgCount ?? null,
+        permissionFallbackUsed: payload.permissionFallbackUsed ?? null,
+        permissionReason: payload.permissionReason ?? null
       });
     } catch (error) {
       this.logger.warn(
@@ -133,8 +153,12 @@ export class AuditLogService {
         beforeData: payload.beforeData ?? null,
         afterData: payload.afterData ?? null,
         durationMs: payload.durationMs,
-        status: "failure",
-        errorMessage: payload.error ?? null
+        status: payload.error === "data scope permission denied" ? "denied" : "failure",
+        errorMessage: payload.error ?? null,
+        permissionScope: payload.permissionScope ?? null,
+        permissionOrgCount: payload.permissionOrgCount ?? null,
+        permissionFallbackUsed: payload.permissionFallbackUsed ?? null,
+        permissionReason: payload.permissionReason ?? null
       });
     } catch (error) {
       this.logger.warn(

@@ -5,6 +5,7 @@ import type { MutationOperation } from "../types";
 
 interface OrderMutationPayload {
   id: string;
+  orgId: string | null;
   owner?: string;
   channel?: string;
   priority?: string;
@@ -16,6 +17,7 @@ export interface OrderMutationCommand {
   tenantId: string;
   userId: string;
   superAdmin: boolean;
+  orgId: string | null;
   payload: OrderMutationPayload;
 }
 
@@ -41,7 +43,7 @@ export class PostgresQueryExecutorService implements OnModuleDestroy {
     });
   }
 
-  async query(sql: string, params: Array<string | number | boolean>): Promise<Record<string, unknown>[]> {
+  async query(sql: string, params: Array<string | number | boolean | string[]>): Promise<Record<string, unknown>[]> {
     const result = await this.pool.query(sql, params);
     return result.rows;
   }
@@ -58,9 +60,9 @@ export class PostgresQueryExecutorService implements OnModuleDestroy {
 
       if (command.operation === "create") {
         const created = await client.query<Record<string, unknown>>(
-          `INSERT INTO orders (id, owner, channel, priority, status, tenant_id, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           RETURNING id, owner, channel, priority, status, tenant_id, created_by`,
+          `INSERT INTO orders (id, owner, channel, priority, status, tenant_id, created_by, org_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           RETURNING id, owner, channel, priority, status, tenant_id, created_by, org_id`,
           [
             command.payload.id,
             command.payload.owner ?? "",
@@ -68,7 +70,8 @@ export class PostgresQueryExecutorService implements OnModuleDestroy {
             command.payload.priority ?? "medium",
             command.payload.status ?? "active",
             command.tenantId,
-            command.userId
+            command.userId,
+            command.orgId
           ]
         );
         await client.query("COMMIT");
@@ -95,16 +98,18 @@ export class PostgresQueryExecutorService implements OnModuleDestroy {
            SET owner = $1,
                channel = $2,
                priority = $3,
-               status = $4
-           WHERE ${buildUpdateWhereClause(command.superAdmin)}
-           RETURNING id, owner, channel, priority, status, tenant_id, created_by`,
+               status = $4,
+               org_id = $5
+           WHERE id = $6 AND tenant_id = $7
+           RETURNING id, owner, channel, priority, status, tenant_id, created_by, org_id`,
           [
             command.payload.owner ?? "",
             command.payload.channel ?? "web",
             command.payload.priority ?? "medium",
             command.payload.status ?? "active",
+            command.orgId,
             command.payload.id,
-            ...buildScopeParams(command)
+            command.tenantId
           ]
         );
         await client.query("COMMIT");
@@ -117,8 +122,8 @@ export class PostgresQueryExecutorService implements OnModuleDestroy {
 
       const deleted = await client.query(
         `DELETE FROM orders
-         WHERE id = $1${buildScopedWhereClause(command.superAdmin)}`,
-        [command.payload.id, ...buildScopeParams(command)]
+         WHERE id = $1 AND tenant_id = $2`,
+        [command.payload.id, command.tenantId]
       );
       await client.query("COMMIT");
       return {
@@ -143,23 +148,21 @@ export class PostgresQueryExecutorService implements OnModuleDestroy {
     command: OrderMutationCommand
   ): Promise<Record<string, unknown> | null> {
     const result = await client.query<Record<string, unknown>>(
-      `SELECT id, owner, channel, priority, status, tenant_id, created_by
+      `SELECT id, owner, channel, priority, status, tenant_id, created_by, org_id
        FROM orders
-       WHERE id = $1${buildScopedWhereClause(command.superAdmin)}`,
-      [command.payload.id, ...buildScopeParams(command)]
+       WHERE id = $1 AND tenant_id = $2`,
+      [command.payload.id, command.tenantId]
     );
     return result.rows[0] ?? null;
   }
-}
 
-function buildScopedWhereClause(superAdmin: boolean): string {
-  return superAdmin ? "" : " AND tenant_id = $2 AND created_by = $3";
-}
-
-function buildUpdateWhereClause(superAdmin: boolean): string {
-  return superAdmin ? "id = $5" : "id = $5 AND tenant_id = $6 AND created_by = $7";
-}
-
-function buildScopeParams(command: OrderMutationCommand): string[] {
-  return command.superAdmin ? [] : [command.tenantId, command.userId];
+  async findOrderById(input: { id: string; tenantId: string }): Promise<Record<string, unknown> | null> {
+    const result = await this.pool.query<Record<string, unknown>>(
+      `SELECT id, owner, channel, priority, status, tenant_id, created_by, org_id
+       FROM orders
+       WHERE id = $1 AND tenant_id = $2`,
+      [input.id, input.tenantId]
+    );
+    return result.rows[0] ?? null;
+  }
 }

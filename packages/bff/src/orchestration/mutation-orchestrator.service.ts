@@ -1,9 +1,14 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { canAccessOrg, resolveDataScope } from "@meta-lc/permission";
+import type { DataScopeDecision } from "@meta-lc/contracts";
+import { ForbiddenDataScopeError } from "../common/permission-errors";
+import { OrgScopeService } from "../integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../integration/postgres-query-executor.service";
 import type { MutationApiRequest, MutationOperation } from "../types";
 
 interface OrderMutationPayload {
   id: string;
+  orgId: string | null;
   owner?: string;
   channel?: string;
   priority?: string;
@@ -16,11 +21,15 @@ export interface MutationExecutionResult {
   table: string;
   beforeData: Record<string, unknown> | null;
   afterData: Record<string, unknown> | null;
+  permissionDecision: DataScopeDecision;
 }
 
 @Injectable()
 export class MutationOrchestratorService {
-  constructor(private readonly queryExecutor: PostgresQueryExecutorService) {}
+  constructor(
+    private readonly queryExecutor: PostgresQueryExecutorService,
+    private readonly orgScopeService: OrgScopeService
+  ) {}
 
   async execute(request: MutationApiRequest): Promise<MutationExecutionResult> {
     if (!request.tenantId || !request.userId) {
@@ -31,13 +40,76 @@ export class MutationOrchestratorService {
     }
 
     const payload = normalizeMutationPayload(request);
+    const orgScopeContext = await this.orgScopeService.resolveContext({
+      tenantId: request.tenantId,
+      userId: request.userId,
+      roles: request.roles
+    });
+    const permissionDecision = resolveDataScope(orgScopeContext);
+
+    if (request.operation === "create") {
+      if (!payload.orgId) {
+        throw new BadRequestException("orgId is required for create.");
+      }
+      const createAccess = canAccessOrg(
+        permissionDecision,
+        {
+          orgId: payload.orgId,
+          createdBy: request.userId
+        },
+        {
+          tenantId: request.tenantId,
+          userId: request.userId,
+          roles: request.roles
+        }
+      );
+      if (!createAccess.allowed) {
+        throw new ForbiddenDataScopeError({
+          decision: permissionDecision,
+          reason: createAccess.reason
+        });
+      }
+    }
 
     try {
+      if (request.operation !== "create") {
+        const existing = await this.queryExecutor.findOrderById({
+          id: payload.id,
+          tenantId: request.tenantId
+        });
+        if (!existing) {
+          throw new NotFoundException(`order ${payload.id} not found`);
+        }
+        const access = canAccessOrg(
+          permissionDecision,
+          {
+            orgId: (existing.org_id as string | null) ?? null,
+            createdBy: (existing.created_by as string | null) ?? null
+          },
+          {
+            tenantId: request.tenantId,
+            userId: request.userId,
+            roles: request.roles
+          }
+        );
+        if (!access.allowed) {
+          throw new ForbiddenDataScopeError({
+            decision: permissionDecision,
+            reason: access.reason
+          });
+        }
+
+        if (request.operation === "update" && !payload.orgId) {
+          payload.orgId = (existing.org_id as string | null) ?? null;
+        }
+      }
+
       const result = await this.queryExecutor.mutateOrder({
         operation: request.operation,
         tenantId: request.tenantId,
         userId: request.userId,
         superAdmin: request.roles.includes("SUPER_ADMIN"),
+        orgId: payload.orgId,
         payload
       });
 
@@ -50,7 +122,8 @@ export class MutationOrchestratorService {
         operation: request.operation,
         table: request.table,
         beforeData: result.beforeData,
-        afterData: result.afterData
+        afterData: result.afterData,
+        permissionDecision
       };
     } catch (error) {
       if (isPgDuplicateKey(error)) {
@@ -69,7 +142,12 @@ function normalizeMutationPayload(request: MutationApiRequest): OrderMutationPay
   }
 
   if (request.operation === "delete") {
-    return { id };
+    return { id, orgId: request.orgId ?? null };
+  }
+
+  const orgId = resolveOrgId(request);
+  if (request.operation === "create" && !orgId) {
+    throw new BadRequestException("orgId is required.");
   }
 
   const owner = String(source["owner"] ?? "").trim();
@@ -79,6 +157,7 @@ function normalizeMutationPayload(request: MutationApiRequest): OrderMutationPay
 
   return {
     id,
+    orgId,
     owner,
     channel: String(source["channel"] ?? "web"),
     priority: String(source["priority"] ?? "medium"),
@@ -96,6 +175,17 @@ function resolveId(request: MutationApiRequest): string {
     return String(dataId);
   }
   return "";
+}
+
+function resolveOrgId(request: MutationApiRequest): string | null {
+  if (typeof request.orgId === "string" && request.orgId.trim()) {
+    return request.orgId.trim();
+  }
+  const fromData = request.data?.["org_id"];
+  if (typeof fromData === "string" && fromData.trim()) {
+    return fromData.trim();
+  }
+  return null;
 }
 
 function isPgDuplicateKey(error: unknown): boolean {

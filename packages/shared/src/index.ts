@@ -12,14 +12,21 @@ export function quoteLiteral(value: string | number | boolean): string {
   return `'${value.replace(/'/g, "''")}'`;
 }
 
+function quoteArray(values: string[]): string {
+  return `ARRAY[${values.map((value) => quoteLiteral(value)).join(", ")}]`;
+}
+
 export function formatSqlWithParams(
   sql: string,
-  params: Array<string | number | boolean>
+  params: Array<string | number | boolean | string[]>
 ): string {
   let finalSql = sql;
   params.forEach((value, index) => {
     const marker = new RegExp(`\\$${index + 1}(?!\\d)`, "g");
-    finalSql = finalSql.replace(marker, quoteLiteral(value));
+    finalSql = finalSql.replace(
+      marker,
+      Array.isArray(value) ? quoteArray(value) : quoteLiteral(value)
+    );
   });
   return finalSql;
 }

@@ -4,6 +4,7 @@ import { AuditLogService } from "./common/audit-log.service";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { QueryController } from "./gateway/query.controller";
 import { AuditPersistenceService } from "./integration/audit-persistence.service";
+import { OrgScopeService } from "./integration/org-scope.service";
 import { PostgresQueryExecutorService } from "./integration/postgres-query-executor.service";
 import { MutationOrchestratorService } from "./orchestration/mutation-orchestrator.service";
 import { QueryOrchestratorService } from "./orchestration/query-orchestrator.service";
@@ -13,6 +14,7 @@ import { QueryOrchestratorService } from "./orchestration/query-orchestrator.ser
   controllers: [QueryController],
   providers: [
     PostgresQueryExecutorService,
+    OrgScopeService,
     AuditPersistenceService,
     QueryOrchestratorService,
     MutationOrchestratorService,

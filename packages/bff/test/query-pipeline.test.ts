@@ -30,6 +30,6 @@ test("compileQueryWithPermission skips tenant/user filters for SUPER_ADMIN", () 
     roles: ["SUPER_ADMIN"]
   });
 
-  assert.equal(compiled.sql, 'SELECT "id" FROM "orders" WHERE "status" = $1 LIMIT 100');
-  assert.deepEqual(compiled.params, ["PAID"]);
+  assert.equal(compiled.sql, 'SELECT "id" FROM "orders" WHERE "status" = $1 AND tenant_id = $2 LIMIT 100');
+  assert.deepEqual(compiled.params, ["PAID", "t1"]);
 });

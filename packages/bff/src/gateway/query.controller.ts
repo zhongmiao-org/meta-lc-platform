@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
+import { ForbiddenDataScopeError } from "../common/permission-errors";
 import { AuditLogService } from "../common/audit-log.service";
 import { resolveRequestId } from "../common/request-id";
 import { MutationOrchestratorService } from "../orchestration/mutation-orchestrator.service";
@@ -51,7 +52,11 @@ export class QueryController {
         queryDsl,
         finalSql: result.finalSql,
         durationMs: Date.now() - startedAt,
-        resultCount: result.rows.length
+        resultCount: result.rows.length,
+        permissionScope: result.permissionDecision.scope,
+        permissionOrgCount: result.permissionDecision.allowedOrgIds.length,
+        permissionFallbackUsed: result.permissionDecision.legacyFallbackToCreatedBy,
+        permissionReason: result.permissionDecision.reason
       });
       return { rows: result.rows };
     } catch (error) {
@@ -62,7 +67,15 @@ export class QueryController {
         table: request.table,
         queryDsl,
         durationMs: Date.now() - startedAt,
-        error: error instanceof Error ? error.message : "unknown_error"
+        error: error instanceof Error ? error.message : "unknown_error",
+        permissionScope: error instanceof ForbiddenDataScopeError ? error.details.decision.scope : null,
+        permissionOrgCount:
+          error instanceof ForbiddenDataScopeError ? error.details.decision.allowedOrgIds.length : null,
+        permissionFallbackUsed:
+          error instanceof ForbiddenDataScopeError
+            ? error.details.decision.legacyFallbackToCreatedBy
+            : null,
+        permissionReason: error instanceof ForbiddenDataScopeError ? error.details.reason : null
       });
       throw error;
     }
@@ -94,7 +107,11 @@ export class QueryController {
         operation: request.operation,
         durationMs: Date.now() - startedAt,
         beforeData: result.beforeData,
-        afterData: result.afterData
+        afterData: result.afterData,
+        permissionScope: result.permissionDecision.scope,
+        permissionOrgCount: result.permissionDecision.allowedOrgIds.length,
+        permissionFallbackUsed: result.permissionDecision.legacyFallbackToCreatedBy,
+        permissionReason: result.permissionDecision.reason
       });
       return {
         rowCount: result.rowCount,
@@ -108,7 +125,15 @@ export class QueryController {
         table: request.table,
         operation: request.operation,
         durationMs: Date.now() - startedAt,
-        error: error instanceof Error ? error.message : "unknown_error"
+        error: error instanceof Error ? error.message : "unknown_error",
+        permissionScope: error instanceof ForbiddenDataScopeError ? error.details.decision.scope : null,
+        permissionOrgCount:
+          error instanceof ForbiddenDataScopeError ? error.details.decision.allowedOrgIds.length : null,
+        permissionFallbackUsed:
+          error instanceof ForbiddenDataScopeError
+            ? error.details.decision.legacyFallbackToCreatedBy
+            : null,
+        permissionReason: error instanceof ForbiddenDataScopeError ? error.details.reason : null
       });
       throw error;
     }
