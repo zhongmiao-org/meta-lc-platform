@@ -268,6 +268,53 @@ assert_mutation_audit_record() {
   fi
 }
 
+assert_query_permission_details() {
+  local request_id="$1"
+  local status="$2"
+  local tenant_id="$3"
+  local user_id="$4"
+
+  local count
+  count="$(query_query_permission_details_count "${request_id}" "${status}" "${tenant_id}" "${user_id}" | tr -d '\r')"
+
+  if [[ "${count}" -lt 1 ]]; then
+    log "query permission detail assertion failed for request_id=${request_id}, status=${status}"
+    exit 1
+  fi
+}
+
+assert_mutation_denied_integrity_record() {
+  local request_id="$1"
+  local operation="$2"
+  local tenant_id="$3"
+  local user_id="$4"
+
+  local count
+  count="$(query_mutation_denied_integrity_count "${request_id}" "${operation}" "${tenant_id}" "${user_id}" | tr -d '\r')"
+
+  if [[ "${count}" -lt 1 ]]; then
+    log "mutation denied integrity audit assertion failed for request_id=${request_id}, operation=${operation}"
+    exit 1
+  fi
+}
+
+assert_business_order_unchanged() {
+  local order_id="$1"
+  local expected_owner="$2"
+  local expected_channel="$3"
+  local expected_priority="$4"
+  local expected_status="$5"
+  local expected_org_id="$6"
+
+  local count
+  count="$(query_business_order_unchanged_count "${order_id}" "${expected_owner}" "${expected_channel}" "${expected_priority}" "${expected_status}" "${expected_org_id}" | tr -d '\r')"
+
+  if [[ "${count}" -lt 1 ]]; then
+    log "business order unchanged assertion failed for order_id=${order_id}"
+    exit 1
+  fi
+}
+
 assert_query_denied() {
   local request_id="$1"
   local tenant_id="$2"
@@ -300,6 +347,7 @@ JSON
   fi
 
   assert_audit_record "${request_id}" "denied" "NULL"
+  assert_query_permission_details "${request_id}" "denied" "${tenant_id}" "${user_id}"
 }
 
 require_cmd node
@@ -439,6 +487,152 @@ const client = new Client({
          AND tenant_id = $4
          AND user_id = $5;`,
       [requestId, operation, status, tenantId, userId]
+    );
+    process.stdout.write(String(result.rows[0]?.count ?? 0));
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
+
+query_query_permission_details_count() {
+  local request_id="$1"
+  local status="$2"
+  local tenant_id="$3"
+  local user_id="$4"
+
+  (
+    cd "${ROOT_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${LC_DB_AUDIT_NAME}" "${LC_DB_SSL}" "${request_id}" "${status}" "${tenant_id}" "${user_id}" <<'NODE'
+const { Client } = require("pg");
+
+const [host, port, user, password, database, sslRaw, requestId, status, tenantId, userId] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+(async () => {
+  await client.connect();
+  try {
+    const result = await client.query(
+      `SELECT COUNT(*)::INT AS count
+       FROM query_logs
+       WHERE request_id = $1
+         AND status = $2
+         AND tenant_id = $3
+         AND user_id = $4
+         AND permission_scope IS NOT NULL
+         AND permission_org_count IS NOT NULL
+         AND permission_reason IS NOT NULL;`,
+      [requestId, status, tenantId, userId]
+    );
+    process.stdout.write(String(result.rows[0]?.count ?? 0));
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
+
+query_mutation_denied_integrity_count() {
+  local request_id="$1"
+  local operation="$2"
+  local tenant_id="$3"
+  local user_id="$4"
+
+  (
+    cd "${ROOT_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${LC_DB_AUDIT_NAME}" "${LC_DB_SSL}" "${request_id}" "${operation}" "${tenant_id}" "${user_id}" <<'NODE'
+const { Client } = require("pg");
+
+const [host, port, user, password, database, sslRaw, requestId, operation, tenantId, userId] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+(async () => {
+  await client.connect();
+  try {
+    const result = await client.query(
+      `SELECT COUNT(*)::INT AS count
+       FROM mutation_logs
+       WHERE request_id = $1
+         AND operation = $2
+         AND status = 'denied'
+         AND tenant_id = $3
+         AND user_id = $4
+         AND permission_scope IS NOT NULL
+         AND permission_org_count IS NOT NULL
+         AND permission_reason IS NOT NULL;`,
+      [requestId, operation, tenantId, userId]
+    );
+    process.stdout.write(String(result.rows[0]?.count ?? 0));
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
+
+query_business_order_unchanged_count() {
+  local order_id="$1"
+  local expected_owner="$2"
+  local expected_channel="$3"
+  local expected_priority="$4"
+  local expected_status="$5"
+  local expected_org_id="$6"
+
+  (
+    cd "${ROOT_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${LC_DB_BUSINESS_NAME}" "${LC_DB_SSL}" "${order_id}" "${expected_owner}" "${expected_channel}" "${expected_priority}" "${expected_status}" "${expected_org_id}" <<'NODE'
+const { Client } = require("pg");
+
+const [host, port, user, password, database, sslRaw, orderId, owner, channel, priority, status, orgId] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+(async () => {
+  await client.connect();
+  try {
+    const result = await client.query(
+      `SELECT COUNT(*)::INT AS count
+       FROM orders
+       WHERE id = $1
+         AND owner = $2
+         AND channel = $3
+         AND priority = $4
+         AND status = $5
+         AND org_id = $6;`,
+      [orderId, owner, channel, priority, status, orgId]
     );
     process.stdout.write(String(result.rows[0]?.count ?? 0));
   } finally {
@@ -716,6 +910,8 @@ if [[ "${mutation_denied_status_code}" != "403" ]]; then
   exit 1
 fi
 assert_mutation_audit_record "${mutation_denied_request_id}" "update" "denied" "tenant-a" "demo-tenant-a-user"
+assert_mutation_denied_integrity_record "${mutation_denied_request_id}" "update" "tenant-a" "demo-tenant-a-user"
+assert_business_order_unchanged "SO-A2001" "A-Manager-Only" "partner" "high" "active" "dept-b"
 
 log "audit snapshot"
 print_audit_snapshot
