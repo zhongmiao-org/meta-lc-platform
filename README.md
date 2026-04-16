@@ -23,6 +23,8 @@ pnpm -r build
 pnpm -r test
 pnpm lint
 pnpm --filter @meta-lc/bff-server start
+pnpm infra:up
+pnpm infra:query-gate
 ```
 
 ## Architectural constraints
