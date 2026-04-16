@@ -1,25 +1,40 @@
 import { Injectable } from "@nestjs/common";
-import { buildRowLevelFilter, injectPermissionClause } from "@meta-lc/permission";
+import { buildDataScopeFilter, injectPermissionClause, resolveDataScope } from "@meta-lc/permission";
 import { compileSelectQuery } from "@meta-lc/query";
 import { formatSqlWithParams, shiftSqlParams } from "@meta-lc/shared";
+import type { DataScopeDecision, QueryApiRequest } from "@meta-lc/contracts";
+import { ForbiddenDataScopeError } from "../common/permission-errors";
+import { OrgScopeService } from "../integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../integration/postgres-query-executor.service";
-import type { QueryApiRequest } from "../types";
 
 export interface QueryExecutionResult {
   rows: Record<string, unknown>[];
   finalSql: string;
+  permissionDecision: DataScopeDecision;
 }
 
 @Injectable()
 export class QueryOrchestratorService {
-  constructor(private readonly queryExecutor: PostgresQueryExecutorService) {}
+  constructor(
+    private readonly queryExecutor: PostgresQueryExecutorService,
+    private readonly orgScopeService: OrgScopeService
+  ) {}
 
   async execute(request: QueryApiRequest): Promise<QueryExecutionResult> {
-    const { sql, params } = compileQueryWithPermission(request);
+    const orgScopeContext = await this.orgScopeService.resolveContext({
+      tenantId: request.tenantId,
+      userId: request.userId,
+      roles: request.roles
+    });
+    const permissionDecision = resolveDataScope(orgScopeContext);
+    ensureOrgFilterInScope(request, permissionDecision);
+
+    const { sql, params } = compileQueryWithPermission(request, permissionDecision);
     const rows = await this.queryExecutor.query(sql, params);
     return {
       rows,
-      finalSql: formatSqlWithParams(sql, params)
+      finalSql: formatSqlWithParams(sql, params),
+      permissionDecision
     };
   }
 
@@ -28,9 +43,12 @@ export class QueryOrchestratorService {
   }
 }
 
-export function compileQueryWithPermission(request: QueryApiRequest): {
+export function compileQueryWithPermission(
+  request: QueryApiRequest,
+  decision: DataScopeDecision
+): {
   sql: string;
-  params: Array<string | number | boolean>;
+  params: Array<string | number | boolean | string[]>;
 } {
   if (!request.tenantId || !request.userId) {
     throw new Error("tenantId and userId are required.");
@@ -42,14 +60,14 @@ export function compileQueryWithPermission(request: QueryApiRequest): {
     filters: request.filters,
     limit: request.limit
   });
-  const permission = buildRowLevelFilter({
+  const permission = buildDataScopeFilter(decision, {
     tenantId: request.tenantId,
     userId: request.userId,
     roles: request.roles
   });
 
   let sql = compiled.sql;
-  const params = [...compiled.params];
+  const params: Array<string | number | boolean | string[]> = [...compiled.params];
   if (permission.clause !== "1=1") {
     const shiftedClause = shiftSqlParams(permission.clause, params.length);
     sql = injectPermissionClause(sql, { clause: shiftedClause, params: [] });
@@ -60,4 +78,20 @@ export function compileQueryWithPermission(request: QueryApiRequest): {
     sql,
     params
   };
+}
+
+function ensureOrgFilterInScope(request: QueryApiRequest, decision: DataScopeDecision): void {
+  const requestedOrgIdRaw = request.filters?.["org_id"];
+  if (!requestedOrgIdRaw || typeof requestedOrgIdRaw !== "string") {
+    return;
+  }
+  if (decision.tenantAll) {
+    return;
+  }
+  if (!decision.allowedOrgIds.includes(requestedOrgIdRaw)) {
+    throw new ForbiddenDataScopeError({
+      decision,
+      reason: `org_id ${requestedOrgIdRaw} is out of scope`
+    });
+  }
 }

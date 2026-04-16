@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS query_logs (
   result_count INTEGER NULL,
   status TEXT NOT NULL,
   error_message TEXT NULL,
+  permission_scope TEXT NULL,
+  permission_org_count INTEGER NULL,
+  permission_fallback_used BOOLEAN NULL,
+  permission_reason TEXT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -25,6 +29,10 @@ CREATE TABLE IF NOT EXISTS mutation_logs (
   duration_ms INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'success',
   error_message TEXT NULL,
+  permission_scope TEXT NULL,
+  permission_org_count INTEGER NULL,
+  permission_fallback_used BOOLEAN NULL,
+  permission_reason TEXT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
