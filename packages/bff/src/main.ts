@@ -13,7 +13,7 @@ export async function startBffServer(): Promise<void> {
     origin: true,
     credentials: true
   });
-  await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000);
+  await app.listen(process.env.PORT ? Number(process.env.PORT) : 6000);
 }
 
 if (require.main === module) {
