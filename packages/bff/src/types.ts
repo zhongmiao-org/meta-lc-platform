@@ -8,4 +8,4 @@ export type {
   MutationOperation,
   OrgScopeContext,
   QueryApiRequest
-} from "@meta-lc/contracts";
+} from "@zhongmiao/meta-lc-contracts";

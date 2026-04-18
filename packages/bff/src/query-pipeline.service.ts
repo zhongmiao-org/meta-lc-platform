@@ -1,5 +1,5 @@
-import { resolveDataScope } from "@meta-lc/permission";
-import type { QueryApiRequest } from "@meta-lc/contracts";
+import { resolveDataScope } from "@zhongmiao/meta-lc-permission";
+import type { QueryApiRequest } from "@zhongmiao/meta-lc-contracts";
 import {
   compileQueryWithPermission as compileQueryWithScopedPermission,
   QueryOrchestratorService as QueryPipelineService

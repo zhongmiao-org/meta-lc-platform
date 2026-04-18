@@ -1,0 +1,21 @@
+{
+  "name": "@zhongmiao/meta-lc-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aggregate entry package for meta-lc platform libraries.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "lint": "echo lint:platform"
+  },
+  "dependencies": {
+    "@zhongmiao/meta-lc-contracts": "workspace:*",
+    "@zhongmiao/meta-lc-query": "workspace:*",
+    "@zhongmiao/meta-lc-permission": "workspace:*",
+    "@zhongmiao/meta-lc-runtime": "workspace:*",
+    "@zhongmiao/meta-lc-shared": "workspace:*"
+  }
+}

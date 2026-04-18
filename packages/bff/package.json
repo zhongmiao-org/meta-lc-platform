@@ -1,5 +1,5 @@
 {
-  "name": "@meta-lc/bff",
+  "name": "@zhongmiao/meta-lc-bff",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",
@@ -16,10 +16,10 @@
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "@meta-lc/contracts": "workspace:*",
-    "@meta-lc/permission": "workspace:*",
-    "@meta-lc/query": "workspace:*",
-    "@meta-lc/shared": "workspace:*"
+    "@zhongmiao/meta-lc-contracts": "workspace:*",
+    "@zhongmiao/meta-lc-permission": "workspace:*",
+    "@zhongmiao/meta-lc-query": "workspace:*",
+    "@zhongmiao/meta-lc-shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

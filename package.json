@@ -8,14 +8,24 @@
     "test": "pnpm -r test",
     "lint": "pnpm run lint:boundaries && pnpm -r lint",
     "start": "pnpm run start:bff",
-    "start:bff": "pnpm --filter @meta-lc/bff-server... build && sh -c 'if [ -f .env ]; then exec node --env-file=.env apps/bff-server/dist/apps/bff-server/src/main.js; else exec node apps/bff-server/dist/apps/bff-server/src/main.js; fi'",
-    "query-gate": "pnpm --filter @meta-lc/bff-server run test:query-gate",
+    "start:bff": "pnpm --filter @zhongmiao/meta-lc-bff-server... build && sh -c 'if [ -f .env ]; then exec node --env-file=.env apps/bff-server/dist/apps/bff-server/src/main.js; else exec node apps/bff-server/dist/apps/bff-server/src/main.js; fi'",
+    "query-gate": "pnpm --filter @zhongmiao/meta-lc-bff-server run test:query-gate",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d postgres redis",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "infra:query-gate": "bash infra/scripts/query-gate.sh",
-    "lint:boundaries": "node scripts/check-boundaries.mjs"
+    "lint:boundaries": "node scripts/check-boundaries.mjs",
+    "changeset": "changeset",
+    "release:status": "changeset status --verbose",
+    "release:draft-notes": "node scripts/release/compose-draft-from-unreleased.mjs",
+    "release:draft-notes:json": "node scripts/release/compose-draft-from-unreleased.mjs --json",
+    "release:finalize-unreleased": "node scripts/release/finalize-unreleased-changelogs.mjs",
+    "release:next-version": "node -p \"require('./packages/platform/package.json').version\"",
+    "version:check": "node scripts/release/version-consistency.mjs",
+    "changelog:gate": "node scripts/check-changelog-gate.mjs"
   },
   "devDependencies": {
+    "@changesets/changelog-git": "^0.2.1",
+    "@changesets/cli": "^2.29.7",
     "nx": "^20.0.0",
     "typescript": "^5.7.2"
   }

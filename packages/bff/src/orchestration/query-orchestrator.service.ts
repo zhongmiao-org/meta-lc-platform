@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { buildDataScopeFilter, injectPermissionClause, resolveDataScope } from "@meta-lc/permission";
-import { compileSelectQuery } from "@meta-lc/query";
-import { formatSqlWithParams, shiftSqlParams } from "@meta-lc/shared";
-import type { DataScopeDecision, QueryApiRequest } from "@meta-lc/contracts";
+import { buildDataScopeFilter, injectPermissionClause, resolveDataScope } from "@zhongmiao/meta-lc-permission";
+import { compileSelectQuery } from "@zhongmiao/meta-lc-query";
+import { formatSqlWithParams, shiftSqlParams } from "@zhongmiao/meta-lc-shared";
+import type { DataScopeDecision, QueryApiRequest } from "@zhongmiao/meta-lc-contracts";
 import { ForbiddenDataScopeError } from "../common/permission-errors";
 import { OrgScopeService } from "../integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../integration/postgres-query-executor.service";

@@ -1,5 +1,5 @@
 {
-  "name": "@meta-lc/migration",
+  "name": "@zhongmiao/meta-lc-migration",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",
@@ -13,7 +13,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@meta-lc/kernel": "workspace:*"
+    "@zhongmiao/meta-lc-kernel": "workspace:*"
   },
   "main": "dist/migration/src/index.js",
   "types": "dist/migration/src/index.d.ts"

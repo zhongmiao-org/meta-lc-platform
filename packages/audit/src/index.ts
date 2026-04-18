@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import type { QueryAuditLog } from "@meta-lc/contracts";
+import type { QueryAuditLog } from "@zhongmiao/meta-lc-contracts";
 
 export interface MutationAuditLog {
   requestId: string;
