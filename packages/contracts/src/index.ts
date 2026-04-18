@@ -91,3 +91,62 @@ export interface QueryAuditLog {
   status: AuditStatus;
   errorMessage?: string | null;
 }
+
+export type RuntimeTemplateSource = "state";
+
+export interface RuntimeTemplateDependency {
+  source: RuntimeTemplateSource;
+  key: string;
+  expression: string;
+}
+
+export interface RuntimePageMeta {
+  id: string;
+  title: string;
+  description?: string;
+}
+
+export interface RuntimeNodeSchema {
+  id: string;
+  componentType: string;
+  props: Record<string, unknown>;
+  children?: RuntimeNodeSchema[];
+}
+
+export interface RuntimeDatasourceDefinition {
+  id: string;
+  type: string;
+  request?: {
+    method?: string;
+    url?: string;
+    params?: Record<string, unknown>;
+    body?: unknown;
+  };
+  responseMapping?: {
+    stateKey?: string;
+  };
+}
+
+export interface RuntimeActionStepDefinition {
+  type: string;
+  datasourceId?: string;
+  stateKey?: string;
+  patch?: Record<string, unknown>;
+  message?: string;
+  payloadTemplate?: Record<string, unknown>;
+}
+
+export interface RuntimeActionDefinition {
+  id: string;
+  trigger?: string;
+  steps: RuntimeActionStepDefinition[];
+}
+
+export interface RuntimePageDsl {
+  schemaVersion: string;
+  pageMeta: RuntimePageMeta;
+  state: Record<string, unknown>;
+  datasources: RuntimeDatasourceDefinition[];
+  actions: RuntimeActionDefinition[];
+  layoutTree: RuntimeNodeSchema[];
+}
