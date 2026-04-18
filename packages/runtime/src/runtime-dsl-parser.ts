@@ -2,14 +2,17 @@ import type {
   RuntimeActionDefinition,
   RuntimeDatasourceDefinition,
   RuntimeNodeSchema,
+  RuntimeRuleDefinition,
   RuntimePageDsl
 } from "@zhongmiao/meta-lc-contracts";
 import { collectTemplateDependencies } from "./template-resolver";
 import {
+  collectRuleStateDependencies,
   type ParsedRuntimeActionDefinition,
   type ParsedRuntimeDatasourceDefinition,
   type ParsedRuntimeNodeSchema,
   type ParsedRuntimePageDsl,
+  type ParsedRuntimeRuleDefinition,
   RuntimeDslParseError,
   type RuntimeDslValidationIssue
 } from "./types";
@@ -29,17 +32,23 @@ export function parseRuntimePageDsl(input: RuntimePageDsl): ParsedRuntimePageDsl
     dependencies: collectTemplateDependencies(action),
     outputStateKeys: []
   }));
+  const rules = (input.rules ?? []).map<ParsedRuntimeRuleDefinition>((rule) => ({
+    ...rule,
+    stateDependencies: collectRuleStateDependencies(rule.condition.call)
+  }));
   const layoutTree = input.layoutTree.map((node) => parseLayoutNode(node));
 
   return {
     ...input,
     datasources,
     actions,
+    rules,
     layoutTree,
     stateKeys: Object.keys(input.state).sort((left, right) => left.localeCompare(right)),
     dependencies: {
       datasources: Object.fromEntries(datasources.map((datasource) => [datasource.id, datasource.dependencies])),
       actions: Object.fromEntries(actions.map((action) => [action.id, action.dependencies])),
+      rules: Object.fromEntries(rules.map((rule) => [rule.id, rule.stateDependencies])),
       layoutNodes: Object.fromEntries(flattenLayoutNodes(layoutTree).map((node) => [node.id, node.dependencies]))
     }
   };
@@ -68,9 +77,13 @@ function validateRuntimePageDsl(input: RuntimePageDsl): RuntimeDslValidationIssu
   if (!Array.isArray(input.layoutTree)) {
     issues.push({ path: "layoutTree", message: "must be an array." });
   }
+  if (input.rules !== undefined && !Array.isArray(input.rules)) {
+    issues.push({ path: "rules", message: "must be an array when provided." });
+  }
 
   collectDuplicateIdIssues(input.datasources, "datasources", issues);
   collectDuplicateIdIssues(input.actions, "actions", issues);
+  collectDuplicateRuleIdIssues(input.rules ?? [], issues);
   collectLayoutIssues(input.layoutTree, "layoutTree", issues);
 
   input.datasources.forEach((datasource, index) => {
@@ -88,6 +101,24 @@ function validateRuntimePageDsl(input: RuntimePageDsl): RuntimeDslValidationIssu
     }
     if (!Array.isArray(action.steps) || action.steps.length === 0) {
       issues.push({ path: `actions[${index}].steps`, message: "must contain at least one step." });
+    }
+  });
+
+  (input.rules ?? []).forEach((rule, index) => {
+    if (!rule.id?.trim()) {
+      issues.push({ path: `rules[${index}].id`, message: "is required." });
+    }
+    if (!rule.trigger?.trim()) {
+      issues.push({ path: `rules[${index}].trigger`, message: "is required." });
+    }
+    if (!rule.condition?.call?.name?.trim()) {
+      issues.push({ path: `rules[${index}].condition.call.name`, message: "is required." });
+    }
+    if (!Array.isArray(rule.condition?.call?.args)) {
+      issues.push({ path: `rules[${index}].condition.call.args`, message: "must be an array." });
+    }
+    if (!Array.isArray(rule.effects) || rule.effects.length === 0) {
+      issues.push({ path: `rules[${index}].effects`, message: "must contain at least one effect." });
     }
   });
 
@@ -145,6 +176,23 @@ function collectLayoutIssues(
   };
 
   nodes.forEach((node, index) => visit(node, `${path}[${index}]`));
+}
+
+function collectDuplicateRuleIdIssues(
+  rules: RuntimeRuleDefinition[],
+  issues: RuntimeDslValidationIssue[]
+): void {
+  const seen = new Set<string>();
+  rules.forEach((rule, index) => {
+    if (!rule.id?.trim()) {
+      return;
+    }
+    if (seen.has(rule.id)) {
+      issues.push({ path: `rules[${index}].id`, message: `duplicates "${rule.id}".` });
+      return;
+    }
+    seen.add(rule.id);
+  });
 }
 
 function parseLayoutNode(node: RuntimeNodeSchema): ParsedRuntimeNodeSchema {

@@ -6,6 +6,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(ci): add changelog gate, release draft sync, and manual changelog finalize workflow for platform release governance.
 - docs(changelog): establish bilingual root/package changelog baselines for the platform workspace.
 - feat(runtime): add dependency graph planning so runtime state and mutation events can drive deterministic auto-refresh execution.
+- feat(runtime): add a minimal rule engine and function registry so runtime events can compute rule-driven patches, actions, and datasource refreshes.
 
 ## 0.1.0 (2026-04-18)
 

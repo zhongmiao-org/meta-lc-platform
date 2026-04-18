@@ -81,6 +81,7 @@ function createRuntimeDsl(): RuntimePageDsl {
         }
       }
     ],
+    rules: [],
     layoutTree: []
   };
 }
