@@ -365,7 +365,7 @@ fi
 
 if [[ ! -f "${WORKSPACE_DIR}/apps/bff-server/dist/apps/bff-server/src/main.js" ]]; then
   log "building bff-server and dependencies"
-  (cd "${WORKSPACE_DIR}" && pnpm --filter @meta-lc/bff-server... build)
+  (cd "${WORKSPACE_DIR}" && pnpm --filter @zhongmiao/meta-lc-bff-server... build)
 fi
 
 run_sql_file() {
@@ -707,7 +707,7 @@ log "starting bff"
   LC_DB_AUDIT_NAME="${LC_DB_AUDIT_NAME}" \
   LC_DB_SSL="${LC_DB_SSL}" \
   PORT="${PORT}" \
-  pnpm --filter @meta-lc/bff-server run start > "${TMP_DIR}/bff.log" 2>&1
+  pnpm --filter @zhongmiao/meta-lc-bff-server run start > "${TMP_DIR}/bff.log" 2>&1
 ) &
 BFF_PID="$!"
 

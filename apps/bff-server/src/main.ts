@@ -1,4 +1,4 @@
 import "reflect-metadata";
-import { startBffServer } from "@meta-lc/bff";
+import { startBffServer } from "@zhongmiao/meta-lc-bff";
 
 void startBffServer();

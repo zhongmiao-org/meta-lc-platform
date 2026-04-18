@@ -1,5 +1,5 @@
 {
-  "name": "@meta-lc/audit",
+  "name": "@zhongmiao/meta-lc-audit",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",
@@ -14,7 +14,7 @@
     "@types/pg": "^8.11.10"
   },
   "dependencies": {
-    "@meta-lc/contracts": "workspace:*",
+    "@zhongmiao/meta-lc-contracts": "workspace:*",
     "pg": "^8.13.1"
   },
   "main": "dist/audit/src/index.js",

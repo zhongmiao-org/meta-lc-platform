@@ -4,7 +4,7 @@ import type {
   RuntimeNodeSchema,
   RuntimePageDsl,
   RuntimeTemplateDependency
-} from "@meta-lc/contracts";
+} from "@zhongmiao/meta-lc-contracts";
 
 export interface ParsedRuntimeDatasourceDefinition extends RuntimeDatasourceDefinition {
   dependencies: RuntimeTemplateDependency[];

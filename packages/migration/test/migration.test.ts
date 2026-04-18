@@ -4,7 +4,7 @@ import {
   buildMigrationDslFromSnapshots,
   computeSnapshotChecksum,
   type SnapshotV1
-} from "@meta-lc/kernel";
+} from "@zhongmiao/meta-lc-kernel";
 import { apply, compileToSql } from "../src";
 
 function snapshot(version: string, withStatus: boolean): SnapshotV1 {

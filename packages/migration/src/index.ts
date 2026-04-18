@@ -3,7 +3,7 @@ import {
   compileMigrationDslToSql,
   type MigrationDslV1,
   type MigrationExecutionOptions
-} from "@meta-lc/kernel";
+} from "@zhongmiao/meta-lc-kernel";
 
 export interface CompiledSqlBundle {
   up: string[];

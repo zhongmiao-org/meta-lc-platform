@@ -44,9 +44,9 @@ function checkFile(file) {
   // Kernel must not depend on bff/query/datasource implementation.
   if (rel.startsWith('packages/kernel/')) {
     const forbidden = [
-      '@meta-lc/bff',
-      '@meta-lc/query',
-      '@meta-lc/datasource'
+      '@zhongmiao/meta-lc-bff',
+      '@zhongmiao/meta-lc-query',
+      '@zhongmiao/meta-lc-datasource'
     ];
     for (const dep of forbidden) {
       if (content.includes(dep)) {

@@ -3,7 +3,7 @@ import type {
   RuntimeDatasourceDefinition,
   RuntimeNodeSchema,
   RuntimePageDsl
-} from "@meta-lc/contracts";
+} from "@zhongmiao/meta-lc-contracts";
 import { collectTemplateDependencies } from "./template-resolver";
 import {
   type ParsedRuntimeActionDefinition,

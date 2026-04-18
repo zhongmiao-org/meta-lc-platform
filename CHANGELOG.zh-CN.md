@@ -1,0 +1,12 @@
+[English](CHANGELOG.md) | 中文文档
+
+## [Unreleased]
+
+- feat(release): 新增聚合总包 `@zhongmiao/meta-lc-platform`，并为工作区包统一预留 `@zhongmiao/meta-lc-*` 命名。
+- feat(ci): 新增 changelog gate、release draft 同步与手动 changelog finalize 工作流，补齐平台发版治理基础。
+- docs(changelog): 为平台工作区建立根级与包级双语 changelog 基线。
+
+## 0.1.0 (2026-04-18)
+
+- Meta-Driven middleware monorepo 的首个内部基线版本。
+- 包含 BFF 运行入口、query/mutation 编排、审计落盘、migration bootstrap，以及 Phase 4 runtime parser/resolver 起步能力。

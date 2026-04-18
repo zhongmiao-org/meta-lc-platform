@@ -1,5 +1,5 @@
 {
-  "name": "@meta-lc/runtime",
+  "name": "@zhongmiao/meta-lc-runtime",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",
@@ -9,7 +9,7 @@
     "lint": "echo lint:runtime"
   },
   "dependencies": {
-    "@meta-lc/contracts": "workspace:*"
+    "@zhongmiao/meta-lc-contracts": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

@@ -11,34 +11,34 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@meta-lc/query": [
+      "@zhongmiao/meta-lc-query": [
         "packages/query/src"
       ],
-      "@meta-lc/permission": [
+      "@zhongmiao/meta-lc-permission": [
         "packages/permission/src"
       ],
-      "@meta-lc/datasource": [
+      "@zhongmiao/meta-lc-datasource": [
         "packages/datasource/src"
       ],
-      "@meta-lc/kernel": [
+      "@zhongmiao/meta-lc-kernel": [
         "packages/kernel/src"
       ],
-      "@meta-lc/migration": [
+      "@zhongmiao/meta-lc-migration": [
         "packages/migration/src"
       ],
-      "@meta-lc/audit": [
+      "@zhongmiao/meta-lc-audit": [
         "packages/audit/src"
       ],
-      "@meta-lc/contracts": [
+      "@zhongmiao/meta-lc-contracts": [
         "packages/contracts/src"
       ],
-      "@meta-lc/runtime": [
+      "@zhongmiao/meta-lc-runtime": [
         "packages/runtime/src"
       ],
-      "@meta-lc/shared": [
+      "@zhongmiao/meta-lc-shared": [
         "packages/shared/src"
       ],
-      "@meta-lc/bff": [
+      "@zhongmiao/meta-lc-bff": [
         "packages/bff/src"
       ]
     }

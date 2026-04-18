@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import { canAccessOrg, resolveDataScope } from "@meta-lc/permission";
-import type { DataScopeDecision } from "@meta-lc/contracts";
+import { canAccessOrg, resolveDataScope } from "@zhongmiao/meta-lc-permission";
+import type { DataScopeDecision } from "@zhongmiao/meta-lc-contracts";
 import { ForbiddenDataScopeError } from "../common/permission-errors";
 import { OrgScopeService } from "../integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../integration/postgres-query-executor.service";
