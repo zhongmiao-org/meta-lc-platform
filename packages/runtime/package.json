@@ -1,0 +1,20 @@
+{
+  "name": "@meta-lc/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
+    "lint": "echo lint:runtime"
+  },
+  "dependencies": {
+    "@meta-lc/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts"
+}

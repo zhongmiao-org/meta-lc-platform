@@ -32,6 +32,9 @@
       "@meta-lc/contracts": [
         "packages/contracts/src"
       ],
+      "@meta-lc/runtime": [
+        "packages/runtime/src"
+      ],
       "@meta-lc/shared": [
         "packages/shared/src"
       ],
