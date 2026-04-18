@@ -31,6 +31,6 @@ The gate validates:
 
 ## Defaults
 
-- `PORT=6000`
+- `PORT=6001`
 - `LC_DB_BOOTSTRAP_MODE=auto` (dev/test)
 - databases: `meta_db`, `business_db`, `audit_db`
