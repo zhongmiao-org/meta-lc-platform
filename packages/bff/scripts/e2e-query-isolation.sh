@@ -15,8 +15,8 @@ if [[ -f "${ENV_FILE}" ]]; then
   set +a
 fi
 
-BFF_URL="${BFF_URL:-http://127.0.0.1:6000}"
-PORT="${PORT:-6000}"
+BFF_URL="${BFF_URL:-http://127.0.0.1:6001}"
+PORT="${PORT:-6001}"
 RUN_ID="${RUN_ID:-$(date +%s)}"
 NODE_ENV="${NODE_ENV:-development}"
 LC_DB_BOOTSTRAP_MODE="${LC_DB_BOOTSTRAP_MODE:-auto}"
