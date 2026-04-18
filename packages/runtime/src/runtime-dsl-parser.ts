@@ -26,7 +26,8 @@ export function parseRuntimePageDsl(input: RuntimePageDsl): ParsedRuntimePageDsl
   }));
   const actions = input.actions.map<ParsedRuntimeActionDefinition>((action) => ({
     ...action,
-    dependencies: collectTemplateDependencies(action)
+    dependencies: collectTemplateDependencies(action),
+    outputStateKeys: []
   }));
   const layoutTree = input.layoutTree.map((node) => parseLayoutNode(node));
 
@@ -35,6 +36,7 @@ export function parseRuntimePageDsl(input: RuntimePageDsl): ParsedRuntimePageDsl
     datasources,
     actions,
     layoutTree,
+    stateKeys: Object.keys(input.state).sort((left, right) => left.localeCompare(right)),
     dependencies: {
       datasources: Object.fromEntries(datasources.map((datasource) => [datasource.id, datasource.dependencies])),
       actions: Object.fromEntries(actions.map((action) => [action.id, action.dependencies])),

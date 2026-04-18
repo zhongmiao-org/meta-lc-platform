@@ -127,6 +127,11 @@ export interface RuntimeDatasourceDefinition {
   };
 }
 
+export interface RuntimeActionSuccessDefinition {
+  refreshDatasources?: string[];
+  runActions?: string[];
+}
+
 export interface RuntimeActionStepDefinition {
   type: string;
   datasourceId?: string;
@@ -139,7 +144,35 @@ export interface RuntimeActionStepDefinition {
 export interface RuntimeActionDefinition {
   id: string;
   trigger?: string;
+  onSuccess?: RuntimeActionSuccessDefinition;
   steps: RuntimeActionStepDefinition[];
+}
+
+export type RuntimeDependencyTargetKind = "datasource" | "action";
+
+export interface RuntimeDependencyTargetRef {
+  kind: RuntimeDependencyTargetKind;
+  id: string;
+}
+
+export interface RuntimeStateChangedEvent {
+  type: "state.changed";
+  stateKeys: string[];
+}
+
+export interface RuntimeMutationSucceededEvent {
+  type: "mutation.succeeded";
+  actionId: string;
+  operation: MutationOperation;
+}
+
+export type RuntimeRefreshEvent = RuntimeStateChangedEvent | RuntimeMutationSucceededEvent;
+
+export interface RuntimeRefreshPlan {
+  datasourceIds: string[];
+  actionIds: string[];
+  targetOrder: RuntimeDependencyTargetRef[];
+  triggeredBy: RuntimeRefreshEvent;
 }
 
 export interface RuntimePageDsl {

@@ -5,6 +5,7 @@
 - feat(release): 新增聚合总包 `@zhongmiao/meta-lc-platform`，并为工作区包统一预留 `@zhongmiao/meta-lc-*` 命名。
 - feat(ci): 新增 changelog gate、release draft 同步与手动 changelog finalize 工作流，补齐平台发版治理基础。
 - docs(changelog): 为平台工作区建立根级与包级双语 changelog 基线。
+- feat(runtime): 新增依赖图规划能力，让 runtime 可由 state 与 mutation 事件驱动确定性自动刷新执行。
 
 ## 0.1.0 (2026-04-18)
 
