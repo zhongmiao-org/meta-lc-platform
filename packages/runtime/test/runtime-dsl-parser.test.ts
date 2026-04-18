@@ -50,6 +50,27 @@ function createRuntimeDsl(): RuntimePageDsl {
         ]
       }
     ],
+    rules: [
+      {
+        id: "reload-rule",
+        trigger: "state.changed",
+        condition: {
+          call: {
+            name: "eq",
+            args: [
+              { source: "state", key: "filter_status" },
+              { source: "literal", value: "PAID" }
+            ]
+          }
+        },
+        effects: [
+          {
+            type: "refreshDatasource",
+            datasourceId: "orders-query-datasource"
+          }
+        ]
+      }
+    ],
     layoutTree: [
       {
         id: "page-root",
@@ -94,6 +115,7 @@ test("parseRuntimePageDsl parses the minimal runtime dsl and collects dependenci
       expression: "{{state.tenantId}}"
     }
   ]);
+  assert.deepEqual(parsed.dependencies.rules["reload-rule"], ["filter_status"]);
   assert.deepEqual(parsed.dependencies.layoutNodes["page-root"], [
     {
       source: "state",
@@ -112,7 +134,20 @@ test("parseRuntimePageDsl throws a stable parse error for missing required field
           id: "",
           title: ""
         },
-        actions: [{ id: "search-action", steps: [] }]
+        actions: [{ id: "search-action", steps: [] }],
+        rules: [
+          {
+            id: "reload-rule",
+            trigger: "" as never,
+            condition: {
+              call: {
+                name: "",
+                args: []
+              }
+            },
+            effects: []
+          }
+        ]
       }),
     (error: unknown) => {
       assert.ok(error instanceof RuntimeDslParseError);
@@ -129,6 +164,18 @@ test("parseRuntimePageDsl throws a stable parse error for missing required field
         {
           path: "actions[0].steps",
           message: "must contain at least one step."
+        },
+        {
+          path: "rules[0].trigger",
+          message: "is required."
+        },
+        {
+          path: "rules[0].condition.call.name",
+          message: "is required."
+        },
+        {
+          path: "rules[0].effects",
+          message: "must contain at least one effect."
         }
       ]);
       return true;

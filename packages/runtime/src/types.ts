@@ -1,6 +1,10 @@
 import type {
   RuntimeDependencyTargetKind,
   RuntimeDependencyTargetRef,
+  RuntimeFunctionCallDefinition,
+  RuntimeRuleDefinition,
+  RuntimeRuleTrigger,
+  RuntimeRuleValueDefinition,
   RuntimeRefreshEvent,
   RuntimeRefreshPlan,
   RuntimeActionDefinition,
@@ -24,14 +28,20 @@ export interface ParsedRuntimeNodeSchema extends RuntimeNodeSchema {
   children?: ParsedRuntimeNodeSchema[];
 }
 
+export interface ParsedRuntimeRuleDefinition extends RuntimeRuleDefinition {
+  stateDependencies: string[];
+}
+
 export interface ParsedRuntimePageDsl extends RuntimePageDsl {
   datasources: ParsedRuntimeDatasourceDefinition[];
   actions: ParsedRuntimeActionDefinition[];
+  rules: ParsedRuntimeRuleDefinition[];
   layoutTree: ParsedRuntimeNodeSchema[];
   stateKeys: string[];
   dependencies: {
     datasources: Record<string, RuntimeTemplateDependency[]>;
     actions: Record<string, RuntimeTemplateDependency[]>;
+    rules: Record<string, string[]>;
     layoutNodes: Record<string, RuntimeTemplateDependency[]>;
   };
 }
@@ -72,6 +82,20 @@ export class RuntimeDependencyGraphError extends Error {
   }
 }
 
+export class RuntimeFunctionRegistryError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RuntimeFunctionRegistryError";
+  }
+}
+
+export class RuntimeRuleEngineError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RuntimeRuleEngineError";
+  }
+}
+
 export interface PlanRuntimeRefreshResult extends RuntimeRefreshPlan {}
 
 export function createRuntimeTargetRef(kind: RuntimeDependencyTargetKind, id: string): RuntimeDependencyTargetRef {
@@ -106,4 +130,79 @@ export function createRefreshPlan(
     datasourceIds: targetOrder.filter((ref) => ref.kind === "datasource").map((ref) => ref.id),
     actionIds: targetOrder.filter((ref) => ref.kind === "action").map((ref) => ref.id)
   };
+}
+
+export interface RuntimeFunctionExecutionContext {
+  state: Record<string, unknown>;
+  event: RuntimeRefreshEvent;
+  parsedDsl: ParsedRuntimePageDsl;
+  graph: RuntimeDependencyGraph;
+}
+
+export type RuntimeFunctionHandler = (
+  args: unknown[],
+  context: RuntimeFunctionExecutionContext
+) => unknown | Promise<unknown>;
+
+export interface RuntimeFunctionRegistry {
+  register(name: string, handler: RuntimeFunctionHandler): void;
+  exec(name: string, args: unknown[], context: RuntimeFunctionExecutionContext): Promise<unknown>;
+}
+
+export interface RuntimeRuleEffectsPlan {
+  triggeredBy: RuntimeRefreshEvent;
+  matchedRuleIds: string[];
+  patchState: Record<string, unknown>;
+  runActionIds: string[];
+  refreshDatasourceIds: string[];
+}
+
+export interface RuntimeRuleEvaluationContext extends RuntimeFunctionExecutionContext {
+  functionRegistry: RuntimeFunctionRegistry;
+}
+
+export interface RuntimeRuleEvaluationRequest {
+  event: RuntimeRefreshEvent;
+  state: Record<string, unknown>;
+  parsedDsl: ParsedRuntimePageDsl;
+  graph: RuntimeDependencyGraph;
+  functionRegistry: RuntimeFunctionRegistry;
+}
+
+export function createEmptyRuleEffectsPlan(triggeredBy: RuntimeRefreshEvent): RuntimeRuleEffectsPlan {
+  return {
+    triggeredBy,
+    matchedRuleIds: [],
+    patchState: {},
+    runActionIds: [],
+    refreshDatasourceIds: []
+  };
+}
+
+export function isSupportedRuleTrigger(value: string): value is RuntimeRuleTrigger {
+  return value === "state.changed" || value === "mutation.succeeded";
+}
+
+export function collectRuleStateDependencies(value: RuntimeRuleValueDefinition | RuntimeFunctionCallDefinition): string[] {
+  const keys = new Set<string>();
+  const visitValue = (current: RuntimeRuleValueDefinition): void => {
+    if (current.source === "state") {
+      keys.add(current.key);
+      return;
+    }
+    if (current.source === "function") {
+      current.call.args.forEach((argument) => visitValue(argument));
+    }
+  };
+  const visitCall = (call: RuntimeFunctionCallDefinition): void => {
+    call.args.forEach((argument) => visitValue(argument));
+  };
+
+  if ("name" in value) {
+    visitCall(value);
+  } else {
+    visitValue(value);
+  }
+
+  return [...keys].sort((left, right) => left.localeCompare(right));
 }

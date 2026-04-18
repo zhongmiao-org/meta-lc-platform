@@ -148,6 +148,73 @@ export interface RuntimeActionDefinition {
   steps: RuntimeActionStepDefinition[];
 }
 
+export type RuntimeRuleTrigger = "state.changed" | "mutation.succeeded";
+
+export type RuntimeRuleValueSource = "literal" | "state" | "event" | "function";
+
+export interface RuntimeRuleLiteralValueDefinition {
+  source: "literal";
+  value: unknown;
+}
+
+export interface RuntimeRuleStateValueDefinition {
+  source: "state";
+  key: string;
+}
+
+export interface RuntimeRuleEventValueDefinition {
+  source: "event";
+  key: string;
+}
+
+export interface RuntimeFunctionCallDefinition {
+  name: string;
+  args: RuntimeRuleValueDefinition[];
+}
+
+export interface RuntimeRuleFunctionValueDefinition {
+  source: "function";
+  call: RuntimeFunctionCallDefinition;
+}
+
+export type RuntimeRuleValueDefinition =
+  | RuntimeRuleLiteralValueDefinition
+  | RuntimeRuleStateValueDefinition
+  | RuntimeRuleEventValueDefinition
+  | RuntimeRuleFunctionValueDefinition;
+
+export interface RuntimeRuleConditionDefinition {
+  call: RuntimeFunctionCallDefinition;
+}
+
+export interface RuntimeSetStateEffectDefinition {
+  type: "setState";
+  stateKey: string;
+  value: RuntimeRuleValueDefinition;
+}
+
+export interface RuntimeRunActionEffectDefinition {
+  type: "runAction";
+  actionId: string;
+}
+
+export interface RuntimeRefreshDatasourceEffectDefinition {
+  type: "refreshDatasource";
+  datasourceId: string;
+}
+
+export type RuntimeRuleEffectDefinition =
+  | RuntimeSetStateEffectDefinition
+  | RuntimeRunActionEffectDefinition
+  | RuntimeRefreshDatasourceEffectDefinition;
+
+export interface RuntimeRuleDefinition {
+  id: string;
+  trigger: RuntimeRuleTrigger;
+  condition: RuntimeRuleConditionDefinition;
+  effects: RuntimeRuleEffectDefinition[];
+}
+
 export type RuntimeDependencyTargetKind = "datasource" | "action";
 
 export interface RuntimeDependencyTargetRef {
@@ -181,5 +248,6 @@ export interface RuntimePageDsl {
   state: Record<string, unknown>;
   datasources: RuntimeDatasourceDefinition[];
   actions: RuntimeActionDefinition[];
+  rules?: RuntimeRuleDefinition[];
   layoutTree: RuntimeNodeSchema[];
 }

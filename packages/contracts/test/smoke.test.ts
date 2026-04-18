@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type {
   QueryApiRequest,
+  RuntimeFunctionCallDefinition,
   RuntimePageDsl,
+  RuntimeRuleDefinition,
   RuntimeRefreshEvent,
   RuntimeRefreshPlan,
   RuntimeTemplateDependency
@@ -36,11 +38,38 @@ test("contracts exports runtime dsl types", () => {
     },
     datasources: [],
     actions: [],
+    rules: [],
     layoutTree: []
   };
 
   assert.equal(dependency.key, "tenantId");
   assert.equal(dsl.pageMeta.id, "orders-query-page");
+});
+
+test("contracts exports runtime rule and function types", () => {
+  const conditionCall: RuntimeFunctionCallDefinition = {
+    name: "eq",
+    args: [
+      { source: "state", key: "filter_status" },
+      { source: "literal", value: "PAID" }
+    ]
+  };
+  const rule: RuntimeRuleDefinition = {
+    id: "refresh-paid-orders-rule",
+    trigger: "state.changed",
+    condition: {
+      call: conditionCall
+    },
+    effects: [
+      {
+        type: "refreshDatasource",
+        datasourceId: "orders-query-datasource"
+      }
+    ]
+  };
+
+  assert.equal(rule.trigger, "state.changed");
+  assert.equal(rule.condition.call.name, "eq");
 });
 
 test("contracts exports runtime refresh planning types", () => {
