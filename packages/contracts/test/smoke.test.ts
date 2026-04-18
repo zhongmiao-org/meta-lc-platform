@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { QueryApiRequest, RuntimePageDsl, RuntimeTemplateDependency } from "../src";
+import type {
+  QueryApiRequest,
+  RuntimePageDsl,
+  RuntimeRefreshEvent,
+  RuntimeRefreshPlan,
+  RuntimeTemplateDependency
+} from "../src";
 
 test("contracts exports query request type", () => {
   const req: QueryApiRequest = {
@@ -35,4 +41,21 @@ test("contracts exports runtime dsl types", () => {
 
   assert.equal(dependency.key, "tenantId");
   assert.equal(dsl.pageMeta.id, "orders-query-page");
+});
+
+test("contracts exports runtime refresh planning types", () => {
+  const event: RuntimeRefreshEvent = {
+    type: "mutation.succeeded",
+    actionId: "save-order-action",
+    operation: "update"
+  };
+  const plan: RuntimeRefreshPlan = {
+    datasourceIds: ["orders-query-datasource"],
+    actionIds: [],
+    targetOrder: [{ kind: "datasource", id: "orders-query-datasource" }],
+    triggeredBy: event
+  };
+
+  assert.equal(plan.triggeredBy.type, "mutation.succeeded");
+  assert.equal(plan.targetOrder[0]?.kind, "datasource");
 });
