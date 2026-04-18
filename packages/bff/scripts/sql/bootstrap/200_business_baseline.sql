@@ -82,6 +82,7 @@ INSERT INTO role_data_policies (tenant_id, role_code, data_scope, custom_org_ids
 VALUES
   ('tenant-a', 'MANAGER', 'DEPT_AND_CHILDREN', '{}'),
   ('tenant-a', 'USER', 'DEPT', '{}'),
+  ('tenant-a', 'CUSTOM_SUPPORT', 'CUSTOM_ORG_SET', '{"dept-b"}'),
   ('tenant-a', 'SUPER_ADMIN', 'TENANT_ALL', '{}'),
   ('tenant-b', 'MANAGER', 'DEPT_AND_CHILDREN', '{}'),
   ('tenant-b', 'USER', 'DEPT', '{}'),
@@ -94,6 +95,8 @@ INSERT INTO user_org_memberships (tenant_id, user_id, org_id, position, is_prima
 VALUES
   ('tenant-a', 'demo-tenant-a-user', 'dept-a', 'staff', true),
   ('tenant-a', 'manager-tenant-a', 'mgr-1', 'manager', true),
+  ('tenant-a', 'custom-tenant-a-user', 'dept-a', 'staff', true),
+  ('tenant-a', 'self-tenant-a-user', 'dept-a', 'staff', true),
   ('tenant-b', 'demo-tenant-b-user', 'dept-c', 'staff', true)
 ON CONFLICT (tenant_id, user_id, org_id) DO UPDATE
 SET position = EXCLUDED.position,
@@ -103,5 +106,6 @@ INSERT INTO user_role_bindings (tenant_id, user_id, role_code)
 VALUES
   ('tenant-a', 'demo-tenant-a-user', 'USER'),
   ('tenant-a', 'manager-tenant-a', 'MANAGER'),
+  ('tenant-a', 'custom-tenant-a-user', 'CUSTOM_SUPPORT'),
   ('tenant-b', 'demo-tenant-b-user', 'USER')
 ON CONFLICT (tenant_id, user_id, role_code) DO NOTHING;

@@ -10,12 +10,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "typescript": "^5.7.2",
-    "@types/pg": "^8.11.10"
+    "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@zhongmiao/meta-lc-contracts": "workspace:*",
-    "pg": "^8.13.1"
+    "@zhongmiao/meta-lc-contracts": "workspace:*"
   },
   "main": "dist/audit/src/index.js",
   "types": "dist/audit/src/index.d.ts"

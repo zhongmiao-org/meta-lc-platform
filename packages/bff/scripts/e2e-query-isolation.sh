@@ -77,6 +77,17 @@ run_mutation_request() {
     -d "${payload}"
 }
 
+run_query_request() {
+  local request_id="$1"
+  local payload="$2"
+  local output_file="$3"
+
+  curl -sS -o "${output_file}" -w "%{http_code}" -X POST "${BFF_URL}/query" \
+    -H "content-type: application/json" \
+    -H "x-request-id: ${request_id}" \
+    -d "${payload}"
+}
+
 run_query_and_assert() {
   local tenant_id="$1"
   local user_id="$2"
@@ -238,6 +249,69 @@ process.stdout.write("0");
   printf "%s %s\n" "${request_id}" "${row_count}"
 }
 
+query_rows_and_assert_ids() {
+  local tenant_id="$1"
+  local user_id="$2"
+  local roles_json="$3"
+  local keyword="$4"
+  local status_filter="$5"
+  local org_id_filter="$6"
+  local expected_ids_csv="$7"
+  local request_id="$8"
+  local output_file="$9"
+  local filters_block=""
+
+  filters_block="\"keyword\": \"${keyword}\""
+  if [[ -n "${status_filter}" ]]; then
+    filters_block="${filters_block},
+    \"status\": \"${status_filter}\""
+  fi
+  if [[ -n "${org_id_filter}" ]]; then
+    filters_block="${filters_block},
+    \"org_id\": \"${org_id_filter}\""
+  fi
+
+  curl -fsS -X POST "${BFF_URL}/query" \
+    -H "content-type: application/json" \
+    -H "x-request-id: ${request_id}" \
+    -d "$(cat <<JSON
+{
+  "table": "orders",
+  "fields": ["id", "owner", "status", "tenant_id", "created_by", "org_id"],
+  "filters": {
+    ${filters_block}
+  },
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ${roles_json},
+  "limit": 100
+}
+JSON
+)" > "${output_file}"
+
+  node -e '
+const fs = require("node:fs");
+const [file, tenantId, expectedIdsCsv] = process.argv.slice(1);
+const expectedIds = expectedIdsCsv.split(",").filter(Boolean).sort();
+const data = JSON.parse(fs.readFileSync(file, "utf8"));
+if (!Array.isArray(data.rows)) {
+  console.error("rows is not an array");
+  process.exit(1);
+}
+const actualIds = data.rows.map((row) => row.id).sort();
+for (const row of data.rows) {
+  if (row.tenant_id !== tenantId) {
+    console.error("tenant leakage", row);
+    process.exit(1);
+  }
+}
+if (JSON.stringify(actualIds) !== JSON.stringify(expectedIds)) {
+  console.error("unexpected ids", { actualIds, expectedIds });
+  process.exit(1);
+}
+' "${output_file}" "${tenant_id}" "${expected_ids_csv}"
+}
+
 assert_audit_record() {
   local request_id="$1"
   local status="$2"
@@ -264,6 +338,22 @@ assert_mutation_audit_record() {
 
   if [[ "${count}" -lt 1 ]]; then
     log "mutation audit assertion failed for request_id=${request_id}, operation=${operation}, status=${status}"
+    exit 1
+  fi
+}
+
+assert_mutation_permission_details() {
+  local request_id="$1"
+  local operation="$2"
+  local status="$3"
+  local tenant_id="$4"
+  local user_id="$5"
+
+  local count
+  count="$(query_mutation_permission_details_count "${request_id}" "${operation}" "${status}" "${tenant_id}" "${user_id}" | tr -d '\r')"
+
+  if [[ "${count}" -lt 1 ]]; then
+    log "mutation permission detail assertion failed for request_id=${request_id}, operation=${operation}, status=${status}"
     exit 1
   fi
 }
@@ -340,6 +430,39 @@ assert_query_denied() {
 }
 JSON
 )")"
+
+  if [[ "${status_code}" != "403" ]]; then
+    cat "${output_file}"
+    exit 1
+  fi
+
+  assert_audit_record "${request_id}" "denied" "NULL"
+  assert_query_permission_details "${request_id}" "denied" "${tenant_id}" "${user_id}"
+}
+
+assert_query_denied_with_roles() {
+  local request_id="$1"
+  local tenant_id="$2"
+  local user_id="$3"
+  local roles_json="$4"
+  local org_id="$5"
+  local output_file="$6"
+
+  local status_code
+  status_code="$(run_query_request "${request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "fields": ["id", "owner", "org_id", "tenant_id", "created_by"],
+  "filters": {
+    "org_id": "${org_id}"
+  },
+  "tenantId": "${tenant_id}",
+  "userId": "${user_id}",
+  "roles": ${roles_json},
+  "limit": 20
+}
+JSON
+)" "${output_file}")"
 
   if [[ "${status_code}" != "403" ]]; then
     cat "${output_file}"
@@ -429,8 +552,10 @@ const client = new Client({
     const rowCountCondition =
       expectedRowCount === "NULL"
         ? "row_count IS NULL"
+        : expectedRowCount === "ANY"
+          ? "1=1"
         : "row_count = $3::INT";
-    const params = expectedRowCount === "NULL"
+    const params = expectedRowCount === "NULL" || expectedRowCount === "ANY"
       ? [requestId, status]
       : [requestId, status, Number(expectedRowCount)];
     const result = await client.query(
@@ -597,6 +722,56 @@ NODE
   )
 }
 
+query_mutation_permission_details_count() {
+  local request_id="$1"
+  local operation="$2"
+  local status="$3"
+  local tenant_id="$4"
+  local user_id="$5"
+
+  (
+    cd "${ROOT_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${LC_DB_AUDIT_NAME}" "${LC_DB_SSL}" "${request_id}" "${operation}" "${status}" "${tenant_id}" "${user_id}" <<'NODE'
+const { Client } = require("pg");
+
+const [host, port, user, password, database, sslRaw, requestId, operation, status, tenantId, userId] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+(async () => {
+  await client.connect();
+  try {
+    const result = await client.query(
+      `SELECT COUNT(*)::INT AS count
+       FROM mutation_logs
+       WHERE request_id = $1
+         AND operation = $2
+         AND status = $3
+         AND tenant_id = $4
+         AND user_id = $5
+         AND permission_scope IS NOT NULL
+         AND permission_org_count IS NOT NULL
+         AND permission_reason IS NOT NULL;`,
+      [requestId, operation, status, tenantId, userId]
+    );
+    process.stdout.write(String(result.rows[0]?.count ?? 0));
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
+
 query_business_order_unchanged_count() {
   local order_id="$1"
   local expected_owner="$2"
@@ -745,6 +920,35 @@ assert_audit_record "${failure_request_id}" "failure" "NULL"
 log "validating query permission denied sample"
 query_denied_request_id="e2e-query-denied-${RUN_ID}"
 assert_query_denied "${query_denied_request_id}" "tenant-a" "demo-tenant-a-user" "dept-b" "${TMP_DIR}/query-denied.json"
+log "validating SELF query success"
+self_query_request_id="e2e-self-query-${RUN_ID}"
+query_rows_and_assert_ids "tenant-a" "self-tenant-a-user" '["SELF_ONLY"]' "SO-A" "active" "" "SO-A3001" "${self_query_request_id}" "${TMP_DIR}/self-query.json"
+assert_audit_record "${self_query_request_id}" "success" "ANY"
+assert_query_permission_details "${self_query_request_id}" "success" "tenant-a" "self-tenant-a-user"
+
+log "validating SELF query denied sample"
+self_query_denied_request_id="e2e-self-query-denied-${RUN_ID}"
+assert_query_denied_with_roles "${self_query_denied_request_id}" "tenant-a" "self-tenant-a-user" '["SELF_ONLY"]' "dept-a" "${TMP_DIR}/self-query-denied.json"
+
+log "validating manager query success"
+manager_query_request_id="e2e-manager-query-${RUN_ID}"
+query_rows_and_assert_ids "tenant-a" "manager-tenant-a" '["MANAGER"]' "SO-A" "active" "" "SO-A1001,SO-A2001,SO-A3001" "${manager_query_request_id}" "${TMP_DIR}/manager-query.json"
+assert_audit_record "${manager_query_request_id}" "success" "ANY"
+assert_query_permission_details "${manager_query_request_id}" "success" "tenant-a" "manager-tenant-a"
+
+log "validating manager query denied sample"
+manager_query_denied_request_id="e2e-manager-query-denied-${RUN_ID}"
+assert_query_denied_with_roles "${manager_query_denied_request_id}" "tenant-a" "manager-tenant-a" '["MANAGER"]' "dept-c" "${TMP_DIR}/manager-query-denied.json"
+
+log "validating custom org query success"
+custom_query_request_id="e2e-custom-query-${RUN_ID}"
+query_rows_and_assert_ids "tenant-a" "custom-tenant-a-user" '["CUSTOM_SUPPORT"]' "SO-A" "active" "" "SO-A2001" "${custom_query_request_id}" "${TMP_DIR}/custom-query.json"
+assert_audit_record "${custom_query_request_id}" "success" "ANY"
+assert_query_permission_details "${custom_query_request_id}" "success" "tenant-a" "custom-tenant-a-user"
+
+log "validating custom org query denied sample"
+custom_query_denied_request_id="e2e-custom-query-denied-${RUN_ID}"
+assert_query_denied_with_roles "${custom_query_denied_request_id}" "tenant-a" "custom-tenant-a-user" '["CUSTOM_SUPPORT"]' "dept-a" "${TMP_DIR}/custom-query-denied.json"
 
 tenant_id="tenant-a"
 user_id="demo-tenant-a-user"
@@ -783,6 +987,7 @@ if (data.rowCount !== 1 || data.row?.id !== process.argv[2]) {
 }
 ' "${TMP_DIR}/mutation-create.json" "${test_order_id}"
 assert_mutation_audit_record "${create_request_id}" "create" "success" "${tenant_id}" "${user_id}"
+assert_mutation_permission_details "${create_request_id}" "create" "success" "${tenant_id}" "${user_id}"
 read -r create_query_request_id create_query_row_count <<< "$(query_order_and_assert "${tenant_id}" "${user_id}" "${test_order_id}" "Gate Create" "web" "medium" "active")"
 assert_audit_record "${create_query_request_id}" "success" "${create_query_row_count}"
 
@@ -848,6 +1053,7 @@ if (data.rowCount !== 1 || data.row?.owner !== process.argv[2] || data.row?.stat
 }
 ' "${TMP_DIR}/mutation-update.json" "Gate Update" "paused"
 assert_mutation_audit_record "${update_request_id}" "update" "success" "${tenant_id}" "${user_id}"
+assert_mutation_permission_details "${update_request_id}" "update" "success" "${tenant_id}" "${user_id}"
 read -r update_query_request_id update_query_row_count <<< "$(query_order_and_assert "${tenant_id}" "${user_id}" "${test_order_id}" "Gate Update" "partner" "high" "paused")"
 assert_audit_record "${update_query_request_id}" "success" "${update_query_row_count}"
 
@@ -879,6 +1085,7 @@ if (data.rowCount !== 1 || data.row?.id !== process.argv[2]) {
 }
 ' "${TMP_DIR}/mutation-delete.json" "${test_order_id}"
 assert_mutation_audit_record "${delete_request_id}" "delete" "success" "${tenant_id}" "${user_id}"
+assert_mutation_permission_details "${delete_request_id}" "delete" "success" "${tenant_id}" "${user_id}"
 read -r delete_query_request_id delete_query_row_count <<< "$(query_order_and_assert_missing "${tenant_id}" "${user_id}" "${test_order_id}")"
 assert_audit_record "${delete_query_request_id}" "success" "${delete_query_row_count}"
 
@@ -910,8 +1117,211 @@ if [[ "${mutation_denied_status_code}" != "403" ]]; then
   exit 1
 fi
 assert_mutation_audit_record "${mutation_denied_request_id}" "update" "denied" "tenant-a" "demo-tenant-a-user"
+assert_mutation_permission_details "${mutation_denied_request_id}" "update" "denied" "tenant-a" "demo-tenant-a-user"
 assert_mutation_denied_integrity_record "${mutation_denied_request_id}" "update" "tenant-a" "demo-tenant-a-user"
 assert_business_order_unchanged "SO-A2001" "A-Manager-Only" "partner" "high" "active" "dept-b"
+
+log "validating SELF mutation success"
+self_test_order_id="SO-ASELF-${RUN_ID}"
+self_create_request_id="e2e-self-mutation-create-${RUN_ID}"
+self_create_status_code="$(run_mutation_request "${self_create_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "create",
+  "tenantId": "tenant-a",
+  "userId": "self-tenant-a-user",
+  "roles": ["SELF_ONLY"],
+  "orgId": "dept-a",
+  "data": {
+    "id": "${self_test_order_id}",
+    "owner": "Self Create",
+    "channel": "web",
+    "priority": "medium",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/self-mutation-create.json")"
+if [[ "${self_create_status_code}" != "201" && "${self_create_status_code}" != "200" ]]; then
+  cat "${TMP_DIR}/self-mutation-create.json"
+  exit 1
+fi
+assert_mutation_audit_record "${self_create_request_id}" "create" "success" "tenant-a" "self-tenant-a-user"
+assert_mutation_permission_details "${self_create_request_id}" "create" "success" "tenant-a" "self-tenant-a-user"
+
+log "validating SELF mutation denied sample"
+self_mutation_denied_request_id="e2e-self-mutation-denied-${RUN_ID}"
+self_mutation_denied_status_code="$(run_mutation_request "${self_mutation_denied_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "update",
+  "tenantId": "tenant-a",
+  "userId": "self-tenant-a-user",
+  "roles": ["SELF_ONLY"],
+  "orgId": "dept-a",
+  "key": {
+    "id": "SO-A1001"
+  },
+  "data": {
+    "id": "SO-A1001",
+    "owner": "self-should-fail",
+    "channel": "web",
+    "priority": "medium",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/self-mutation-denied.json")"
+if [[ "${self_mutation_denied_status_code}" != "403" ]]; then
+  cat "${TMP_DIR}/self-mutation-denied.json"
+  exit 1
+fi
+assert_mutation_audit_record "${self_mutation_denied_request_id}" "update" "denied" "tenant-a" "self-tenant-a-user"
+assert_mutation_permission_details "${self_mutation_denied_request_id}" "update" "denied" "tenant-a" "self-tenant-a-user"
+assert_mutation_denied_integrity_record "${self_mutation_denied_request_id}" "update" "tenant-a" "self-tenant-a-user"
+assert_business_order_unchanged "SO-A1001" "Alice" "web" "high" "active" "dept-a"
+
+log "validating manager mutation success"
+manager_test_order_id="SO-AMGR-${RUN_ID}"
+manager_create_request_id="e2e-manager-mutation-create-${RUN_ID}"
+manager_create_status_code="$(run_mutation_request "${manager_create_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "create",
+  "tenantId": "tenant-a",
+  "userId": "manager-tenant-a",
+  "roles": ["MANAGER"],
+  "orgId": "dept-b",
+  "data": {
+    "id": "${manager_test_order_id}",
+    "owner": "Manager Create",
+    "channel": "partner",
+    "priority": "high",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/manager-mutation-create.json")"
+if [[ "${manager_create_status_code}" != "201" && "${manager_create_status_code}" != "200" ]]; then
+  cat "${TMP_DIR}/manager-mutation-create.json"
+  exit 1
+fi
+assert_mutation_audit_record "${manager_create_request_id}" "create" "success" "tenant-a" "manager-tenant-a"
+assert_mutation_permission_details "${manager_create_request_id}" "create" "success" "tenant-a" "manager-tenant-a"
+
+log "validating manager mutation denied sample"
+manager_mutation_denied_request_id="e2e-manager-mutation-denied-${RUN_ID}"
+manager_mutation_denied_status_code="$(run_mutation_request "${manager_mutation_denied_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "create",
+  "tenantId": "tenant-a",
+  "userId": "manager-tenant-a",
+  "roles": ["MANAGER"],
+  "orgId": "dept-c",
+  "data": {
+    "id": "SO-AMGR-DENIED-${RUN_ID}",
+    "owner": "manager-should-fail",
+    "channel": "partner",
+    "priority": "high",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/manager-mutation-denied.json")"
+if [[ "${manager_mutation_denied_status_code}" != "404" && "${manager_mutation_denied_status_code}" != "403" ]]; then
+  cat "${TMP_DIR}/manager-mutation-denied.json"
+  exit 1
+fi
+assert_mutation_audit_record "${manager_mutation_denied_request_id}" "create" "denied" "tenant-a" "manager-tenant-a"
+assert_mutation_permission_details "${manager_mutation_denied_request_id}" "create" "denied" "tenant-a" "manager-tenant-a"
+
+log "validating custom org mutation success"
+custom_test_order_id="SO-ACUSTOM-${RUN_ID}"
+custom_create_request_id="e2e-custom-mutation-create-${RUN_ID}"
+custom_create_status_code="$(run_mutation_request "${custom_create_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "create",
+  "tenantId": "tenant-a",
+  "userId": "custom-tenant-a-user",
+  "roles": ["CUSTOM_SUPPORT"],
+  "orgId": "dept-b",
+  "data": {
+    "id": "${custom_test_order_id}",
+    "owner": "Custom Create",
+    "channel": "partner",
+    "priority": "medium",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/custom-mutation-create.json")"
+if [[ "${custom_create_status_code}" != "201" && "${custom_create_status_code}" != "200" ]]; then
+  cat "${TMP_DIR}/custom-mutation-create.json"
+  exit 1
+fi
+assert_mutation_audit_record "${custom_create_request_id}" "create" "success" "tenant-a" "custom-tenant-a-user"
+assert_mutation_permission_details "${custom_create_request_id}" "create" "success" "tenant-a" "custom-tenant-a-user"
+
+log "validating custom org mutation denied sample"
+custom_mutation_denied_request_id="e2e-custom-mutation-denied-${RUN_ID}"
+custom_mutation_denied_status_code="$(run_mutation_request "${custom_mutation_denied_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "update",
+  "tenantId": "tenant-a",
+  "userId": "custom-tenant-a-user",
+  "roles": ["CUSTOM_SUPPORT"],
+  "orgId": "dept-a",
+  "key": {
+    "id": "SO-A1001"
+  },
+  "data": {
+    "id": "SO-A1001",
+    "owner": "custom-should-fail",
+    "channel": "web",
+    "priority": "medium",
+    "status": "active"
+  }
+}
+JSON
+)" "${TMP_DIR}/custom-mutation-denied.json")"
+if [[ "${custom_mutation_denied_status_code}" != "403" ]]; then
+  cat "${TMP_DIR}/custom-mutation-denied.json"
+  exit 1
+fi
+assert_mutation_audit_record "${custom_mutation_denied_request_id}" "update" "denied" "tenant-a" "custom-tenant-a-user"
+assert_mutation_permission_details "${custom_mutation_denied_request_id}" "update" "denied" "tenant-a" "custom-tenant-a-user"
+assert_mutation_denied_integrity_record "${custom_mutation_denied_request_id}" "update" "tenant-a" "custom-tenant-a-user"
+assert_business_order_unchanged "SO-A1001" "Alice" "web" "high" "active" "dept-a"
+
+log "cleaning scoped mutation samples"
+for delete_spec in \
+  "self-tenant-a-user|SELF_ONLY|${self_test_order_id}" \
+  "manager-tenant-a|MANAGER|${manager_test_order_id}" \
+  "custom-tenant-a-user|CUSTOM_SUPPORT|${custom_test_order_id}"
+do
+  IFS="|" read -r scoped_user scoped_role scoped_order_id <<< "${delete_spec}"
+  cleanup_request_id="e2e-cleanup-${scoped_user}-${RUN_ID}"
+  cleanup_status_code="$(run_mutation_request "${cleanup_request_id}" "$(cat <<JSON
+{
+  "table": "orders",
+  "operation": "delete",
+  "tenantId": "tenant-a",
+  "userId": "${scoped_user}",
+  "roles": ["${scoped_role}"],
+  "key": {
+    "id": "${scoped_order_id}"
+  }
+}
+JSON
+)" "${TMP_DIR}/cleanup-${scoped_user}.json")"
+  if [[ "${cleanup_status_code}" != "200" && "${cleanup_status_code}" != "201" ]]; then
+    cat "${TMP_DIR}/cleanup-${scoped_user}.json"
+    exit 1
+  fi
+done
 
 log "audit snapshot"
 print_audit_snapshot

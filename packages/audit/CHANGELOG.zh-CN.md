@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - chore(package): 为 release 治理切换到 `@zhongmiao/meta-lc-audit` 正式包名。
+- refactor(boundary): 将本包收回为审计契约与兼容辅助层，避免审计数据库执行职责继续外溢到 BFF 边界之外。
 
 ## 0.1.0 (2026-04-18)
 

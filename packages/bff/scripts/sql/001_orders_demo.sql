@@ -18,6 +18,7 @@ VALUES
   ('SO-A1001', 'Alice', 'web', 'high', 'active', 'tenant-a', 'demo-tenant-a-user', 'dept-a'),
   ('SO-A1002', 'Aria', 'store', 'medium', 'paused', 'tenant-a', 'demo-tenant-a-user', 'dept-a'),
   ('SO-A2001', 'A-Manager-Only', 'partner', 'high', 'active', 'tenant-a', 'manager-tenant-a', 'dept-b'),
+  ('SO-A3001', 'Self Owned', 'web', 'medium', 'active', 'tenant-a', 'self-tenant-a-user', 'dept-a'),
   ('SO-B1001', 'Brenda', 'partner', 'high', 'active', 'tenant-b', 'demo-tenant-b-user', 'dept-c'),
   ('SO-B1002', 'Bryan', 'web', 'low', 'paused', 'tenant-b', 'demo-tenant-b-user', 'dept-c')
 ON CONFLICT (id) DO UPDATE

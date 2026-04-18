@@ -30,13 +30,14 @@ function checkFile(file) {
   // Transitional guard: DB driver should be centralized and explicitly allowlisted.
   if (content.includes("from \"pg\"") || content.includes("from 'pg'")) {
     const allowed = [
-      'packages/datasource/',
-      'packages/audit/',
+      'packages/datasource/src/postgres-datasource-adapter.ts',
       'packages/kernel/src/postgres-meta-kernel-repository.ts',
-      'packages/bff/src/integration/',
-      'packages/bff/src/bootstrap/'
+      'packages/bff/src/integration/org-scope.service.ts',
+      'packages/bff/src/integration/audit-persistence.service.ts',
+      'packages/bff/src/integration/postgres-query-executor.service.ts',
+      'packages/bff/src/bootstrap/migration-runner.ts'
     ];
-    if (!allowed.some((prefix) => rel.startsWith(prefix))) {
+    if (!allowed.includes(rel)) {
       violations.push(`${rel}: direct pg import is not allowed here.`);
     }
   }

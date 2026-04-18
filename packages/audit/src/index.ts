@@ -1,4 +1,3 @@
-import { Pool } from "pg";
 import type { QueryAuditLog } from "@zhongmiao/meta-lc-contracts";
 
 export interface MutationAuditLog {
@@ -34,89 +33,51 @@ export interface AccessAuditLog {
 }
 
 export interface AuditDbConfig {
-  connectionString: string;
+  connectionString?: string;
+}
+
+export interface AuditSink {
+  logQuery(log: QueryAuditLog): Promise<void>;
+  logMutation(log: MutationAuditLog): Promise<void>;
+  logMigration(log: MigrationAuditLog): Promise<void>;
+  logAccess(log: AccessAuditLog): Promise<void>;
+  close?(): Promise<void>;
+}
+
+function createNoopAuditSink(): AuditSink {
+  return {
+    async logQuery(): Promise<void> {},
+    async logMutation(): Promise<void> {},
+    async logMigration(): Promise<void> {},
+    async logAccess(): Promise<void> {},
+    async close(): Promise<void> {}
+  };
 }
 
 export class AuditService {
-  private readonly pool: Pool;
+  private readonly sink: AuditSink;
 
-  constructor(config: AuditDbConfig) {
-    this.pool = new Pool({ connectionString: config.connectionString });
+  constructor(_config: AuditDbConfig = {}, sink?: AuditSink) {
+    this.sink = sink ?? createNoopAuditSink();
   }
 
   async logQuery(log: QueryAuditLog): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO query_logs (
-        request_id, tenant_id, user_id, query_dsl, final_sql, duration_ms, result_count, status, error_message
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [
-        log.requestId,
-        log.tenantId,
-        log.userId,
-        log.queryDsl,
-        log.finalSql,
-        log.durationMs,
-        log.resultCount,
-        log.status,
-        log.errorMessage ?? null
-      ]
-    );
+    await this.sink.logQuery(log);
   }
 
   async logMutation(log: MutationAuditLog): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO mutation_logs (
-        request_id, tenant_id, user_id, table_name, action, payload, status, error_message
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [
-        log.requestId,
-        log.tenantId,
-        log.userId,
-        log.table,
-        log.action,
-        log.payload,
-        log.status,
-        log.errorMessage ?? null
-      ]
-    );
+    await this.sink.logMutation(log);
   }
 
   async logMigration(log: MigrationAuditLog): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO migration_logs (
-        request_id, app_id, from_version, to_version, statement, status, duration_ms, error_message
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [
-        log.requestId,
-        log.appId,
-        log.fromVersion,
-        log.toVersion,
-        log.statement,
-        log.status,
-        log.durationMs,
-        log.errorMessage ?? null
-      ]
-    );
+    await this.sink.logMigration(log);
   }
 
   async logAccess(log: AccessAuditLog): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO access_logs (
-        request_id, tenant_id, user_id, resource, action, status, reason
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [
-        log.requestId,
-        log.tenantId,
-        log.userId,
-        log.resource,
-        log.action,
-        log.status,
-        log.reason ?? null
-      ]
-    );
+    await this.sink.logAccess(log);
   }
 
   async close(): Promise<void> {
-    await this.pool.end();
+    await this.sink.close?.();
   }
 }
