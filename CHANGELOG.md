@@ -7,6 +7,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - docs(changelog): establish bilingual root/package changelog baselines for the platform workspace.
 - feat(runtime): add dependency graph planning so runtime state and mutation events can drive deterministic auto-refresh execution.
 - feat(runtime): add a minimal rule engine and function registry so runtime events can compute rule-driven patches, actions, and datasource refreshes.
+- docs(runtime): sync the runtime contract, frontend integration, migration guidance, and testing playbook to the current manager-first implementation.
+- fix(boundaries): tighten direct `pg` access down to explicit BFF/datasource/kernel entry points and remove the audit package from the transitional DB-driver allowlist.
 
 ## 0.1.0 (2026-04-18)
 

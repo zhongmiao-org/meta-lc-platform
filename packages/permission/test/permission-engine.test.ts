@@ -105,6 +105,37 @@ test("canAccessOrg denies sibling org and allows legacy fallback", () => {
   assert.equal(allowedByLegacy.fallbackUsed, true);
 });
 
+test("resolveDataScope keeps custom org set from role policy", () => {
+  const decision = resolveDataScope({
+    tenantId: "tenant-a",
+    userId: "custom-user",
+    roles: ["CUSTOM_SUPPORT"],
+    userOrgIds: ["dept-a"],
+    rolePolicies: [{ role: "CUSTOM_SUPPORT", scope: "CUSTOM_ORG_SET", customOrgIds: ["dept-b"] }],
+    orgNodes: []
+  });
+
+  assert.equal(decision.scope, "CUSTOM_ORG_SET");
+  assert.deepEqual(decision.allowedOrgIds, ["dept-b"]);
+});
+
+test("canAccessOrg enforces SELF scope by creator only", () => {
+  const denied = canAccessOrg(
+    {
+      scope: "SELF",
+      allowedOrgIds: [],
+      tenantAll: false,
+      legacyFallbackToCreatedBy: true,
+      reason: "scope:SELF"
+    },
+    { orgId: "dept-a", createdBy: "someone-else" },
+    { tenantId: "tenant-a", userId: "self-user", roles: ["SELF_ONLY"] }
+  );
+
+  assert.equal(denied.allowed, false);
+  assert.equal(denied.reason, "self-owner-required");
+});
+
 test("injectPermissionClause appends filter to SQL with WHERE", () => {
   const sql = injectPermissionClause("SELECT * FROM orders WHERE status = $1", {
     clause: "tenant_id = $2",
