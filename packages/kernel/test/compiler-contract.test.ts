@@ -1,12 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compileSchemaSql } from "../src";
+import { compileApiRoutes, compileSchemaSql } from "../src";
 import { ordersCompilerFixture } from "./fixtures/compiler-fixtures";
 
 test("compiler fixture defines the public SQL generator contract", () => {
   const compiled = compileSchemaSql(ordersCompilerFixture.schema);
 
-  assert.deepEqual(compiled, ordersCompilerFixture.expected);
+  assert.deepEqual(compiled, ordersCompilerFixture.expected.sql);
+});
+
+test("compiler fixture defines the public API route manifest contract", () => {
+  const compiled = compileApiRoutes(ordersCompilerFixture.schema);
+
+  assert.deepEqual(compiled, ordersCompilerFixture.expected.api);
 });
 
 test("compiler statements are grouped as tables then indexes then relations", () => {
@@ -17,7 +23,17 @@ test("compiler statements are grouped as tables then indexes then relations", ()
     ...compiled.indexes,
     ...compiled.relations
   ]);
-  assert.deepEqual(compiled.statements, ordersCompilerFixture.expected.statements);
+  assert.deepEqual(compiled.statements, ordersCompilerFixture.expected.sql.statements);
+});
+
+test("compiler API routes are grouped by schema table order", () => {
+  const compiled = compileApiRoutes(ordersCompilerFixture.schema);
+
+  assert.deepEqual(
+    compiled.routes.map((route) => route.id),
+    ["customers.query", "customers.mutation", "orders.query", "orders.mutation"]
+  );
+  assert.deepEqual(compiled.routes, ordersCompilerFixture.expected.api.routes);
 });
 
 test("compiler contract accepts table-only schemas without side effects", () => {
@@ -33,13 +49,39 @@ test("compiler contract accepts table-only schemas without side effects", () => 
     ]
   };
   const before = JSON.stringify(schema);
-  const compiled = compileSchemaSql(schema);
+  const compiledSql = compileSchemaSql(schema);
+  const compiledApi = compileApiRoutes(schema);
 
-  assert.deepEqual(compiled, {
+  assert.deepEqual(compiledSql, {
     tables: ['CREATE TABLE "audit_logs" ("id" UUID NOT NULL, "status" TEXT NOT NULL);'],
     indexes: [],
     relations: [],
     statements: ['CREATE TABLE "audit_logs" ("id" UUID NOT NULL, "status" TEXT NOT NULL);']
+  });
+  assert.deepEqual(compiledApi, {
+    source: "meta-schema",
+    routes: [
+      {
+        id: "audit_logs.query",
+        table: "audit_logs",
+        operation: "query",
+        method: "POST",
+        path: "/api/audit_logs/query",
+        target: { method: "POST", path: "/query" },
+        requestContract: "QueryApiRequest",
+        responseContract: "QueryApiResponse"
+      },
+      {
+        id: "audit_logs.mutation",
+        table: "audit_logs",
+        operation: "mutation",
+        method: "POST",
+        path: "/api/audit_logs/mutation",
+        target: { method: "POST", path: "/mutation" },
+        requestContract: "MutationApiRequest",
+        responseContract: "MutationApiResponse"
+      }
+    ]
   });
   assert.equal(JSON.stringify(schema), before);
 });

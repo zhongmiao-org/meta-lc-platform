@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from "@nestjs/common";
 import { QueryOrchestratorService } from "./orchestration/query-orchestrator.service";
-import type { QueryApiRequest } from "./types";
+import type { QueryApiRequest, QueryApiResponse } from "./types";
 
 @Controller()
 export class AppController {
@@ -13,7 +13,7 @@ export class AppController {
   }
 
   @Post("query")
-  async query(@Body() request: QueryApiRequest): Promise<{ rows: Record<string, unknown>[] }> {
+  async query(@Body() request: QueryApiRequest): Promise<QueryApiResponse> {
     const result = await this.queryOrchestrator.execute(request);
     return { rows: result.rows };
   }

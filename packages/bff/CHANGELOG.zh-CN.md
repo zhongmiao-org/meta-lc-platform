@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - feat(gateway): 新增 meta API、内存 cache、aggregation summary 与 WebSocket lifecycle 基线。
+- feat(api-contracts): 为 query 与 mutation controller 响应标注共享 API response contract。
 - chore(gateway): WebSocket subscription acknowledgement 复用共享 runtime page topic helper。
 - chore(package): 为 release 治理切换到 `@zhongmiao/meta-lc-bff` 正式包名。
 - fix(local-dev): 将 BFF 本地默认端口调整为 `6001`，并显式绑定 host，避免浏览器因 unsafe port 策略阻断联调访问。

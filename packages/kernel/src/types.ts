@@ -90,6 +90,30 @@ export interface CompiledSchemaSql {
   statements: string[];
 }
 
+export type ApiRouteOperation = "query" | "mutation";
+export type ApiRouteMethod = "POST";
+
+export interface CompiledApiRouteTarget {
+  method: ApiRouteMethod;
+  path: "/query" | "/mutation";
+}
+
+export interface CompiledApiRoute {
+  id: string;
+  table: string;
+  operation: ApiRouteOperation;
+  method: ApiRouteMethod;
+  path: string;
+  target: CompiledApiRouteTarget;
+  requestContract: "QueryApiRequest" | "MutationApiRequest";
+  responseContract: "QueryApiResponse" | "MutationApiResponse";
+}
+
+export interface CompiledApiRouteManifest {
+  source: "meta-schema";
+  routes: CompiledApiRoute[];
+}
+
 export interface MetaVersionMetadata {
   author: string;
   message: string;
