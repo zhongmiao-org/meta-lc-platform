@@ -23,6 +23,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(bff): add Runtime WebSocket topic-room broadcast and in-memory replay baseline.
 - feat(bff): add a configurable Runtime WebSocket replay store with a Redis-backed latest-event adapter.
 - feat(bff): add a configurable Runtime WebSocket broadcast bus with Redis pub/sub fanout.
+- feat(bff): add Runtime WebSocket operations status and health visibility.
 
 ## 0.1.0 (2026-04-18)
 

@@ -13,6 +13,8 @@ import {
   type RuntimeWsBroadcastHandler,
   type RuntimeWsBroadcastPublishOptions
 } from "../src/gateway/runtime-ws-broadcast.bus";
+import { RuntimeWsHealthController } from "../src/gateway/runtime-ws-health.controller";
+import { RuntimeWsOperationsState } from "../src/gateway/runtime-ws-operations.state";
 import {
   InMemoryRuntimeWsReplayStore,
   parseRuntimeWsReplayStoreMode,
@@ -64,6 +66,18 @@ class RecordingReplayStore implements RuntimeWsReplayStore {
   }
 }
 
+class FailingReplayStore implements RuntimeWsReplayStore {
+  constructor(private readonly error: Error) {}
+
+  async saveLatest(): Promise<void> {
+    throw this.error;
+  }
+
+  async getLatest(): Promise<RuntimeManagerExecutedEvent | undefined> {
+    throw this.error;
+  }
+}
+
 class RecordingBroadcastBus implements RuntimeWsBroadcastBus {
   readonly published: Array<{ event: RuntimeManagerExecutedEvent; options: RuntimeWsBroadcastPublishOptions }> = [];
   readonly handlers: RuntimeWsBroadcastHandler[] = [];
@@ -80,6 +94,18 @@ class RecordingBroadcastBus implements RuntimeWsBroadcastBus {
   async close(): Promise<void> {
     this.closed = true;
   }
+}
+
+class FailingBroadcastBus implements RuntimeWsBroadcastBus {
+  constructor(private readonly error: Error) {}
+
+  async publish(): Promise<void> {
+    throw this.error;
+  }
+
+  async subscribe(): Promise<void> {}
+
+  async close(): Promise<void> {}
 }
 
 class FakeRedisClient implements RedisRuntimeWsReplayClient, RedisRuntimeWsBroadcastClient {
@@ -187,6 +213,30 @@ test("runtime websocket gateway confirms page subscription", async () => {
   assert.deepEqual(emitted, [{ event: "pageSubscribed", payload: expected }]);
 });
 
+test("runtime websocket operations state tracks connected client count", () => {
+  const operationsState = new RuntimeWsOperationsState({
+    replayStoreMode: "memory",
+    broadcastBusMode: "local",
+    instanceId: "instance-a"
+  });
+  const gateway = new RuntimeWsGateway(
+    new RecordingReplayStore(),
+    new RecordingBroadcastBus(),
+    "instance-a",
+    operationsState
+  );
+  const client: WsClientLike = {
+    id: "client-1",
+    emit(): void {}
+  };
+
+  gateway.handleConnection(client);
+  assert.equal(operationsState.snapshot().connectedClients, 1);
+
+  gateway.handleDisconnect(client);
+  assert.equal(operationsState.snapshot().connectedClients, 0);
+});
+
 test("runtime websocket gateway confirms page subscription when join is unavailable", async () => {
   const gateway = new RuntimeWsGateway();
   const emitted: Array<{ event: string; payload: unknown }> = [];
@@ -241,7 +291,13 @@ test("runtime websocket gateway emits manager executed updates", () => {
 test("runtime websocket gateway broadcasts manager executed updates to topic rooms", async () => {
   const replayStore = new RecordingReplayStore();
   const broadcastBus = new RecordingBroadcastBus();
-  const gateway = new RuntimeWsGateway(replayStore, broadcastBus, "instance-a");
+  const operationsState = new RuntimeWsOperationsState({
+    replayStoreMode: "memory",
+    broadcastBusMode: "local",
+    instanceId: "instance-a"
+  });
+  operationsState.recordError("broadcast", new Error("previous error"));
+  const gateway = new RuntimeWsGateway(replayStore, broadcastBus, "instance-a", operationsState);
   const emitted: Array<{ room: string; event: string; payload: unknown }> = [];
   const server: WsServerLike = {
     to(room: string) {
@@ -258,6 +314,8 @@ test("runtime websocket gateway broadcasts manager executed updates to topic roo
   const result = await gateway.broadcastRuntimeManagerExecuted(update);
 
   assert.deepEqual(result, update);
+  assert.equal(operationsState.snapshot().ok, true);
+  assert.equal(operationsState.snapshot().lastError, undefined);
   assert.deepEqual(replayStore.saved, [update]);
   assert.deepEqual(broadcastBus.published, [{ event: update, options: { originId: "instance-a" } }]);
   assert.deepEqual(emitted, [
@@ -267,6 +325,81 @@ test("runtime websocket gateway broadcasts manager executed updates to topic roo
       payload: update
     }
   ]);
+});
+
+test("runtime websocket gateway records replay errors and preserves fail-fast behavior", async () => {
+  const operationsState = new RuntimeWsOperationsState({
+    replayStoreMode: "memory",
+    broadcastBusMode: "local",
+    instanceId: "instance-a"
+  });
+  const gateway = new RuntimeWsGateway(
+    new FailingReplayStore(new Error("replay unavailable")),
+    new RecordingBroadcastBus(),
+    "instance-a",
+    operationsState
+  );
+  const client: WsClientLike = {
+    id: "client-1",
+    emit(): void {}
+  };
+
+  await assert.rejects(
+    () =>
+      gateway.subscribePage(
+        {
+          tenantId: "tenant-a",
+          pageId: "orders",
+          pageInstanceId: "instance-1"
+        },
+        client
+      ),
+    /replay unavailable/
+  );
+
+  assert.deepEqual(operationsState.snapshot().lastError?.operation, "replay");
+  assert.deepEqual(operationsState.snapshot().lastError?.message, "replay unavailable");
+  assert.equal(operationsState.snapshot().ok, false);
+});
+
+test("runtime websocket gateway records broadcast errors and preserves fail-fast behavior", async () => {
+  const operationsState = new RuntimeWsOperationsState({
+    replayStoreMode: "memory",
+    broadcastBusMode: "local",
+    instanceId: "instance-a"
+  });
+  const gateway = new RuntimeWsGateway(
+    new RecordingReplayStore(),
+    new FailingBroadcastBus(new Error("broadcast unavailable")),
+    "instance-a",
+    operationsState
+  );
+
+  await assert.rejects(() => gateway.broadcastRuntimeManagerExecuted(createUpdate()), /broadcast unavailable/);
+
+  assert.equal(operationsState.snapshot().lastError?.operation, "broadcast");
+  assert.equal(operationsState.snapshot().lastError?.message, "broadcast unavailable");
+  assert.equal(operationsState.snapshot().ok, false);
+});
+
+test("runtime websocket health controller returns stable operations status", () => {
+  const operationsState = new RuntimeWsOperationsState({
+    replayStoreMode: "redis",
+    broadcastBusMode: "redis",
+    instanceId: "instance-health"
+  });
+  const controller = new RuntimeWsHealthController(operationsState);
+
+  operationsState.clientConnected("client-1");
+  const health = controller.health();
+
+  assert.deepEqual(health, {
+    ok: true,
+    replayStoreMode: "redis",
+    broadcastBusMode: "redis",
+    instanceId: "instance-health",
+    connectedClients: 1
+  });
 });
 
 test("runtime websocket gateway emits remote broadcast bus events once", async () => {

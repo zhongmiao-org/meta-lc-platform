@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import { AggregationService } from "./aggregation/aggregation.service";
@@ -8,10 +9,15 @@ import { MetaController } from "./gateway/meta.controller";
 import { MetaRegistryService } from "./gateway/meta-registry.service";
 import {
   createRuntimeWsBroadcastBusFromEnv,
-  RUNTIME_WS_BROADCAST_BUS
+  parseRuntimeWsBroadcastBusMode,
+  RUNTIME_WS_BROADCAST_BUS,
+  RUNTIME_WS_INSTANCE_ID
 } from "./gateway/runtime-ws-broadcast.bus";
+import { RuntimeWsHealthController } from "./gateway/runtime-ws-health.controller";
+import { RuntimeWsOperationsState } from "./gateway/runtime-ws-operations.state";
 import {
   createRuntimeWsReplayStoreFromEnv,
+  parseRuntimeWsReplayStoreMode,
   RUNTIME_WS_REPLAY_STORE
 } from "./gateway/runtime-ws-replay.store";
 import { QueryController } from "./gateway/query.controller";
@@ -24,7 +30,7 @@ import { QueryOrchestratorService } from "./orchestration/query-orchestrator.ser
 
 @Module({
   imports: [],
-  controllers: [QueryController, MetaController],
+  controllers: [QueryController, MetaController, RuntimeWsHealthController],
   providers: [
     AggregationService,
     CacheService,
@@ -35,6 +41,20 @@ import { QueryOrchestratorService } from "./orchestration/query-orchestrator.ser
     QueryOrchestratorService,
     MutationOrchestratorService,
     AuditLogService,
+    {
+      provide: RUNTIME_WS_INSTANCE_ID,
+      useFactory: () => randomUUID()
+    },
+    {
+      provide: RuntimeWsOperationsState,
+      useFactory: (instanceId: string) =>
+        new RuntimeWsOperationsState({
+          replayStoreMode: parseRuntimeWsReplayStoreMode(process.env.LC_RUNTIME_WS_REPLAY_STORE),
+          broadcastBusMode: parseRuntimeWsBroadcastBusMode(process.env.LC_RUNTIME_WS_BROADCAST_BUS),
+          instanceId
+        }),
+      inject: [RUNTIME_WS_INSTANCE_ID]
+    },
     {
       provide: RUNTIME_WS_REPLAY_STORE,
       useFactory: () => createRuntimeWsReplayStoreFromEnv()

@@ -27,6 +27,7 @@ import {
   type RuntimeWsBroadcastBus,
   type RuntimeWsBroadcastMessage
 } from "./runtime-ws-broadcast.bus";
+import { RuntimeWsOperationsState } from "./runtime-ws-operations.state";
 
 export interface WsClientLike {
   id: string;
@@ -54,6 +55,7 @@ export class RuntimeWsGateway
   implements OnModuleInit, OnModuleDestroy, OnGatewayConnection<WsClientLike>, OnGatewayDisconnect<WsClientLike>
 {
   private readonly logger = new Logger("RuntimeWsGateway");
+  private readonly operationsState: RuntimeWsOperationsState;
 
   constructor(
     @Optional()
@@ -64,8 +66,18 @@ export class RuntimeWsGateway
     private readonly broadcastBus: RuntimeWsBroadcastBus = new InProcessRuntimeWsBroadcastBus(),
     @Optional()
     @Inject(RUNTIME_WS_INSTANCE_ID)
-    private readonly instanceId: string = randomUUID()
-  ) {}
+    private readonly instanceId: string = randomUUID(),
+    @Optional()
+    operationsState?: RuntimeWsOperationsState
+  ) {
+    this.operationsState =
+      operationsState ??
+      new RuntimeWsOperationsState({
+        replayStoreMode: "memory",
+        broadcastBusMode: "local",
+        instanceId: this.instanceId
+      });
+  }
 
   @WebSocketServer()
   server?: WsServerLike;
@@ -79,10 +91,12 @@ export class RuntimeWsGateway
   }
 
   handleConnection(client: WsClientLike): void {
+    this.operationsState.clientConnected(client.id);
     this.logger.log(`client connected: ${client.id}`);
   }
 
   handleDisconnect(client: WsClientLike): void {
+    this.operationsState.clientDisconnected(client.id);
     this.logger.log(`client disconnected: ${client.id}`);
   }
 
@@ -98,7 +112,14 @@ export class RuntimeWsGateway
     };
     this.joinTopic(client, event.topic);
     client.emit("pageSubscribed", event);
-    const replayEvent = await this.replayStore.getLatest(event.topic);
+    let replayEvent: RuntimeManagerExecutedEvent | undefined;
+    try {
+      replayEvent = await this.replayStore.getLatest(event.topic);
+      this.operationsState.recordSuccess();
+    } catch (error) {
+      this.operationsState.recordError("replay", error);
+      throw error;
+    }
     if (replayEvent) {
       this.emitRuntimeManagerExecuted(client, replayEvent);
     }
@@ -111,9 +132,15 @@ export class RuntimeWsGateway
   }
 
   async broadcastRuntimeManagerExecuted(event: RuntimeManagerExecutedEvent): Promise<RuntimeManagerExecutedEvent> {
-    await this.replayStore.saveLatest(event);
-    this.emitRuntimeManagerExecutedToTopic(event);
-    await this.broadcastBus.publish(event, { originId: this.instanceId });
+    try {
+      await this.replayStore.saveLatest(event);
+      this.emitRuntimeManagerExecutedToTopic(event);
+      await this.broadcastBus.publish(event, { originId: this.instanceId });
+      this.operationsState.recordSuccess();
+    } catch (error) {
+      this.operationsState.recordError("broadcast", error);
+      throw error;
+    }
     return event;
   }
 
@@ -121,8 +148,14 @@ export class RuntimeWsGateway
     if (message.originId === this.instanceId) {
       return;
     }
-    await this.replayStore.saveLatest(message.event);
-    this.emitRuntimeManagerExecutedToTopic(message.event);
+    try {
+      await this.replayStore.saveLatest(message.event);
+      this.emitRuntimeManagerExecutedToTopic(message.event);
+      this.operationsState.recordSuccess();
+    } catch (error) {
+      this.operationsState.recordError("broadcast", error);
+      throw error;
+    }
   }
 
   private emitRuntimeManagerExecutedToTopic(event: RuntimeManagerExecutedEvent): void {
