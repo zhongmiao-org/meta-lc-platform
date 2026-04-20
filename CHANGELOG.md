@@ -13,6 +13,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(bff): add the first Gateway baseline for meta APIs, in-memory cache, aggregation summary, and WebSocket lifecycle smoke.
 - feat(runtime): add a manager-first runtime orchestrator baseline and shared runtime page topic helper.
 - feat(kernel): add a SQL Generator V1 baseline for tables, indexes, relations, and compiler fixture coverage.
+- test(kernel): promote SQL generator examples into a reusable compiler contract fixture baseline.
 
 ## 0.1.0 (2026-04-18)
 
