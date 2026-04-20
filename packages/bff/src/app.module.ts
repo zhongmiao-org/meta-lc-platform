@@ -6,6 +6,10 @@ import { AuditLogService } from "./common/audit-log.service";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { MetaController } from "./gateway/meta.controller";
 import { MetaRegistryService } from "./gateway/meta-registry.service";
+import {
+  createRuntimeWsReplayStoreFromEnv,
+  RUNTIME_WS_REPLAY_STORE
+} from "./gateway/runtime-ws-replay.store";
 import { QueryController } from "./gateway/query.controller";
 import { RuntimeWsGateway } from "./gateway/ws.gateway";
 import { AuditPersistenceService } from "./integration/audit-persistence.service";
@@ -27,6 +31,10 @@ import { QueryOrchestratorService } from "./orchestration/query-orchestrator.ser
     QueryOrchestratorService,
     MutationOrchestratorService,
     AuditLogService,
+    {
+      provide: RUNTIME_WS_REPLAY_STORE,
+      useFactory: () => createRuntimeWsReplayStoreFromEnv()
+    },
     RuntimeWsGateway,
     {
       provide: APP_FILTER,

@@ -1,4 +1,4 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger, Optional } from "@nestjs/common";
 import {
   ConnectedSocket,
   MessageBody,
@@ -14,6 +14,11 @@ import {
   type RuntimeManagerExecutedEvent,
   type RuntimePageTopicRef
 } from "@zhongmiao/meta-lc-contracts";
+import {
+  InMemoryRuntimeWsReplayStore,
+  RUNTIME_WS_REPLAY_STORE,
+  type RuntimeWsReplayStore
+} from "./runtime-ws-replay.store";
 
 export interface WsClientLike {
   id: string;
@@ -39,7 +44,12 @@ export interface PageSubscribedEvent extends SubscribePageMessage {
 @WebSocketGateway({ namespace: "runtime" })
 export class RuntimeWsGateway implements OnGatewayConnection<WsClientLike>, OnGatewayDisconnect<WsClientLike> {
   private readonly logger = new Logger("RuntimeWsGateway");
-  private readonly latestRuntimeEventsByTopic = new Map<string, RuntimeManagerExecutedEvent>();
+
+  constructor(
+    @Optional()
+    @Inject(RUNTIME_WS_REPLAY_STORE)
+    private readonly replayStore: RuntimeWsReplayStore = new InMemoryRuntimeWsReplayStore()
+  ) {}
 
   @WebSocketServer()
   server?: WsServerLike;
@@ -53,10 +63,10 @@ export class RuntimeWsGateway implements OnGatewayConnection<WsClientLike>, OnGa
   }
 
   @SubscribeMessage("subscribePage")
-  subscribePage(
+  async subscribePage(
     @MessageBody() message: SubscribePageMessage,
     @ConnectedSocket() client: WsClientLike
-  ): PageSubscribedEvent {
+  ): Promise<PageSubscribedEvent> {
     const event: PageSubscribedEvent = {
       ...message,
       topic: buildPageTopic(message),
@@ -64,7 +74,7 @@ export class RuntimeWsGateway implements OnGatewayConnection<WsClientLike>, OnGa
     };
     this.joinTopic(client, event.topic);
     client.emit("pageSubscribed", event);
-    const replayEvent = this.latestRuntimeEventsByTopic.get(event.topic);
+    const replayEvent = await this.replayStore.getLatest(event.topic);
     if (replayEvent) {
       this.emitRuntimeManagerExecuted(client, replayEvent);
     }
@@ -76,8 +86,8 @@ export class RuntimeWsGateway implements OnGatewayConnection<WsClientLike>, OnGa
     return event;
   }
 
-  broadcastRuntimeManagerExecuted(event: RuntimeManagerExecutedEvent): RuntimeManagerExecutedEvent {
-    this.latestRuntimeEventsByTopic.set(event.topic, event);
+  async broadcastRuntimeManagerExecuted(event: RuntimeManagerExecutedEvent): Promise<RuntimeManagerExecutedEvent> {
+    await this.replayStore.saveLatest(event);
     this.server?.to(event.topic).emit(RUNTIME_MANAGER_EXECUTED_EVENT, event);
     return event;
   }

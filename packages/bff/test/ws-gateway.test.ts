@@ -5,6 +5,13 @@ import {
   type RuntimeManagerExecutedEvent
 } from "@zhongmiao/meta-lc-contracts";
 import {
+  InMemoryRuntimeWsReplayStore,
+  parseRuntimeWsReplayStoreMode,
+  RedisRuntimeWsReplayStore,
+  type RedisRuntimeWsReplayClient,
+  type RuntimeWsReplayStore
+} from "../src/gateway/runtime-ws-replay.store";
+import {
   buildPageTopic,
   RuntimeWsGateway,
   type PageSubscribedEvent,
@@ -28,6 +35,53 @@ function createUpdate(topic = "tenant.tenant-a.page.orders.instance.instance-1")
   };
 }
 
+class RecordingReplayStore implements RuntimeWsReplayStore {
+  readonly saved: RuntimeManagerExecutedEvent[] = [];
+  private readonly latest = new Map<string, RuntimeManagerExecutedEvent>();
+
+  constructor(initialEvents: RuntimeManagerExecutedEvent[] = []) {
+    for (const event of initialEvents) {
+      this.latest.set(event.topic, event);
+    }
+  }
+
+  async saveLatest(event: RuntimeManagerExecutedEvent): Promise<void> {
+    this.saved.push(event);
+    this.latest.set(event.topic, event);
+  }
+
+  async getLatest(topic: string): Promise<RuntimeManagerExecutedEvent | undefined> {
+    return this.latest.get(topic);
+  }
+}
+
+class FakeRedisClient implements RedisRuntimeWsReplayClient {
+  readonly values = new Map<string, string>();
+  readonly setCalls: Array<{ key: string; value: string }> = [];
+  connected = false;
+
+  constructor(private readonly failWith?: Error) {}
+
+  async connect(): Promise<void> {
+    this.connected = true;
+  }
+
+  async get(key: string): Promise<string | null> {
+    if (this.failWith) {
+      throw this.failWith;
+    }
+    return this.values.get(key) ?? null;
+  }
+
+  async set(key: string, value: string): Promise<void> {
+    if (this.failWith) {
+      throw this.failWith;
+    }
+    this.setCalls.push({ key, value });
+    this.values.set(key, value);
+  }
+}
+
 test("buildPageTopic creates tenant/page/instance scoped topic", () => {
   assert.equal(
     buildPageTopic({
@@ -39,7 +93,7 @@ test("buildPageTopic creates tenant/page/instance scoped topic", () => {
   );
 });
 
-test("runtime websocket gateway confirms page subscription", () => {
+test("runtime websocket gateway confirms page subscription", async () => {
   const gateway = new RuntimeWsGateway();
   const emitted: Array<{ event: string; payload: unknown }> = [];
   const joinedRooms: string[] = [];
@@ -54,7 +108,7 @@ test("runtime websocket gateway confirms page subscription", () => {
   };
 
   gateway.handleConnection(client);
-  const result = gateway.subscribePage(
+  const result = await gateway.subscribePage(
     {
       tenantId: "tenant-a",
       pageId: "orders",
@@ -76,7 +130,7 @@ test("runtime websocket gateway confirms page subscription", () => {
   assert.deepEqual(emitted, [{ event: "pageSubscribed", payload: expected }]);
 });
 
-test("runtime websocket gateway confirms page subscription when join is unavailable", () => {
+test("runtime websocket gateway confirms page subscription when join is unavailable", async () => {
   const gateway = new RuntimeWsGateway();
   const emitted: Array<{ event: string; payload: unknown }> = [];
   const client: WsClientLike = {
@@ -86,7 +140,7 @@ test("runtime websocket gateway confirms page subscription when join is unavaila
     }
   };
 
-  const result = gateway.subscribePage(
+  const result = await gateway.subscribePage(
     {
       tenantId: "tenant-a",
       pageId: "orders",
@@ -127,8 +181,9 @@ test("runtime websocket gateway emits manager executed updates", () => {
   assert.deepEqual(emitted, [{ event: RUNTIME_MANAGER_EXECUTED_EVENT, payload: update }]);
 });
 
-test("runtime websocket gateway broadcasts manager executed updates to topic rooms", () => {
-  const gateway = new RuntimeWsGateway();
+test("runtime websocket gateway broadcasts manager executed updates to topic rooms", async () => {
+  const replayStore = new RecordingReplayStore();
+  const gateway = new RuntimeWsGateway(replayStore);
   const emitted: Array<{ room: string; event: string; payload: unknown }> = [];
   const server: WsServerLike = {
     to(room: string) {
@@ -142,9 +197,10 @@ test("runtime websocket gateway broadcasts manager executed updates to topic roo
   gateway.server = server;
   const update = createUpdate();
 
-  const result = gateway.broadcastRuntimeManagerExecuted(update);
+  const result = await gateway.broadcastRuntimeManagerExecuted(update);
 
   assert.deepEqual(result, update);
+  assert.deepEqual(replayStore.saved, [update]);
   assert.deepEqual(emitted, [
     {
       room: "tenant.tenant-a.page.orders.instance.instance-1",
@@ -154,8 +210,7 @@ test("runtime websocket gateway broadcasts manager executed updates to topic roo
   ]);
 });
 
-test("runtime websocket gateway replays the latest topic update on subscription", () => {
-  const gateway = new RuntimeWsGateway();
+test("runtime websocket gateway replays the latest topic update on subscription", async () => {
   const emitted: Array<{ event: string; payload: unknown }> = [];
   const client: WsClientLike = {
     id: "client-1",
@@ -164,9 +219,9 @@ test("runtime websocket gateway replays the latest topic update on subscription"
     }
   };
   const update = createUpdate();
-  gateway.broadcastRuntimeManagerExecuted(update);
+  const gateway = new RuntimeWsGateway(new RecordingReplayStore([update]));
 
-  gateway.subscribePage(
+  await gateway.subscribePage(
     {
       tenantId: "tenant-a",
       pageId: "orders",
@@ -190,8 +245,7 @@ test("runtime websocket gateway replays the latest topic update on subscription"
   ]);
 });
 
-test("runtime websocket gateway does not replay updates for other topics", () => {
-  const gateway = new RuntimeWsGateway();
+test("runtime websocket gateway does not replay updates for other topics", async () => {
   const emitted: Array<{ event: string; payload: unknown }> = [];
   const client: WsClientLike = {
     id: "client-1",
@@ -199,9 +253,11 @@ test("runtime websocket gateway does not replay updates for other topics", () =>
       emitted.push({ event, payload });
     }
   };
-  gateway.broadcastRuntimeManagerExecuted(createUpdate("tenant.tenant-a.page.customers.instance.instance-1"));
+  const gateway = new RuntimeWsGateway(
+    new RecordingReplayStore([createUpdate("tenant.tenant-a.page.customers.instance.instance-1")])
+  );
 
-  gateway.subscribePage(
+  await gateway.subscribePage(
     {
       tenantId: "tenant-a",
       pageId: "orders",
@@ -222,4 +278,64 @@ test("runtime websocket gateway does not replay updates for other topics", () =>
       }
     }
   ]);
+});
+
+test("in-memory runtime websocket replay store saves and returns latest topic event", async () => {
+  const store = new InMemoryRuntimeWsReplayStore();
+  const first = createUpdate();
+  const latest = createUpdate("tenant.tenant-a.page.orders.instance.instance-1");
+  const otherTopic = createUpdate("tenant.tenant-a.page.customers.instance.instance-1");
+
+  await store.saveLatest(first);
+  await store.saveLatest(otherTopic);
+  await store.saveLatest(latest);
+
+  assert.deepEqual(await store.getLatest("tenant.tenant-a.page.orders.instance.instance-1"), latest);
+  assert.deepEqual(await store.getLatest("tenant.tenant-a.page.customers.instance.instance-1"), otherTopic);
+  assert.equal(await store.getLatest("tenant.tenant-a.page.missing.instance.instance-1"), undefined);
+});
+
+test("redis runtime websocket replay store serializes and returns latest topic event", async () => {
+  const client = new FakeRedisClient();
+  const store = new RedisRuntimeWsReplayStore(client, { keyPrefix: "test:runtime" });
+  const update = createUpdate();
+
+  await store.connect();
+  await store.saveLatest(update);
+
+  assert.equal(client.connected, true);
+  assert.deepEqual(client.setCalls, [
+    {
+      key: "test:runtime:tenant.tenant-a.page.orders.instance.instance-1",
+      value: JSON.stringify(update)
+    }
+  ]);
+  assert.deepEqual(await store.getLatest(update.topic), update);
+  assert.equal(await store.getLatest("tenant.tenant-a.page.missing.instance.instance-1"), undefined);
+});
+
+test("redis runtime websocket replay store fails on invalid payload", async () => {
+  const client = new FakeRedisClient();
+  client.values.set("test:runtime:tenant.tenant-a.page.orders.instance.instance-1", JSON.stringify({ topic: "oops" }));
+  const store = new RedisRuntimeWsReplayStore(client, { keyPrefix: "test:runtime" });
+
+  await assert.rejects(
+    () => store.getLatest("tenant.tenant-a.page.orders.instance.instance-1"),
+    /Invalid runtime manager executed replay payload/
+  );
+});
+
+test("redis runtime websocket replay store propagates client errors", async () => {
+  const store = new RedisRuntimeWsReplayStore(new FakeRedisClient(new Error("redis down")));
+
+  await assert.rejects(() => store.saveLatest(createUpdate()), /redis down/);
+  await assert.rejects(() => store.getLatest("tenant.tenant-a.page.orders.instance.instance-1"), /redis down/);
+});
+
+test("runtime websocket replay store mode defaults to memory and rejects unknown modes", () => {
+  assert.equal(parseRuntimeWsReplayStoreMode(undefined), "memory");
+  assert.equal(parseRuntimeWsReplayStoreMode(""), "memory");
+  assert.equal(parseRuntimeWsReplayStoreMode("memory"), "memory");
+  assert.equal(parseRuntimeWsReplayStoreMode("redis"), "redis");
+  assert.throws(() => parseRuntimeWsReplayStoreMode("postgres"), /Invalid LC_RUNTIME_WS_REPLAY_STORE/);
 });
