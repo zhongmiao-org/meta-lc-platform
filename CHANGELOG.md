@@ -20,6 +20,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(kernel): add tenant, app, rule, and permission metadata to the versioned MetaSchema contract.
 - feat(runtime): add a manager adapter execution contract for orchestrator command plans.
 - feat(runtime): add a Runtime WebSocket manager-executed event contract and BFF emit baseline.
+- feat(bff): add Runtime WebSocket topic-room broadcast and in-memory replay baseline.
 
 ## 0.1.0 (2026-04-18)
 
