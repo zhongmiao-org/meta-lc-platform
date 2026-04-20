@@ -16,6 +16,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - test(kernel): promote SQL generator examples into a reusable compiler contract fixture baseline.
 - feat(kernel): add an API Generator V1 route manifest baseline and extend compiler fixtures across SQL and API outputs.
 - feat(contracts): add query and mutation response contracts for generated API route manifests.
+- feat(kernel): add a Permission Generator V1 manifest baseline and complete compiler fixture coverage across SQL, API, and permission outputs.
 
 ## 0.1.0 (2026-04-18)
 

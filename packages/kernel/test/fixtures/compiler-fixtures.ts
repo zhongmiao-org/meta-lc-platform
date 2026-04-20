@@ -1,10 +1,18 @@
-import type { CompiledApiRouteManifest, CompiledSchemaSql, MetaSchema } from "../../src";
+import type {
+  CompiledApiRouteManifest,
+  CompiledPermissionManifest,
+  CompiledSchemaSql,
+  MetaSchema,
+  SnapshotPermission
+} from "../../src";
 
 export interface CompilerFixture {
   schema: MetaSchema;
+  permissions: SnapshotPermission[];
   expected: {
     sql: CompiledSchemaSql;
     api: CompiledApiRouteManifest;
+    permission: CompiledPermissionManifest;
   };
 }
 
@@ -39,6 +47,11 @@ export const ordersCompilerFixture: CompilerFixture = {
       }
     ]
   },
+  permissions: [
+    { resource: "customers", action: "query", roles: ["SALES", "ADMIN"] },
+    { resource: "orders", action: "query", roles: ["SALES", "FINANCE", "ADMIN"] },
+    { resource: "orders", action: "mutation", roles: ["ADMIN"] }
+  ],
   expected: {
     sql: {
       tables: [
@@ -102,6 +115,35 @@ export const ordersCompilerFixture: CompilerFixture = {
           target: { method: "POST", path: "/mutation" },
           requestContract: "MutationApiRequest",
           responseContract: "MutationApiResponse"
+        }
+      ]
+    },
+    permission: {
+      source: "snapshot-permissions",
+      rules: [
+        {
+          id: "customers.query",
+          resource: "customers",
+          action: "query",
+          roles: ["SALES", "ADMIN"],
+          effect: "allow",
+          enforcement: "rbac"
+        },
+        {
+          id: "orders.query",
+          resource: "orders",
+          action: "query",
+          roles: ["SALES", "FINANCE", "ADMIN"],
+          effect: "allow",
+          enforcement: "rbac"
+        },
+        {
+          id: "orders.mutation",
+          resource: "orders",
+          action: "mutation",
+          roles: ["ADMIN"],
+          effect: "allow",
+          enforcement: "rbac"
         }
       ]
     }

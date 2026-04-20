@@ -8,3 +8,4 @@ export * from "./migration-safety";
 export * from "./snapshot-dsl";
 export * from "./sql-generator";
 export * from "./api-generator";
+export * from "./permission-generator";

@@ -114,6 +114,23 @@ export interface CompiledApiRouteManifest {
   routes: CompiledApiRoute[];
 }
 
+export type PermissionRuleEffect = "allow";
+export type PermissionRuleEnforcement = "rbac";
+
+export interface CompiledPermissionRule {
+  id: string;
+  resource: string;
+  action: string;
+  roles: string[];
+  effect: PermissionRuleEffect;
+  enforcement: PermissionRuleEnforcement;
+}
+
+export interface CompiledPermissionManifest {
+  source: "snapshot-permissions";
+  rules: CompiledPermissionRule[];
+}
+
 export interface MetaVersionMetadata {
   author: string;
   message: string;
