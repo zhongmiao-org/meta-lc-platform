@@ -7,13 +7,21 @@ export interface MetaField {
   defaultValue?: Primitive;
 }
 
+export interface MetaIndex {
+  name: string;
+  fields: string[];
+  unique?: boolean;
+}
+
 export interface MetaTable {
   name: string;
   fields: MetaField[];
+  indexes?: MetaIndex[];
 }
 
 export interface MetaSchema {
   tables: MetaTable[];
+  relations?: SnapshotRelation[];
 }
 
 export interface SnapshotRelation {
@@ -73,6 +81,13 @@ export interface MigrationDslV1 {
 export interface CompiledMigrationSql {
   up: string[];
   down: string[];
+}
+
+export interface CompiledSchemaSql {
+  tables: string[];
+  indexes: string[];
+  relations: string[];
+  statements: string[];
 }
 
 export interface MetaVersionMetadata {
