@@ -7,17 +7,17 @@ import {
   SubscribeMessage,
   WebSocketGateway
 } from "@nestjs/websockets";
+import {
+  buildRuntimePageTopic,
+  type RuntimePageTopicRef
+} from "@zhongmiao/meta-lc-contracts";
 
 export interface WsClientLike {
   id: string;
   emit(event: string, payload: unknown): void;
 }
 
-export interface SubscribePageMessage {
-  tenantId: string;
-  pageId: string;
-  pageInstanceId: string;
-}
+export interface SubscribePageMessage extends RuntimePageTopicRef {}
 
 export interface PageSubscribedEvent extends SubscribePageMessage {
   topic: string;
@@ -52,5 +52,5 @@ export class RuntimeWsGateway implements OnGatewayConnection<WsClientLike>, OnGa
 }
 
 export function buildPageTopic(message: SubscribePageMessage): string {
-  return `tenant.${message.tenantId}.page.${message.pageId}.instance.${message.pageInstanceId}`;
+  return buildRuntimePageTopic(message);
 }
