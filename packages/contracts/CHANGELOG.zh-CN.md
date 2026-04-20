@@ -8,6 +8,7 @@
 - feat(runtime-contracts): 新增共享 runtime page topic helper，用于 BFF WebSocket 与 runtime orchestration 边界对齐。
 - feat(api-contracts): 新增 query 与 mutation 响应契约，供生成的 API route manifest 引用。
 - feat(runtime-contracts): 新增 manager-executed WebSocket 事件 envelope，用于 runtime 页面更新。
+- feat(runtime-contracts): 为 runtime manager-executed 事件新增可选 replay cursor。
 
 ## 0.1.0 (2026-04-18)
 

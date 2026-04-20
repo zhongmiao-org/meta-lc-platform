@@ -134,6 +134,7 @@ export interface RuntimeManagerExecutedEvent {
   topic: string;
   page: RuntimePageTopicRef;
   requestId?: string;
+  replayId?: string;
   patchState: Record<string, unknown>;
   refreshedDatasourceIds: string[];
   runActionIds: string[];

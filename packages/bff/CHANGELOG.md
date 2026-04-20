@@ -14,6 +14,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(gateway): add a configurable runtime WebSocket replay store with a Redis-backed latest-event adapter.
 - feat(gateway): add a configurable runtime WebSocket broadcast bus with Redis pub/sub fanout.
 - feat(gateway): add runtime WebSocket operations status and health visibility.
+- feat(gateway): add Redis Stream cursor replay for runtime WebSocket updates.
 
 ## 0.1.0 (2026-04-18)
 

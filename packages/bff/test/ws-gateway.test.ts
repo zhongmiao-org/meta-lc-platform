@@ -17,8 +17,12 @@ import { RuntimeWsHealthController } from "../src/gateway/runtime-ws-health.cont
 import { RuntimeWsOperationsState } from "../src/gateway/runtime-ws-operations.state";
 import {
   InMemoryRuntimeWsReplayStore,
+  parseRuntimeWsReplayLimit,
   parseRuntimeWsReplayStoreMode,
   RedisRuntimeWsReplayStore,
+  RedisStreamRuntimeWsReplayStore,
+  type RedisRuntimeWsStreamReplayClient,
+  type RedisRuntimeWsStreamEntry,
   type RedisRuntimeWsReplayClient,
   type RuntimeWsReplayStore
 } from "../src/gateway/runtime-ws-replay.store";
@@ -48,32 +52,54 @@ function createUpdate(topic = "tenant.tenant-a.page.orders.instance.instance-1")
 
 class RecordingReplayStore implements RuntimeWsReplayStore {
   readonly saved: RuntimeManagerExecutedEvent[] = [];
+  private readonly events: RuntimeManagerExecutedEvent[] = [];
   private readonly latest = new Map<string, RuntimeManagerExecutedEvent>();
 
   constructor(initialEvents: RuntimeManagerExecutedEvent[] = []) {
     for (const event of initialEvents) {
+      this.events.push(event);
       this.latest.set(event.topic, event);
     }
   }
 
-  async saveLatest(event: RuntimeManagerExecutedEvent): Promise<void> {
+  async saveLatest(event: RuntimeManagerExecutedEvent): Promise<RuntimeManagerExecutedEvent> {
     this.saved.push(event);
+    this.events.push(event);
     this.latest.set(event.topic, event);
+    return event;
   }
 
   async getLatest(topic: string): Promise<RuntimeManagerExecutedEvent | undefined> {
     return this.latest.get(topic);
+  }
+
+  async getAfter(topic: string, afterReplayId: string): Promise<RuntimeManagerExecutedEvent[]> {
+    return this.events.filter(
+      (event) => event.topic === topic && event.replayId && compareReplayId(event.replayId, afterReplayId) > 0
+    );
+  }
+}
+
+class ReplayIdReplayStore extends RecordingReplayStore {
+  async saveLatest(event: RuntimeManagerExecutedEvent): Promise<RuntimeManagerExecutedEvent> {
+    const savedEvent = { ...event, replayId: "2-0" };
+    await super.saveLatest(savedEvent);
+    return savedEvent;
   }
 }
 
 class FailingReplayStore implements RuntimeWsReplayStore {
   constructor(private readonly error: Error) {}
 
-  async saveLatest(): Promise<void> {
+  async saveLatest(): Promise<RuntimeManagerExecutedEvent> {
     throw this.error;
   }
 
   async getLatest(): Promise<RuntimeManagerExecutedEvent | undefined> {
+    throw this.error;
+  }
+
+  async getAfter(): Promise<RuntimeManagerExecutedEvent[]> {
     throw this.error;
   }
 }
@@ -108,9 +134,13 @@ class FailingBroadcastBus implements RuntimeWsBroadcastBus {
   async close(): Promise<void> {}
 }
 
-class FakeRedisClient implements RedisRuntimeWsReplayClient, RedisRuntimeWsBroadcastClient {
+class FakeRedisClient implements RedisRuntimeWsReplayClient, RedisRuntimeWsBroadcastClient, RedisRuntimeWsStreamReplayClient {
   readonly values = new Map<string, string>();
+  readonly streams = new Map<string, RedisRuntimeWsStreamEntry[]>();
   readonly setCalls: Array<{ key: string; value: string }> = [];
+  readonly xAddCalls: Array<{ key: string; id: string; message: Record<string, string> }> = [];
+  readonly xRangeCalls: Array<{ key: string; start: string; end: string; options?: { COUNT?: number } }> = [];
+  readonly xRevRangeCalls: Array<{ key: string; start: string; end: string; options?: { COUNT?: number } }> = [];
   readonly publishCalls: Array<{ channel: string; message: string }> = [];
   readonly subscriptions = new Map<string, (message: string, channel: string) => void | Promise<void>>();
   unsubscribedChannels: string[] = [];
@@ -142,6 +172,46 @@ class FakeRedisClient implements RedisRuntimeWsReplayClient, RedisRuntimeWsBroad
     this.values.set(key, value);
   }
 
+  async xAdd(key: string, id: string, message: Record<string, string>): Promise<string> {
+    if (this.failWith) {
+      throw this.failWith;
+    }
+    const entries = this.streams.get(key) ?? [];
+    const replayId = `${entries.length + 1}-0`;
+    this.xAddCalls.push({ key, id, message });
+    entries.push({ id: replayId, message });
+    this.streams.set(key, entries);
+    return replayId;
+  }
+
+  async xRange(
+    key: string,
+    start: string,
+    end: string,
+    options?: { COUNT?: number }
+  ): Promise<RedisRuntimeWsStreamEntry[]> {
+    if (this.failWith) {
+      throw this.failWith;
+    }
+    this.xRangeCalls.push({ key, start, end, options });
+    const entries = this.streams.get(key) ?? [];
+    const minId = start.startsWith("(") ? start.slice(1) : start;
+    return entries.filter((entry) => compareReplayId(entry.id, minId) > 0).slice(0, options?.COUNT);
+  }
+
+  async xRevRange(
+    key: string,
+    start: string,
+    end: string,
+    options?: { COUNT?: number }
+  ): Promise<RedisRuntimeWsStreamEntry[]> {
+    if (this.failWith) {
+      throw this.failWith;
+    }
+    this.xRevRangeCalls.push({ key, start, end, options });
+    return [...(this.streams.get(key) ?? [])].reverse().slice(0, options?.COUNT);
+  }
+
   async publish(channel: string, message: string): Promise<void> {
     if (this.failWith) {
       throw this.failWith;
@@ -163,6 +233,14 @@ class FakeRedisClient implements RedisRuntimeWsReplayClient, RedisRuntimeWsBroad
   async quit(): Promise<void> {
     this.quitCalled = true;
   }
+}
+
+function compareReplayId(left: string, right: string): number {
+  const [leftMs = "0", leftSeq = "0"] = left.split("-");
+  const [rightMs = "0", rightSeq = "0"] = right.split("-");
+  const leftParts = [Number(leftMs), Number(leftSeq)];
+  const rightParts = [Number(rightMs), Number(rightSeq)];
+  return leftParts[0] === rightParts[0] ? leftParts[1] - rightParts[1] : leftParts[0] - rightParts[0];
 }
 
 test("buildPageTopic creates tenant/page/instance scoped topic", () => {
@@ -327,6 +405,36 @@ test("runtime websocket gateway broadcasts manager executed updates to topic roo
   ]);
 });
 
+test("runtime websocket gateway broadcasts replay-id enriched manager updates", async () => {
+  const replayStore = new ReplayIdReplayStore();
+  const broadcastBus = new RecordingBroadcastBus();
+  const gateway = new RuntimeWsGateway(replayStore, broadcastBus, "instance-a");
+  const emitted: Array<{ room: string; event: string; payload: unknown }> = [];
+  gateway.server = {
+    to(room: string) {
+      return {
+        emit(event: string, payload: unknown): void {
+          emitted.push({ room, event, payload });
+        }
+      };
+    }
+  };
+  const update = createUpdate();
+  const enrichedUpdate = { ...update, replayId: "2-0" };
+
+  const result = await gateway.broadcastRuntimeManagerExecuted(update);
+
+  assert.deepEqual(result, enrichedUpdate);
+  assert.deepEqual(broadcastBus.published, [{ event: enrichedUpdate, options: { originId: "instance-a" } }]);
+  assert.deepEqual(emitted, [
+    {
+      room: "tenant.tenant-a.page.orders.instance.instance-1",
+      event: RUNTIME_MANAGER_EXECUTED_EVENT,
+      payload: enrichedUpdate
+    }
+  ]);
+});
+
 test("runtime websocket gateway records replay errors and preserves fail-fast behavior", async () => {
   const operationsState = new RuntimeWsOperationsState({
     replayStoreMode: "memory",
@@ -432,6 +540,36 @@ test("runtime websocket gateway emits remote broadcast bus events once", async (
   ]);
 });
 
+test("runtime websocket gateway does not re-save remote events that already have replay ids", async () => {
+  const replayStore = new RecordingReplayStore();
+  const broadcastBus = new InProcessRuntimeWsBroadcastBus();
+  const gateway = new RuntimeWsGateway(replayStore, broadcastBus, "instance-a");
+  const emitted: Array<{ room: string; event: string; payload: unknown }> = [];
+  gateway.server = {
+    to(room: string) {
+      return {
+        emit(event: string, payload: unknown): void {
+          emitted.push({ room, event, payload });
+        }
+      };
+    }
+  };
+  const update = { ...createUpdate(), replayId: "1-0" };
+
+  await gateway.onModuleInit();
+  await broadcastBus.publish(update, { originId: "instance-b" });
+  await gateway.onModuleDestroy();
+
+  assert.deepEqual(replayStore.saved, []);
+  assert.deepEqual(emitted, [
+    {
+      room: "tenant.tenant-a.page.orders.instance.instance-1",
+      event: RUNTIME_MANAGER_EXECUTED_EVENT,
+      payload: update
+    }
+  ]);
+});
+
 test("runtime websocket gateway ignores its own broadcast bus events", async () => {
   const replayStore = new RecordingReplayStore();
   const broadcastBus = new InProcessRuntimeWsBroadcastBus();
@@ -487,6 +625,45 @@ test("runtime websocket gateway replays the latest topic update on subscription"
       }
     },
     { event: RUNTIME_MANAGER_EXECUTED_EVENT, payload: update }
+  ]);
+});
+
+test("runtime websocket gateway replays cursor updates after subscription replay id", async () => {
+  const emitted: Array<{ event: string; payload: unknown }> = [];
+  const client: WsClientLike = {
+    id: "client-1",
+    emit(event: string, payload: unknown): void {
+      emitted.push({ event, payload });
+    }
+  };
+  const oldUpdate = { ...createUpdate(), replayId: "1-0" };
+  const nextUpdate = { ...createUpdate(), replayId: "2-0", requestId: "req-2" };
+  const latestUpdate = { ...createUpdate(), replayId: "3-0", requestId: "req-3" };
+  const gateway = new RuntimeWsGateway(new RecordingReplayStore([oldUpdate, nextUpdate, latestUpdate]));
+
+  await gateway.subscribePage(
+    {
+      tenantId: "tenant-a",
+      pageId: "orders",
+      pageInstanceId: "instance-1",
+      afterReplayId: "1-0"
+    },
+    client
+  );
+
+  assert.deepEqual(emitted, [
+    {
+      event: "pageSubscribed",
+      payload: {
+        tenantId: "tenant-a",
+        pageId: "orders",
+        pageInstanceId: "instance-1",
+        topic: "tenant.tenant-a.page.orders.instance.instance-1",
+        status: "subscribed"
+      }
+    },
+    { event: RUNTIME_MANAGER_EXECUTED_EVENT, payload: nextUpdate },
+    { event: RUNTIME_MANAGER_EXECUTED_EVENT, payload: latestUpdate }
   ]);
 });
 
@@ -557,6 +734,61 @@ test("redis runtime websocket replay store serializes and returns latest topic e
   ]);
   assert.deepEqual(await store.getLatest(update.topic), update);
   assert.equal(await store.getLatest("tenant.tenant-a.page.missing.instance.instance-1"), undefined);
+});
+
+test("redis stream runtime websocket replay store saves replay ids and reads cursor events", async () => {
+  const client = new FakeRedisClient();
+  const store = new RedisStreamRuntimeWsReplayStore(client, {
+    keyPrefix: "test:stream",
+    replayLimit: 1
+  });
+  const first = createUpdate();
+  const second = { ...createUpdate(), requestId: "req-2" };
+  const third = { ...createUpdate(), requestId: "req-3" };
+
+  await store.connect();
+  const savedFirst = await store.saveLatest(first);
+  const savedSecond = await store.saveLatest(second);
+  const savedThird = await store.saveLatest(third);
+
+  assert.equal(client.connected, true);
+  assert.equal(savedFirst.replayId, "1-0");
+  assert.equal(savedSecond.replayId, "2-0");
+  assert.equal(savedThird.replayId, "3-0");
+  assert.deepEqual(client.xAddCalls[0], {
+    key: "test:stream:tenant.tenant-a.page.orders.instance.instance-1",
+    id: "*",
+    message: { event: JSON.stringify(first) }
+  });
+  assert.deepEqual(await store.getLatest(first.topic), savedThird);
+  assert.deepEqual(await store.getAfter(first.topic, "1-0"), [savedSecond]);
+  assert.deepEqual(client.xRangeCalls.at(-1), {
+    key: "test:stream:tenant.tenant-a.page.orders.instance.instance-1",
+    start: "(1-0",
+    end: "+",
+    options: { COUNT: 1 }
+  });
+  assert.equal(await store.getLatest("tenant.tenant-a.page.missing.instance.instance-1"), undefined);
+});
+
+test("redis stream runtime websocket replay store fails on invalid payload", async () => {
+  const client = new FakeRedisClient();
+  client.streams.set("test:stream:tenant.tenant-a.page.orders.instance.instance-1", [
+    { id: "1-0", message: { event: JSON.stringify({ topic: "oops" }) } }
+  ]);
+  const store = new RedisStreamRuntimeWsReplayStore(client, { keyPrefix: "test:stream" });
+
+  await assert.rejects(
+    () => store.getLatest("tenant.tenant-a.page.orders.instance.instance-1"),
+    /Invalid runtime manager executed replay payload/
+  );
+});
+
+test("redis stream runtime websocket replay store propagates client errors", async () => {
+  const store = new RedisStreamRuntimeWsReplayStore(new FakeRedisClient(new Error("redis down")));
+
+  await assert.rejects(() => store.saveLatest(createUpdate()), /redis down/);
+  await assert.rejects(() => store.getAfter("tenant.tenant-a.page.orders.instance.instance-1", "1-0"), /redis down/);
 });
 
 test("redis runtime websocket broadcast bus publishes and subscribes manager events", async () => {
@@ -639,7 +871,16 @@ test("runtime websocket replay store mode defaults to memory and rejects unknown
   assert.equal(parseRuntimeWsReplayStoreMode(""), "memory");
   assert.equal(parseRuntimeWsReplayStoreMode("memory"), "memory");
   assert.equal(parseRuntimeWsReplayStoreMode("redis"), "redis");
+  assert.equal(parseRuntimeWsReplayStoreMode("redis-stream"), "redis-stream");
   assert.throws(() => parseRuntimeWsReplayStoreMode("postgres"), /Invalid LC_RUNTIME_WS_REPLAY_STORE/);
+});
+
+test("runtime websocket replay limit defaults and rejects invalid values", () => {
+  assert.equal(parseRuntimeWsReplayLimit(undefined), 20);
+  assert.equal(parseRuntimeWsReplayLimit(""), 20);
+  assert.equal(parseRuntimeWsReplayLimit("5"), 5);
+  assert.throws(() => parseRuntimeWsReplayLimit("0"), /Invalid LC_RUNTIME_WS_REPLAY_LIMIT/);
+  assert.throws(() => parseRuntimeWsReplayLimit("abc"), /Invalid LC_RUNTIME_WS_REPLAY_LIMIT/);
 });
 
 test("runtime websocket broadcast bus mode defaults to local and rejects unknown modes", () => {
