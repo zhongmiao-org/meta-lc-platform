@@ -10,6 +10,7 @@
 - test(permission-gate): 将 query/mutation gate 扩展到 `SELF`、`DEPT_AND_CHILDREN`、`CUSTOM_ORG_SET` 权限路径，不再只覆盖现有 `DEPT` denied 样例。
 - feat(permission-seed): 新增 custom-org 与 self-scope 演示身份，供 e2e 与远端 bootstrap 场景稳定复现组织域权限。
 - feat(gateway): 新增 runtime manager-executed 更新的 WebSocket emit 基线。
+- feat(gateway): 为 runtime manager-executed 更新新增 topic room 广播与内存 replay。
 
 ## 0.1.0 (2026-04-18)
 
