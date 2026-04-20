@@ -19,6 +19,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(kernel): add a Permission Generator V1 manifest baseline and complete compiler fixture coverage across SQL, API, and permission outputs.
 - feat(kernel): add tenant, app, rule, and permission metadata to the versioned MetaSchema contract.
 - feat(runtime): add a manager adapter execution contract for orchestrator command plans.
+- feat(runtime): add a Runtime WebSocket manager-executed event contract and BFF emit baseline.
 
 ## 0.1.0 (2026-04-18)
 
