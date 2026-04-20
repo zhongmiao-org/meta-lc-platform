@@ -6,6 +6,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(sql-generator): add table, index, relation SQL generation and a compiler fixture baseline.
 - test(compiler): add a reusable compiler contract fixture for SQL generator output.
 - feat(api-generator): add a stable route manifest generator and extend compiler fixture coverage to API outputs.
+- feat(permission-generator): add a stable permission manifest generator and complete compiler fixture coverage.
 
 ## 0.1.0 (2026-04-18)
 
