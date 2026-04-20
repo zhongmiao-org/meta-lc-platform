@@ -14,6 +14,8 @@
 - feat(runtime): 新增 manager-first runtime orchestrator 基线与共享 runtime page topic helper。
 - feat(kernel): 新增 SQL Generator V1 基线，覆盖 table、index、relation 与 compiler fixture。
 - test(kernel): 将 SQL generator 示例提升为可复用的 compiler contract fixture 基线。
+- feat(kernel): 新增 API Generator V1 route manifest 基线，并将 compiler fixture 扩展到 SQL 与 API 输出。
+- feat(contracts): 新增 query 与 mutation 响应契约，供生成的 API route manifest 引用。
 
 ## 0.1.0 (2026-04-18)
 

@@ -4,7 +4,7 @@ import { AuditLogService } from "../common/audit-log.service";
 import { resolveRequestId } from "../common/request-id";
 import { MutationOrchestratorService } from "../orchestration/mutation-orchestrator.service";
 import { QueryOrchestratorService } from "../orchestration/query-orchestrator.service";
-import type { MutationApiRequest, QueryApiRequest } from "../types";
+import type { MutationApiRequest, MutationApiResponse, QueryApiRequest, QueryApiResponse } from "../types";
 
 @Controller()
 export class QueryController {
@@ -31,7 +31,7 @@ export class QueryController {
     res: {
       setHeader(name: string, value: string): void;
     }
-  ): Promise<{ rows: Record<string, unknown>[] }> {
+  ): Promise<QueryApiResponse> {
     const requestId = resolveRequestId(req.headers["x-request-id"]);
     res.setHeader("x-request-id", requestId);
 
@@ -92,7 +92,7 @@ export class QueryController {
     res: {
       setHeader(name: string, value: string): void;
     }
-  ): Promise<{ rowCount: number; row: Record<string, unknown> | null }> {
+  ): Promise<MutationApiResponse> {
     const requestId = resolveRequestId(req.headers["x-request-id"]);
     res.setHeader("x-request-id", requestId);
 

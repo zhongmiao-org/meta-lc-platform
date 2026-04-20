@@ -14,6 +14,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(runtime): add a manager-first runtime orchestrator baseline and shared runtime page topic helper.
 - feat(kernel): add a SQL Generator V1 baseline for tables, indexes, relations, and compiler fixture coverage.
 - test(kernel): promote SQL generator examples into a reusable compiler contract fixture baseline.
+- feat(kernel): add an API Generator V1 route manifest baseline and extend compiler fixtures across SQL and API outputs.
+- feat(contracts): add query and mutation response contracts for generated API route manifests.
 
 ## 0.1.0 (2026-04-18)
 

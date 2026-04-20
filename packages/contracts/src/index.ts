@@ -8,6 +8,10 @@ export interface QueryApiRequest {
   limit?: number;
 }
 
+export interface QueryApiResponse {
+  rows: Record<string, unknown>[];
+}
+
 export type MutationOperation = "create" | "update" | "delete";
 
 export interface MutationApiRequest {
@@ -19,6 +23,11 @@ export interface MutationApiRequest {
   orgId?: string;
   key?: Record<string, string | number | boolean>;
   data?: Record<string, string | number | boolean | null>;
+}
+
+export interface MutationApiResponse {
+  rowCount: number;
+  row: Record<string, unknown> | null;
 }
 
 export type DataScopeType =

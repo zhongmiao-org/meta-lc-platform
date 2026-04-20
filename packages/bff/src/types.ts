@@ -5,7 +5,9 @@ export type {
   DataScopeDecision,
   DataScopeType,
   MutationApiRequest,
+  MutationApiResponse,
   MutationOperation,
   OrgScopeContext,
-  QueryApiRequest
+  QueryApiRequest,
+  QueryApiResponse
 } from "@zhongmiao/meta-lc-contracts";

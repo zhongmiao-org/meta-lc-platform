@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildRuntimePageTopic,
+  type MutationApiResponse,
   type QueryApiRequest,
+  type QueryApiResponse,
   type RuntimeFunctionCallDefinition,
   type RuntimePageDsl,
   type RuntimeRuleDefinition,
@@ -20,6 +22,19 @@ test("contracts exports query request type", () => {
     roles: ["USER"]
   };
   assert.equal(req.table, "orders");
+});
+
+test("contracts exports query and mutation response types", () => {
+  const queryResponse: QueryApiResponse = {
+    rows: [{ id: "order-1" }]
+  };
+  const mutationResponse: MutationApiResponse = {
+    rowCount: 1,
+    row: { id: "order-1" }
+  };
+
+  assert.equal(queryResponse.rows[0]?.id, "order-1");
+  assert.equal(mutationResponse.rowCount, 1);
 });
 
 test("contracts exports runtime dsl types", () => {

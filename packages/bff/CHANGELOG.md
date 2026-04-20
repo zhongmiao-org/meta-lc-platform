@@ -3,6 +3,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 ## [Unreleased]
 
 - feat(gateway): add meta API, in-memory cache, aggregation summary, and WebSocket lifecycle baseline.
+- feat(api-contracts): annotate query and mutation controller responses with shared API response contracts.
 - chore(gateway): reuse the shared runtime page topic helper for WebSocket subscription acknowledgements.
 - chore(package): adopt the `@zhongmiao/meta-lc-bff` scoped package identity for release governance.
 - fix(local-dev): move the default BFF local port to `6001` and bind an explicit host so browser-based integration can reach the service without unsafe-port blocking.
