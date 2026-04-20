@@ -10,6 +10,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - docs(runtime): sync the runtime contract, frontend integration, migration guidance, and testing playbook to the current manager-first implementation.
 - fix(boundaries): tighten direct `pg` access down to explicit BFF/datasource/kernel entry points and remove the audit package from the transitional DB-driver allowlist.
 - fix(boundaries): promote DB-driver boundary checks from a transitional allowlist to explicit package/file policy checks with self-tests.
+- feat(bff): add the first Gateway baseline for meta APIs, in-memory cache, aggregation summary, and WebSocket lifecycle smoke.
 
 ## 0.1.0 (2026-04-18)
 
