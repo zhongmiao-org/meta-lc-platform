@@ -22,6 +22,30 @@ export interface MetaTable {
 export interface MetaSchema {
   tables: MetaTable[];
   relations?: SnapshotRelation[];
+  tenants?: MetaTenant[];
+  apps?: MetaApp[];
+  rules?: MetaRule[];
+  permissions?: SnapshotPermission[];
+}
+
+export interface MetaTenant {
+  id: string;
+  name: string;
+  status?: "active" | "disabled";
+}
+
+export interface MetaApp {
+  id: string;
+  tenantId: string;
+  name: string;
+  status?: "active" | "disabled";
+}
+
+export interface MetaRule {
+  id: string;
+  appId: string;
+  name?: string;
+  trigger: string;
 }
 
 export interface SnapshotRelation {
