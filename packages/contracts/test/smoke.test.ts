@@ -147,3 +147,21 @@ test("contracts exports runtime manager executed event helper", () => {
     runActionIds: ["notify"]
   });
 });
+
+test("contracts accepts runtime manager executed replay cursor", () => {
+  const event: RuntimeManagerExecutedEvent = {
+    type: "runtime.manager.executed",
+    topic: "tenant.tenant-a.page.orders-page.instance.instance-1",
+    page: {
+      tenantId: "tenant-a",
+      pageId: "orders-page",
+      pageInstanceId: "instance-1"
+    },
+    replayId: "1710000000000-0",
+    patchState: {},
+    refreshedDatasourceIds: [],
+    runActionIds: []
+  };
+
+  assert.equal(event.replayId, "1710000000000-0");
+});

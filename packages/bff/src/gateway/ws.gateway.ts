@@ -43,9 +43,11 @@ export interface WsServerLike {
   to(room: string): WsRoomLike;
 }
 
-export interface SubscribePageMessage extends RuntimePageTopicRef {}
+export interface SubscribePageMessage extends RuntimePageTopicRef {
+  afterReplayId?: string;
+}
 
-export interface PageSubscribedEvent extends SubscribePageMessage {
+export interface PageSubscribedEvent extends RuntimePageTopicRef {
   topic: string;
   status: "subscribed";
 }
@@ -106,22 +108,31 @@ export class RuntimeWsGateway
     @ConnectedSocket() client: WsClientLike
   ): Promise<PageSubscribedEvent> {
     const event: PageSubscribedEvent = {
-      ...message,
+      tenantId: message.tenantId,
+      pageId: message.pageId,
+      pageInstanceId: message.pageInstanceId,
       topic: buildPageTopic(message),
       status: "subscribed"
     };
     this.joinTopic(client, event.topic);
     client.emit("pageSubscribed", event);
-    let replayEvent: RuntimeManagerExecutedEvent | undefined;
     try {
-      replayEvent = await this.replayStore.getLatest(event.topic);
+      if (message.afterReplayId) {
+        const replayEvents = await this.replayStore.getAfter(event.topic, message.afterReplayId);
+        this.operationsState.recordSuccess();
+        for (const replayEvent of replayEvents) {
+          this.emitRuntimeManagerExecuted(client, replayEvent);
+        }
+        return event;
+      }
+      const replayEvent = await this.replayStore.getLatest(event.topic);
       this.operationsState.recordSuccess();
+      if (replayEvent) {
+        this.emitRuntimeManagerExecuted(client, replayEvent);
+      }
     } catch (error) {
       this.operationsState.recordError("replay", error);
       throw error;
-    }
-    if (replayEvent) {
-      this.emitRuntimeManagerExecuted(client, replayEvent);
     }
     return event;
   }
@@ -133,15 +144,15 @@ export class RuntimeWsGateway
 
   async broadcastRuntimeManagerExecuted(event: RuntimeManagerExecutedEvent): Promise<RuntimeManagerExecutedEvent> {
     try {
-      await this.replayStore.saveLatest(event);
-      this.emitRuntimeManagerExecutedToTopic(event);
-      await this.broadcastBus.publish(event, { originId: this.instanceId });
+      const savedEvent = await this.replayStore.saveLatest(event);
+      this.emitRuntimeManagerExecutedToTopic(savedEvent);
+      await this.broadcastBus.publish(savedEvent, { originId: this.instanceId });
       this.operationsState.recordSuccess();
+      return savedEvent;
     } catch (error) {
       this.operationsState.recordError("broadcast", error);
       throw error;
     }
-    return event;
   }
 
   private async handleBroadcastMessage(message: RuntimeWsBroadcastMessage): Promise<void> {
@@ -149,8 +160,8 @@ export class RuntimeWsGateway
       return;
     }
     try {
-      await this.replayStore.saveLatest(message.event);
-      this.emitRuntimeManagerExecutedToTopic(message.event);
+      const event = message.event.replayId ? message.event : await this.replayStore.saveLatest(message.event);
+      this.emitRuntimeManagerExecutedToTopic(event);
       this.operationsState.recordSuccess();
     } catch (error) {
       this.operationsState.recordError("broadcast", error);

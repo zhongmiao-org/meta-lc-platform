@@ -24,6 +24,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(bff): add a configurable Runtime WebSocket replay store with a Redis-backed latest-event adapter.
 - feat(bff): add a configurable Runtime WebSocket broadcast bus with Redis pub/sub fanout.
 - feat(bff): add Runtime WebSocket operations status and health visibility.
+- feat(bff): add Redis Stream cursor replay for Runtime WebSocket updates.
 
 ## 0.1.0 (2026-04-18)
 
