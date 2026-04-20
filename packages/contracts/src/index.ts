@@ -106,6 +106,16 @@ export interface RuntimePageMeta {
   description?: string;
 }
 
+export interface RuntimePageTopicRef {
+  tenantId: string;
+  pageId: string;
+  pageInstanceId: string;
+}
+
+export function buildRuntimePageTopic(ref: RuntimePageTopicRef): string {
+  return `tenant.${ref.tenantId}.page.${ref.pageId}.instance.${ref.pageInstanceId}`;
+}
+
 export interface RuntimeNodeSchema {
   id: string;
   componentType: string;

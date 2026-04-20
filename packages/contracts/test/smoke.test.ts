@@ -1,13 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type {
-  QueryApiRequest,
-  RuntimeFunctionCallDefinition,
-  RuntimePageDsl,
-  RuntimeRuleDefinition,
-  RuntimeRefreshEvent,
-  RuntimeRefreshPlan,
-  RuntimeTemplateDependency
+import {
+  buildRuntimePageTopic,
+  type QueryApiRequest,
+  type RuntimeFunctionCallDefinition,
+  type RuntimePageDsl,
+  type RuntimeRuleDefinition,
+  type RuntimeRefreshEvent,
+  type RuntimeRefreshPlan,
+  type RuntimeTemplateDependency
 } from "../src";
 
 test("contracts exports query request type", () => {
@@ -87,4 +88,15 @@ test("contracts exports runtime refresh planning types", () => {
 
   assert.equal(plan.triggeredBy.type, "mutation.succeeded");
   assert.equal(plan.targetOrder[0]?.kind, "datasource");
+});
+
+test("contracts exports runtime page topic helper", () => {
+  assert.equal(
+    buildRuntimePageTopic({
+      tenantId: "tenant-a",
+      pageId: "orders-page",
+      pageInstanceId: "instance-1"
+    }),
+    "tenant.tenant-a.page.orders-page.instance.instance-1"
+  );
 });
