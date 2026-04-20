@@ -17,6 +17,7 @@
 - feat(kernel): 新增 API Generator V1 route manifest 基线，并将 compiler fixture 扩展到 SQL 与 API 输出。
 - feat(contracts): 新增 query 与 mutation 响应契约，供生成的 API route manifest 引用。
 - feat(kernel): 新增 Permission Generator V1 manifest 基线，完成 SQL、API 与 permission 输出的 compiler fixture 覆盖。
+- feat(kernel): 将 tenant、app、rule 与 permission 元数据纳入可版本化 MetaSchema 契约。
 
 ## 0.1.0 (2026-04-18)
 

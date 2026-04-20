@@ -25,6 +25,15 @@ test("compilePermissionManifest accepts empty permissions", () => {
   });
 });
 
+test("compilePermissionManifest accepts permissions from MetaSchema", () => {
+  const schema = {
+    tables: [],
+    permissions: ordersCompilerFixture.permissions
+  };
+
+  assert.deepEqual(compilePermissionManifest(schema.permissions ?? []), ordersCompilerFixture.expected.permission);
+});
+
 test("compilePermissionManifest rejects invalid permissions", () => {
   assert.throws(
     () => compilePermissionManifest([{ resource: "", action: "query", roles: ["ADMIN"] }]),
