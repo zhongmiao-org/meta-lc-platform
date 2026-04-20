@@ -1,55 +1,67 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = process.cwd();
-const PACKAGES = path.join(ROOT, 'packages');
-const violations = [];
+const DB_DRIVER_PACKAGES = new Set(['bff', 'datasource', 'kernel']);
+const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
+const ALLOWED_PG_IMPORT_FILES = new Set([
+  'packages/datasource/src/postgres-datasource-adapter.ts',
+  'packages/kernel/src/postgres-meta-kernel-repository.ts',
+  'packages/bff/src/integration/org-scope.service.ts',
+  'packages/bff/src/integration/audit-persistence.service.ts',
+  'packages/bff/src/integration/postgres-query-executor.service.ts',
+  'packages/bff/src/bootstrap/migration-runner.ts'
+]);
+const FORBIDDEN_KERNEL_DEPS = [
+  '@zhongmiao/meta-lc-bff',
+  '@zhongmiao/meta-lc-query',
+  '@zhongmiao/meta-lc-datasource'
+];
 
-function walk(dir) {
+export function checkWorkspace(root = process.cwd()) {
+  const packagesDir = path.join(root, 'packages');
+  const violations = [];
+  walk(packagesDir, root, violations);
+  return violations;
+}
+
+function walk(dir, root, violations) {
+  if (!fs.existsSync(dir)) return;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (entry.name === 'dist' || entry.name === 'node_modules') continue;
-      walk(full);
+      walk(full, root, violations);
       continue;
     }
-    if (entry.isFile() && full.endsWith('.ts')) checkFile(full);
+    if (entry.isFile() && entry.name === 'package.json') checkPackageManifest(full, root, violations);
+    if (entry.isFile() && full.endsWith('.ts')) checkSourceFile(full, root, violations);
   }
 }
 
-function checkFile(file) {
-  const rel = path.relative(ROOT, file);
+function checkSourceFile(file, root, violations) {
+  const rel = normalizePath(path.relative(root, file));
   const content = fs.readFileSync(file, 'utf8');
 
   // No deep cross-package imports.
-  const deepImport = content.match(/from\s+["']@meta-lc\/[a-z-]+\//g);
+  const deepImport = content.match(/from\s+["'](?:@meta-lc\/[a-z-]+|@zhongmiao\/meta-lc-[a-z-]+)\//g);
   if (deepImport) {
     violations.push(`${rel}: deep import from package internals is forbidden.`);
   }
 
-  // Transitional guard: DB driver should be centralized and explicitly allowlisted.
-  if (content.includes("from \"pg\"") || content.includes("from 'pg'")) {
-    const allowed = [
-      'packages/datasource/src/postgres-datasource-adapter.ts',
-      'packages/kernel/src/postgres-meta-kernel-repository.ts',
-      'packages/bff/src/integration/org-scope.service.ts',
-      'packages/bff/src/integration/audit-persistence.service.ts',
-      'packages/bff/src/integration/postgres-query-executor.service.ts',
-      'packages/bff/src/bootstrap/migration-runner.ts'
-    ];
-    if (!allowed.includes(rel)) {
+  // DB driver access is a hard boundary: only explicit DB edge files may import pg.
+  if (importsPg(content)) {
+    const packageName = getPackageName(rel);
+    if (!DB_DRIVER_PACKAGES.has(packageName)) {
+      violations.push(`${rel}: direct pg import is forbidden outside bff/datasource/kernel packages.`);
+    } else if (!ALLOWED_PG_IMPORT_FILES.has(rel)) {
       violations.push(`${rel}: direct pg import is not allowed here.`);
     }
   }
 
   // Kernel must not depend on bff/query/datasource implementation.
   if (rel.startsWith('packages/kernel/')) {
-    const forbidden = [
-      '@zhongmiao/meta-lc-bff',
-      '@zhongmiao/meta-lc-query',
-      '@zhongmiao/meta-lc-datasource'
-    ];
-    for (const dep of forbidden) {
+    for (const dep of FORBIDDEN_KERNEL_DEPS) {
       if (content.includes(dep)) {
         violations.push(`${rel}: kernel cannot depend on ${dep}.`);
       }
@@ -57,12 +69,50 @@ function checkFile(file) {
   }
 }
 
-walk(PACKAGES);
+function checkPackageManifest(file, root, violations) {
+  const rel = normalizePath(path.relative(root, file));
+  const packageName = getPackageName(rel);
+  const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const dependencyBlocks = ['dependencies', 'devDependencies'];
 
-if (violations.length > 0) {
-  console.error('Boundary violations found:');
-  for (const v of violations) console.error(`- ${v}`);
-  process.exit(1);
+  for (const blockName of dependencyBlocks) {
+    const block = manifest[blockName] ?? {};
+    for (const dependencyName of Object.keys(block)) {
+      if (!DB_DRIVER_DEPENDENCIES.has(dependencyName)) continue;
+      if (!DB_DRIVER_PACKAGES.has(packageName)) {
+        violations.push(
+          `${rel}: ${dependencyName} is forbidden in ${blockName} outside bff/datasource/kernel packages.`
+        );
+      }
+    }
+  }
 }
 
-console.log('Boundary check passed.');
+function importsPg(content) {
+  return /from\s+["']pg["']/.test(content) || /require\(\s*["']pg["']\s*\)/.test(content);
+}
+
+function getPackageName(rel) {
+  const match = rel.match(/^packages\/([^/]+)\//);
+  return match?.[1] ?? '';
+}
+
+function normalizePath(value) {
+  return value.split(path.sep).join('/');
+}
+
+function main() {
+  const violations = checkWorkspace();
+
+  if (violations.length > 0) {
+    console.error('Boundary violations found:');
+    for (const v of violations) console.error(`- ${v}`);
+    process.exit(1);
+  }
+
+  console.log('Boundary check passed.');
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}
