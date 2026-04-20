@@ -5,6 +5,15 @@ import {
   type RuntimeManagerExecutedEvent
 } from "@zhongmiao/meta-lc-contracts";
 import {
+  InProcessRuntimeWsBroadcastBus,
+  parseRuntimeWsBroadcastBusMode,
+  RedisRuntimeWsBroadcastBus,
+  type RedisRuntimeWsBroadcastClient,
+  type RuntimeWsBroadcastBus,
+  type RuntimeWsBroadcastHandler,
+  type RuntimeWsBroadcastPublishOptions
+} from "../src/gateway/runtime-ws-broadcast.bus";
+import {
   InMemoryRuntimeWsReplayStore,
   parseRuntimeWsReplayStoreMode,
   RedisRuntimeWsReplayStore,
@@ -55,12 +64,38 @@ class RecordingReplayStore implements RuntimeWsReplayStore {
   }
 }
 
-class FakeRedisClient implements RedisRuntimeWsReplayClient {
+class RecordingBroadcastBus implements RuntimeWsBroadcastBus {
+  readonly published: Array<{ event: RuntimeManagerExecutedEvent; options: RuntimeWsBroadcastPublishOptions }> = [];
+  readonly handlers: RuntimeWsBroadcastHandler[] = [];
+  closed = false;
+
+  async publish(event: RuntimeManagerExecutedEvent, options: RuntimeWsBroadcastPublishOptions): Promise<void> {
+    this.published.push({ event, options });
+  }
+
+  async subscribe(handler: RuntimeWsBroadcastHandler): Promise<void> {
+    this.handlers.push(handler);
+  }
+
+  async close(): Promise<void> {
+    this.closed = true;
+  }
+}
+
+class FakeRedisClient implements RedisRuntimeWsReplayClient, RedisRuntimeWsBroadcastClient {
   readonly values = new Map<string, string>();
   readonly setCalls: Array<{ key: string; value: string }> = [];
+  readonly publishCalls: Array<{ channel: string; message: string }> = [];
+  readonly subscriptions = new Map<string, (message: string, channel: string) => void | Promise<void>>();
+  unsubscribedChannels: string[] = [];
   connected = false;
+  quitCalled = false;
 
   constructor(private readonly failWith?: Error) {}
+
+  duplicate(): FakeRedisClient {
+    return this;
+  }
 
   async connect(): Promise<void> {
     this.connected = true;
@@ -79,6 +114,28 @@ class FakeRedisClient implements RedisRuntimeWsReplayClient {
     }
     this.setCalls.push({ key, value });
     this.values.set(key, value);
+  }
+
+  async publish(channel: string, message: string): Promise<void> {
+    if (this.failWith) {
+      throw this.failWith;
+    }
+    this.publishCalls.push({ channel, message });
+  }
+
+  async subscribe(channel: string, listener: (message: string, channel: string) => void | Promise<void>): Promise<void> {
+    if (this.failWith) {
+      throw this.failWith;
+    }
+    this.subscriptions.set(channel, listener);
+  }
+
+  async unsubscribe(channel: string): Promise<void> {
+    this.unsubscribedChannels.push(channel);
+  }
+
+  async quit(): Promise<void> {
+    this.quitCalled = true;
   }
 }
 
@@ -183,7 +240,8 @@ test("runtime websocket gateway emits manager executed updates", () => {
 
 test("runtime websocket gateway broadcasts manager executed updates to topic rooms", async () => {
   const replayStore = new RecordingReplayStore();
-  const gateway = new RuntimeWsGateway(replayStore);
+  const broadcastBus = new RecordingBroadcastBus();
+  const gateway = new RuntimeWsGateway(replayStore, broadcastBus, "instance-a");
   const emitted: Array<{ room: string; event: string; payload: unknown }> = [];
   const server: WsServerLike = {
     to(room: string) {
@@ -201,6 +259,7 @@ test("runtime websocket gateway broadcasts manager executed updates to topic roo
 
   assert.deepEqual(result, update);
   assert.deepEqual(replayStore.saved, [update]);
+  assert.deepEqual(broadcastBus.published, [{ event: update, options: { originId: "instance-a" } }]);
   assert.deepEqual(emitted, [
     {
       room: "tenant.tenant-a.page.orders.instance.instance-1",
@@ -208,6 +267,59 @@ test("runtime websocket gateway broadcasts manager executed updates to topic roo
       payload: update
     }
   ]);
+});
+
+test("runtime websocket gateway emits remote broadcast bus events once", async () => {
+  const replayStore = new RecordingReplayStore();
+  const broadcastBus = new InProcessRuntimeWsBroadcastBus();
+  const gateway = new RuntimeWsGateway(replayStore, broadcastBus, "instance-a");
+  const emitted: Array<{ room: string; event: string; payload: unknown }> = [];
+  gateway.server = {
+    to(room: string) {
+      return {
+        emit(event: string, payload: unknown): void {
+          emitted.push({ room, event, payload });
+        }
+      };
+    }
+  };
+  const update = createUpdate();
+
+  await gateway.onModuleInit();
+  await broadcastBus.publish(update, { originId: "instance-b" });
+  await gateway.onModuleDestroy();
+
+  assert.deepEqual(replayStore.saved, [update]);
+  assert.deepEqual(emitted, [
+    {
+      room: "tenant.tenant-a.page.orders.instance.instance-1",
+      event: RUNTIME_MANAGER_EXECUTED_EVENT,
+      payload: update
+    }
+  ]);
+});
+
+test("runtime websocket gateway ignores its own broadcast bus events", async () => {
+  const replayStore = new RecordingReplayStore();
+  const broadcastBus = new InProcessRuntimeWsBroadcastBus();
+  const gateway = new RuntimeWsGateway(replayStore, broadcastBus, "instance-a");
+  const emitted: Array<{ room: string; event: string; payload: unknown }> = [];
+  gateway.server = {
+    to(room: string) {
+      return {
+        emit(event: string, payload: unknown): void {
+          emitted.push({ room, event, payload });
+        }
+      };
+    }
+  };
+
+  await gateway.onModuleInit();
+  await broadcastBus.publish(createUpdate(), { originId: "instance-a" });
+  await gateway.onModuleDestroy();
+
+  assert.deepEqual(replayStore.saved, []);
+  assert.deepEqual(emitted, []);
 });
 
 test("runtime websocket gateway replays the latest topic update on subscription", async () => {
@@ -314,6 +426,63 @@ test("redis runtime websocket replay store serializes and returns latest topic e
   assert.equal(await store.getLatest("tenant.tenant-a.page.missing.instance.instance-1"), undefined);
 });
 
+test("redis runtime websocket broadcast bus publishes and subscribes manager events", async () => {
+  const publisher = new FakeRedisClient();
+  const subscriber = new FakeRedisClient();
+  const bus = new RedisRuntimeWsBroadcastBus(publisher, subscriber, { channel: "test:broadcast" });
+  const received: unknown[] = [];
+  const update = createUpdate();
+
+  await bus.connect();
+  await bus.subscribe((message) => {
+    received.push(message);
+  });
+  await bus.publish(update, { originId: "instance-a" });
+  const listener = subscriber.subscriptions.get("test:broadcast");
+  assert.ok(listener);
+  await listener(JSON.stringify({ originId: "instance-b", event: update }), "test:broadcast");
+
+  assert.equal(publisher.connected, true);
+  assert.equal(subscriber.connected, true);
+  assert.deepEqual(publisher.publishCalls, [
+    {
+      channel: "test:broadcast",
+      message: JSON.stringify({ originId: "instance-a", event: update })
+    }
+  ]);
+  assert.deepEqual(received, [{ originId: "instance-b", event: update }]);
+});
+
+test("redis runtime websocket broadcast bus fails on invalid payload", async () => {
+  const subscriber = new FakeRedisClient();
+  const bus = new RedisRuntimeWsBroadcastBus(new FakeRedisClient(), subscriber, { channel: "test:broadcast" });
+
+  await bus.subscribe(() => undefined);
+  const listener = subscriber.subscriptions.get("test:broadcast");
+  assert.ok(listener);
+  await assert.rejects(
+    async () => {
+      await listener(JSON.stringify({ originId: "instance-b", event: { topic: "oops" } }), "test:broadcast");
+    },
+    /Invalid runtime manager executed replay payload/
+  );
+});
+
+test("redis runtime websocket broadcast bus propagates client errors and closes clients", async () => {
+  const bus = new RedisRuntimeWsBroadcastBus(new FakeRedisClient(new Error("redis down")), new FakeRedisClient());
+
+  await assert.rejects(() => bus.publish(createUpdate(), { originId: "instance-a" }), /redis down/);
+
+  const publisher = new FakeRedisClient();
+  const subscriber = new FakeRedisClient();
+  const closeableBus = new RedisRuntimeWsBroadcastBus(publisher, subscriber, { channel: "test:broadcast" });
+  await closeableBus.close();
+
+  assert.deepEqual(subscriber.unsubscribedChannels, ["test:broadcast"]);
+  assert.equal(subscriber.quitCalled, true);
+  assert.equal(publisher.quitCalled, true);
+});
+
 test("redis runtime websocket replay store fails on invalid payload", async () => {
   const client = new FakeRedisClient();
   client.values.set("test:runtime:tenant.tenant-a.page.orders.instance.instance-1", JSON.stringify({ topic: "oops" }));
@@ -338,4 +507,12 @@ test("runtime websocket replay store mode defaults to memory and rejects unknown
   assert.equal(parseRuntimeWsReplayStoreMode("memory"), "memory");
   assert.equal(parseRuntimeWsReplayStoreMode("redis"), "redis");
   assert.throws(() => parseRuntimeWsReplayStoreMode("postgres"), /Invalid LC_RUNTIME_WS_REPLAY_STORE/);
+});
+
+test("runtime websocket broadcast bus mode defaults to local and rejects unknown modes", () => {
+  assert.equal(parseRuntimeWsBroadcastBusMode(undefined), "local");
+  assert.equal(parseRuntimeWsBroadcastBusMode(""), "local");
+  assert.equal(parseRuntimeWsBroadcastBusMode("local"), "local");
+  assert.equal(parseRuntimeWsBroadcastBusMode("redis"), "redis");
+  assert.throws(() => parseRuntimeWsBroadcastBusMode("postgres"), /Invalid LC_RUNTIME_WS_BROADCAST_BUS/);
 });

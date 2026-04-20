@@ -1,4 +1,5 @@
-import { Inject, Logger, Optional } from "@nestjs/common";
+import { randomUUID } from "node:crypto";
+import { Inject, Logger, OnModuleDestroy, OnModuleInit, Optional } from "@nestjs/common";
 import {
   ConnectedSocket,
   MessageBody,
@@ -19,6 +20,13 @@ import {
   RUNTIME_WS_REPLAY_STORE,
   type RuntimeWsReplayStore
 } from "./runtime-ws-replay.store";
+import {
+  InProcessRuntimeWsBroadcastBus,
+  RUNTIME_WS_BROADCAST_BUS,
+  RUNTIME_WS_INSTANCE_ID,
+  type RuntimeWsBroadcastBus,
+  type RuntimeWsBroadcastMessage
+} from "./runtime-ws-broadcast.bus";
 
 export interface WsClientLike {
   id: string;
@@ -42,17 +50,33 @@ export interface PageSubscribedEvent extends SubscribePageMessage {
 }
 
 @WebSocketGateway({ namespace: "runtime" })
-export class RuntimeWsGateway implements OnGatewayConnection<WsClientLike>, OnGatewayDisconnect<WsClientLike> {
+export class RuntimeWsGateway
+  implements OnModuleInit, OnModuleDestroy, OnGatewayConnection<WsClientLike>, OnGatewayDisconnect<WsClientLike>
+{
   private readonly logger = new Logger("RuntimeWsGateway");
 
   constructor(
     @Optional()
     @Inject(RUNTIME_WS_REPLAY_STORE)
-    private readonly replayStore: RuntimeWsReplayStore = new InMemoryRuntimeWsReplayStore()
+    private readonly replayStore: RuntimeWsReplayStore = new InMemoryRuntimeWsReplayStore(),
+    @Optional()
+    @Inject(RUNTIME_WS_BROADCAST_BUS)
+    private readonly broadcastBus: RuntimeWsBroadcastBus = new InProcessRuntimeWsBroadcastBus(),
+    @Optional()
+    @Inject(RUNTIME_WS_INSTANCE_ID)
+    private readonly instanceId: string = randomUUID()
   ) {}
 
   @WebSocketServer()
   server?: WsServerLike;
+
+  async onModuleInit(): Promise<void> {
+    await this.broadcastBus.subscribe((message) => this.handleBroadcastMessage(message));
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.broadcastBus.close();
+  }
 
   handleConnection(client: WsClientLike): void {
     this.logger.log(`client connected: ${client.id}`);
@@ -88,8 +112,21 @@ export class RuntimeWsGateway implements OnGatewayConnection<WsClientLike>, OnGa
 
   async broadcastRuntimeManagerExecuted(event: RuntimeManagerExecutedEvent): Promise<RuntimeManagerExecutedEvent> {
     await this.replayStore.saveLatest(event);
-    this.server?.to(event.topic).emit(RUNTIME_MANAGER_EXECUTED_EVENT, event);
+    this.emitRuntimeManagerExecutedToTopic(event);
+    await this.broadcastBus.publish(event, { originId: this.instanceId });
     return event;
+  }
+
+  private async handleBroadcastMessage(message: RuntimeWsBroadcastMessage): Promise<void> {
+    if (message.originId === this.instanceId) {
+      return;
+    }
+    await this.replayStore.saveLatest(message.event);
+    this.emitRuntimeManagerExecutedToTopic(message.event);
+  }
+
+  private emitRuntimeManagerExecutedToTopic(event: RuntimeManagerExecutedEvent): void {
+    this.server?.to(event.topic).emit(RUNTIME_MANAGER_EXECUTED_EVENT, event);
   }
 
   private joinTopic(client: WsClientLike, topic: string): void {
