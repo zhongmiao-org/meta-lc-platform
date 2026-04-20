@@ -12,6 +12,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(gateway): add a WebSocket emit baseline for runtime manager-executed updates.
 - feat(gateway): add topic-room broadcast and in-memory replay for runtime manager-executed updates.
 - feat(gateway): add a configurable runtime WebSocket replay store with a Redis-backed latest-event adapter.
+- feat(gateway): add a configurable runtime WebSocket broadcast bus with Redis pub/sub fanout.
 
 ## 0.1.0 (2026-04-18)
 

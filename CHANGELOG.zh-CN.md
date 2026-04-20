@@ -22,6 +22,7 @@
 - feat(runtime): 新增 Runtime WebSocket manager-executed 事件契约与 BFF emit 基线。
 - feat(bff): 新增 Runtime WebSocket topic room 广播与内存 replay 基线。
 - feat(bff): 新增可配置的 Runtime WebSocket replay store 与 Redis latest-event adapter。
+- feat(bff): 新增可配置的 Runtime WebSocket broadcast bus 与 Redis pub/sub fanout。
 
 ## 0.1.0 (2026-04-18)
 

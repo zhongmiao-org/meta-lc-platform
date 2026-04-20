@@ -7,6 +7,10 @@ import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { MetaController } from "./gateway/meta.controller";
 import { MetaRegistryService } from "./gateway/meta-registry.service";
 import {
+  createRuntimeWsBroadcastBusFromEnv,
+  RUNTIME_WS_BROADCAST_BUS
+} from "./gateway/runtime-ws-broadcast.bus";
+import {
   createRuntimeWsReplayStoreFromEnv,
   RUNTIME_WS_REPLAY_STORE
 } from "./gateway/runtime-ws-replay.store";
@@ -34,6 +38,10 @@ import { QueryOrchestratorService } from "./orchestration/query-orchestrator.ser
     {
       provide: RUNTIME_WS_REPLAY_STORE,
       useFactory: () => createRuntimeWsReplayStoreFromEnv()
+    },
+    {
+      provide: RUNTIME_WS_BROADCAST_BUS,
+      useFactory: () => createRuntimeWsBroadcastBusFromEnv()
     },
     RuntimeWsGateway,
     {
