@@ -11,6 +11,7 @@
 - feat(permission-seed): 新增 custom-org 与 self-scope 演示身份，供 e2e 与远端 bootstrap 场景稳定复现组织域权限。
 - feat(gateway): 新增 runtime manager-executed 更新的 WebSocket emit 基线。
 - feat(gateway): 为 runtime manager-executed 更新新增 topic room 广播与内存 replay。
+- feat(gateway): 新增可配置的 runtime WebSocket replay store 与 Redis latest-event adapter。
 
 ## 0.1.0 (2026-04-18)
 
