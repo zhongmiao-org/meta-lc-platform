@@ -9,6 +9,8 @@ import {
 } from "@nestjs/websockets";
 import {
   buildRuntimePageTopic,
+  RUNTIME_MANAGER_EXECUTED_EVENT,
+  type RuntimeManagerExecutedEvent,
   type RuntimePageTopicRef
 } from "@zhongmiao/meta-lc-contracts";
 
@@ -47,6 +49,11 @@ export class RuntimeWsGateway implements OnGatewayConnection<WsClientLike>, OnGa
       status: "subscribed"
     };
     client.emit("pageSubscribed", event);
+    return event;
+  }
+
+  emitRuntimeManagerExecuted(client: WsClientLike, event: RuntimeManagerExecutedEvent): RuntimeManagerExecutedEvent {
+    client.emit(RUNTIME_MANAGER_EXECUTED_EVENT, event);
     return event;
   }
 }

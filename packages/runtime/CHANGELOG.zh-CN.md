@@ -7,6 +7,7 @@
 - feat(runtime): 新增最小 FunctionRegistry 与 RuleEngine，支持事件驱动的规则 effect 计算。
 - feat(runtime): 新增 manager-first orchestration plan，统一 refresh planning、rule effects、next state、manager commands 与 WebSocket topics。
 - feat(runtime): 新增 manager adapter 执行契约，用于执行 orchestrator command plan。
+- feat(runtime): 新增 helper，将 manager 执行结果转换为 WebSocket 更新事件。
 
 ## 0.1.0 (2026-04-18)
 

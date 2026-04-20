@@ -7,6 +7,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(runtime): add a minimal function registry and rule engine for event-driven runtime effects.
 - feat(runtime): add a manager-first orchestration plan that combines refresh planning, rule effects, next state, manager commands, and WebSocket topics.
 - feat(runtime): add a manager adapter execution contract for orchestrator command plans.
+- feat(runtime): add a helper that converts manager execution results into WebSocket update events.
 
 ## 0.1.0 (2026-04-18)
 

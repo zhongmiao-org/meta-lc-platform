@@ -125,6 +125,42 @@ export function buildRuntimePageTopic(ref: RuntimePageTopicRef): string {
   return `tenant.${ref.tenantId}.page.${ref.pageId}.instance.${ref.pageInstanceId}`;
 }
 
+export const RUNTIME_MANAGER_EXECUTED_EVENT = "runtimeManagerExecuted";
+
+export type RuntimeManagerExecutedEventType = "runtime.manager.executed";
+
+export interface RuntimeManagerExecutedEvent {
+  type: RuntimeManagerExecutedEventType;
+  topic: string;
+  page: RuntimePageTopicRef;
+  requestId?: string;
+  patchState: Record<string, unknown>;
+  refreshedDatasourceIds: string[];
+  runActionIds: string[];
+}
+
+export interface CreateRuntimeManagerExecutedEventRequest {
+  page: RuntimePageTopicRef;
+  requestId?: string;
+  patchState?: Record<string, unknown>;
+  refreshedDatasourceIds?: string[];
+  runActionIds?: string[];
+}
+
+export function createRuntimeManagerExecutedEvent(
+  request: CreateRuntimeManagerExecutedEventRequest
+): RuntimeManagerExecutedEvent {
+  return {
+    type: "runtime.manager.executed",
+    topic: buildRuntimePageTopic(request.page),
+    page: { ...request.page },
+    ...(request.requestId ? { requestId: request.requestId } : {}),
+    patchState: { ...(request.patchState ?? {}) },
+    refreshedDatasourceIds: [...(request.refreshedDatasourceIds ?? [])],
+    runActionIds: [...(request.runActionIds ?? [])]
+  };
+}
+
 export interface RuntimeNodeSchema {
   id: string;
   componentType: string;

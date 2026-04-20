@@ -19,6 +19,7 @@
 - feat(kernel): 新增 Permission Generator V1 manifest 基线，完成 SQL、API 与 permission 输出的 compiler fixture 覆盖。
 - feat(kernel): 将 tenant、app、rule 与 permission 元数据纳入可版本化 MetaSchema 契约。
 - feat(runtime): 新增 manager adapter 执行契约，用于执行 orchestrator command plan。
+- feat(runtime): 新增 Runtime WebSocket manager-executed 事件契约与 BFF emit 基线。
 
 ## 0.1.0 (2026-04-18)
 

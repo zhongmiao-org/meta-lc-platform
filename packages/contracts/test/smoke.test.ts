@@ -2,9 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildRuntimePageTopic,
+  createRuntimeManagerExecutedEvent,
+  RUNTIME_MANAGER_EXECUTED_EVENT,
   type MutationApiResponse,
   type QueryApiRequest,
   type QueryApiResponse,
+  type RuntimeManagerExecutedEvent,
   type RuntimeFunctionCallDefinition,
   type RuntimePageDsl,
   type RuntimeRuleDefinition,
@@ -114,4 +117,33 @@ test("contracts exports runtime page topic helper", () => {
     }),
     "tenant.tenant-a.page.orders-page.instance.instance-1"
   );
+});
+
+test("contracts exports runtime manager executed event helper", () => {
+  const event: RuntimeManagerExecutedEvent = createRuntimeManagerExecutedEvent({
+    page: {
+      tenantId: "tenant-a",
+      pageId: "orders-page",
+      pageInstanceId: "instance-1"
+    },
+    requestId: "req-1",
+    patchState: { status: "PAID" },
+    refreshedDatasourceIds: ["orders"],
+    runActionIds: ["notify"]
+  });
+
+  assert.equal(RUNTIME_MANAGER_EXECUTED_EVENT, "runtimeManagerExecuted");
+  assert.deepEqual(event, {
+    type: "runtime.manager.executed",
+    topic: "tenant.tenant-a.page.orders-page.instance.instance-1",
+    page: {
+      tenantId: "tenant-a",
+      pageId: "orders-page",
+      pageInstanceId: "instance-1"
+    },
+    requestId: "req-1",
+    patchState: { status: "PAID" },
+    refreshedDatasourceIds: ["orders"],
+    runActionIds: ["notify"]
+  });
 });
