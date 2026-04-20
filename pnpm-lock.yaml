@@ -42,16 +42,10 @@ importers:
       '@zhongmiao/meta-lc-contracts':
         specifier: workspace:*
         version: link:../contracts
-      pg:
-        specifier: ^8.13.1
-        version: 8.20.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
         version: 22.19.17
-      '@types/pg':
-        specifier: ^8.11.10
-        version: 8.20.0
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

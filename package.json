@@ -13,6 +13,7 @@
     "infra:up": "docker compose -f infra/docker-compose.yml up -d postgres redis",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "infra:query-gate": "bash infra/scripts/query-gate.sh",
+    "test:boundaries": "node --test scripts/check-boundaries.test.mjs",
     "lint:boundaries": "node scripts/check-boundaries.mjs",
     "changeset": "changeset",
     "release:status": "changeset status --verbose",
