@@ -1,8 +1,13 @@
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
+import { AggregationService } from "./aggregation/aggregation.service";
+import { CacheService } from "./cache/cache.service";
 import { AuditLogService } from "./common/audit-log.service";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
+import { MetaController } from "./gateway/meta.controller";
+import { MetaRegistryService } from "./gateway/meta-registry.service";
 import { QueryController } from "./gateway/query.controller";
+import { RuntimeWsGateway } from "./gateway/ws.gateway";
 import { AuditPersistenceService } from "./integration/audit-persistence.service";
 import { OrgScopeService } from "./integration/org-scope.service";
 import { PostgresQueryExecutorService } from "./integration/postgres-query-executor.service";
@@ -11,14 +16,18 @@ import { QueryOrchestratorService } from "./orchestration/query-orchestrator.ser
 
 @Module({
   imports: [],
-  controllers: [QueryController],
+  controllers: [QueryController, MetaController],
   providers: [
+    AggregationService,
+    CacheService,
+    MetaRegistryService,
     PostgresQueryExecutorService,
     OrgScopeService,
     AuditPersistenceService,
     QueryOrchestratorService,
     MutationOrchestratorService,
     AuditLogService,
+    RuntimeWsGateway,
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter

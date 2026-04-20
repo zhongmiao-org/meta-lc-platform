@@ -10,6 +10,7 @@
 - docs(runtime): 将 runtime contract、前端接入、迁移指引与测试手册同步到当前 manager-first 实现口径。
 - fix(boundaries): 将 `pg` 直连点收紧到显式的 BFF/datasource/kernel 入口，并把 audit 包移出过渡白名单。
 - fix(boundaries): 将 DB driver 边界检查从过渡白名单升级为显式包/文件策略检查，并补充自测。
+- feat(bff): 新增首版 Gateway 基线，覆盖 meta API、内存 cache、aggregation summary 与 WebSocket lifecycle smoke。
 
 ## 0.1.0 (2026-04-18)
 
