@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import type {
   CompiledMigrationSql,
-  MetaField,
   MigrationAction,
   MigrationDslV1,
   SnapshotV1
 } from "./types";
 import { diffSchemas } from "./schema-diff";
+import { createTableSql, quoteIdentifier, toColumnDefinition, toSqlType } from "./sql-utils";
 
 export function computeSnapshotChecksum(snapshot: Omit<SnapshotV1, "checksum">): string {
   return sha256(stableStringify(snapshot));
@@ -185,30 +185,4 @@ function stableStringify(value: unknown): string {
   const object = value as Record<string, unknown>;
   const sortedKeys = Object.keys(object).sort();
   return `{${sortedKeys.map((key) => `${JSON.stringify(key)}:${stableStringify(object[key])}`).join(",")}}`;
-}
-
-function createTableSql(tableName: string, fields: MetaField[]): string {
-  const columns = fields.map((field) => toColumnDefinition(field)).join(", ");
-  return `CREATE TABLE ${quoteIdentifier(tableName)} (${columns});`;
-}
-
-function toColumnDefinition(field: MetaField): string {
-  return `${quoteIdentifier(field.name)} ${toSqlType(field.type)}${field.nullable ? "" : " NOT NULL"}`;
-}
-
-function quoteIdentifier(value: string): string {
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
-    throw new Error(`Invalid identifier: ${value}`);
-  }
-  return `"${value}"`;
-}
-
-function toSqlType(type: string): string {
-  const normalized = type.toLowerCase();
-  if (normalized === "string") return "TEXT";
-  if (normalized === "number") return "INTEGER";
-  if (normalized === "boolean") return "BOOLEAN";
-  if (normalized === "date") return "TIMESTAMPTZ";
-  if (normalized === "uuid") return "UUID";
-  return type.toUpperCase();
 }

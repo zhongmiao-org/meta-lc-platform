@@ -6,3 +6,4 @@ export * from "./meta-kernel-service";
 export * from "./schema-diff";
 export * from "./migration-safety";
 export * from "./snapshot-dsl";
+export * from "./sql-generator";

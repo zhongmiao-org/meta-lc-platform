@@ -1,4 +1,5 @@
 import type { MetaField, MetaSchema, MetaTable } from "./types";
+import { createTableSql, quoteIdentifier, toSqlType } from "./sql-utils";
 
 export interface FieldChange {
   field: string;
@@ -62,10 +63,7 @@ export function generateMigrationSql(diff: SchemaDiff): string[] {
   const statements: string[] = [];
 
   for (const table of diff.addedTables) {
-    const columns = table.fields
-      .map((field) => `${quoteIdentifier(field.name)} ${toSqlType(field.type)}${field.nullable ? "" : " NOT NULL"}`)
-      .join(", ");
-    statements.push(`CREATE TABLE ${quoteIdentifier(table.name)} (${columns});`);
+    statements.push(createTableSql(table.name, table.fields));
   }
 
   for (const table of diff.changedTables) {
@@ -122,21 +120,4 @@ function diffTableFields(table: string, fromFields: MetaField[], toFields: MetaF
   }
 
   return { table, addedFields, removedFields, changedFields };
-}
-
-function quoteIdentifier(value: string): string {
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
-    throw new Error(`Invalid identifier: ${value}`);
-  }
-  return `"${value}"`;
-}
-
-function toSqlType(type: string): string {
-  const normalized = type.toLowerCase();
-  if (normalized === "string") return "TEXT";
-  if (normalized === "number") return "INTEGER";
-  if (normalized === "boolean") return "BOOLEAN";
-  if (normalized === "date") return "TIMESTAMPTZ";
-  if (normalized === "uuid") return "UUID";
-  return type.toUpperCase();
 }

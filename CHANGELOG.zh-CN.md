@@ -12,6 +12,7 @@
 - fix(boundaries): 将 DB driver 边界检查从过渡白名单升级为显式包/文件策略检查，并补充自测。
 - feat(bff): 新增首版 Gateway 基线，覆盖 meta API、内存 cache、aggregation summary 与 WebSocket lifecycle smoke。
 - feat(runtime): 新增 manager-first runtime orchestrator 基线与共享 runtime page topic helper。
+- feat(kernel): 新增 SQL Generator V1 基线，覆盖 table、index、relation 与 compiler fixture。
 
 ## 0.1.0 (2026-04-18)
 
