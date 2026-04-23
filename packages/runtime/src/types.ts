@@ -14,6 +14,79 @@ import type {
   RuntimeTemplateDependency
 } from "@zhongmiao/meta-lc-contracts";
 
+export type ViewExpression =
+  | string
+  | number
+  | boolean
+  | null
+  | ViewExpression[]
+  | { [key: string]: ViewExpression };
+
+export interface ViewDefinition {
+  name: string;
+  params?: Record<string, ViewExpression>;
+  nodes: Record<string, NodeDefinition>;
+  output: OutputDefinition;
+  submit?: SubmitDefinition;
+}
+
+export type NodeDefinition = QueryNodeDefinition | MutationNodeDefinition | TransformNodeDefinition | MergeNodeDefinition;
+
+export interface BaseNodeDefinition {
+  type: "query" | "mutation" | "transform" | "merge";
+  [key: string]: unknown;
+}
+
+export interface QueryNodeDefinition extends BaseNodeDefinition {
+  type: "query";
+}
+
+export interface MutationNodeDefinition extends BaseNodeDefinition {
+  type: "mutation";
+}
+
+export interface TransformNodeDefinition extends BaseNodeDefinition {
+  type: "transform";
+}
+
+export interface MergeNodeDefinition extends BaseNodeDefinition {
+  type: "merge";
+}
+
+export interface OutputDefinition {
+  [key: string]: ViewExpression;
+}
+
+export interface SubmitDefinition {
+  nodes?: string[];
+  [key: string]: unknown;
+}
+
+export interface ExecutionNode {
+  id: string;
+  type: NodeDefinition["type"];
+  definition: NodeDefinition;
+}
+
+export interface ExecutionPlan {
+  nodes: ExecutionNode[];
+  edges: Record<string, string[]>;
+  output: OutputDefinition;
+  submit?: SubmitDefinition;
+}
+
+export interface ViewCompilerDependency {
+  nodeId: string;
+  expression: string;
+}
+
+export class ViewCompilerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ViewCompilerError";
+  }
+}
+
 export interface ParsedRuntimeDatasourceDefinition extends RuntimeDatasourceDefinition {
   dependencies: RuntimeTemplateDependency[];
 }
