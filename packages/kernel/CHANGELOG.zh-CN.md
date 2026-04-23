@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 新增双语子包 README 与最小架构流程图。
 - chore(package): 为 release 治理切换到 `@zhongmiao/meta-lc-kernel` 正式包名。
 - feat(sql-generator): 新增 table、index、relation SQL 生成能力与 compiler fixture 基线。
 - test(compiler): 新增可复用 compiler contract fixture，固化 SQL generator 输出。

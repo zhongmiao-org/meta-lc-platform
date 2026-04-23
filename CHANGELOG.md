@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(readme): add bilingual package README index and architecture diagrams.
 - feat(release): add aggregate package `@zhongmiao/meta-lc-platform` and reserve `@zhongmiao/meta-lc-*` naming for workspace packages.
 - feat(ci): add changelog gate, release draft sync, and manual changelog finalize workflow for platform release governance.
 - docs(changelog): establish bilingual root/package changelog baselines for the platform workspace.

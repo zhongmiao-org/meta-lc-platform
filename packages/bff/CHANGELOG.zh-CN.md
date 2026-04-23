@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 新增双语子包 README 与最小架构流程图。
 - feat(gateway): 新增 meta API、内存 cache、aggregation summary 与 WebSocket lifecycle 基线。
 - feat(api-contracts): 为 query 与 mutation controller 响应标注共享 API response contract。
 - chore(gateway): WebSocket subscription acknowledgement 复用共享 runtime page topic helper。
