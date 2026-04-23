@@ -197,6 +197,12 @@ importers:
       '@zhongmiao/meta-lc-contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@zhongmiao/meta-lc-datasource':
+        specifier: workspace:*
+        version: link:../datasource
+      '@zhongmiao/meta-lc-query':
+        specifier: workspace:*
+        version: link:../query
     devDependencies:
       '@types/node':
         specifier: ^22.10.2

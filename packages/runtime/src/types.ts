@@ -47,6 +47,11 @@ export interface BaseNodeDefinition {
 
 export interface QueryNodeDefinition extends BaseNodeDefinition {
   type: "query";
+  request?: ViewExpression;
+  table?: ViewExpression;
+  fields?: ViewExpression[];
+  filters?: Record<string, ViewExpression>;
+  limit?: ViewExpression;
 }
 
 export interface MutationNodeDefinition extends BaseNodeDefinition {
@@ -135,6 +140,17 @@ export class NodeExecutorError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "NodeExecutorError";
+  }
+}
+
+export class QueryExecutorError extends NodeExecutorError {
+  constructor(
+    message: string,
+    public readonly stage: "validation" | "compile" | "execute",
+    public readonly cause?: unknown
+  ) {
+    super(message);
+    this.name = "QueryExecutorError";
   }
 }
 

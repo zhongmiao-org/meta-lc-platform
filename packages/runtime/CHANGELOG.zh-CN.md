@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(runtime): 新增 QueryExecutor 适配层，负责编译 query 节点并执行 datasource 查询。
 - feat(runtime): 新增面向 V2 runtime node 的纯 NodeExecutor 分发系统。
 - feat(runtime): 新增面向 V2 runtime value 的确定性表达式解析器。
 - feat(runtime): 新增面向 V2 ExecutionPlan edges 的纯 DAG 调度器。
