@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(readme): add bilingual package README and minimal architecture flow.
 - chore(package): adopt the `@zhongmiao/meta-lc-runtime` scoped package identity for release governance.
 - feat(runtime): add dependency graph construction and auto-refresh planning for state and mutation events.
 - feat(runtime): add a minimal function registry and rule engine for event-driven runtime effects.

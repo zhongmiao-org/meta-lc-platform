@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(readme): add bilingual package README and minimal architecture flow.
 - chore(package): adopt the `@zhongmiao/meta-lc-contracts` scoped package identity for release governance.
 - feat(runtime-contracts): add refresh planning event and target contracts for dependency graph execution.
 - feat(runtime-contracts): add rule and function contracts for event-driven runtime evaluation.

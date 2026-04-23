@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 新增双语子包 README 与最小架构流程图。
 - chore(package): 为 release 治理切换到 `@zhongmiao/meta-lc-runtime` 正式包名。
 - feat(runtime): 新增依赖图构建与自动刷新规划，覆盖 state 与 mutation 成功事件。
 - feat(runtime): 新增最小 FunctionRegistry 与 RuleEngine，支持事件驱动的规则 effect 计算。

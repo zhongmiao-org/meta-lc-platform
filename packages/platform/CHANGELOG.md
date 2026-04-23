@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(readme): add bilingual package README and minimal architecture flow.
 - feat(aggregate): add the `@zhongmiao/meta-lc-platform` aggregate package to group public library-facing platform modules.
 
 ## 0.1.0 (2026-04-18)

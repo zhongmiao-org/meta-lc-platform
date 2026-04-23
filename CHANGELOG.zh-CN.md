@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 新增双语子包 README 索引与架构流程图。
 - feat(release): 新增聚合总包 `@zhongmiao/meta-lc-platform`，并为工作区包统一预留 `@zhongmiao/meta-lc-*` 命名。
 - feat(ci): 新增 changelog gate、release draft 同步与手动 changelog finalize 工作流，补齐平台发版治理基础。
 - docs(changelog): 为平台工作区建立根级与包级双语 changelog 基线。

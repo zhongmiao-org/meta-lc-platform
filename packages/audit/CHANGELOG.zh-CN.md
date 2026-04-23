@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 新增双语子包 README 与最小架构流程图。
 - chore(package): 为 release 治理切换到 `@zhongmiao/meta-lc-audit` 正式包名。
 - refactor(boundary): 将本包收回为审计契约与兼容辅助层，避免审计数据库执行职责继续外溢到 BFF 边界之外。
 
