@@ -40,6 +40,8 @@ export interface ViewDefinition {
 
 export type NodeDefinition = QueryNodeDefinition | MutationNodeDefinition | TransformNodeDefinition | MergeNodeDefinition;
 
+export type MergeStrategy = "objectMerge" | "arrayConcat" | "custom";
+
 export interface BaseNodeDefinition {
   type: "query" | "mutation" | "transform" | "merge";
   [key: string]: unknown;
@@ -64,6 +66,9 @@ export interface TransformNodeDefinition extends BaseNodeDefinition {
 
 export interface MergeNodeDefinition extends BaseNodeDefinition {
   type: "merge";
+  strategy?: MergeStrategy;
+  inputs?: Record<string, ViewExpression>;
+  hook?: string;
 }
 
 export interface OutputDefinition {
@@ -151,6 +156,17 @@ export class QueryExecutorError extends NodeExecutorError {
   ) {
     super(message);
     this.name = "QueryExecutorError";
+  }
+}
+
+export class MergeExecutorError extends NodeExecutorError {
+  constructor(
+    message: string,
+    public readonly strategy?: MergeStrategy,
+    public readonly hook?: string
+  ) {
+    super(message);
+    this.name = "MergeExecutorError";
   }
 }
 
