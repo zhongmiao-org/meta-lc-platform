@@ -83,6 +83,12 @@ export interface ExecutionPlan {
   submit?: SubmitDefinition;
 }
 
+export type RuntimeContext = Record<string, unknown>;
+
+export interface RuntimeStateStore {
+  get(path: string): unknown;
+}
+
 export type DagEdges = Record<string, string[]>;
 
 export interface DagGraphNode {
@@ -122,6 +128,13 @@ export class ExpressionResolverError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "ExpressionResolverError";
+  }
+}
+
+export class NodeExecutorError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NodeExecutorError";
   }
 }
 
