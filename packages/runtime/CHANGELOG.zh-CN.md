@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(runtime): 新增 RuntimeExecutor 主执行引擎，负责 DAG 分层调度、原子提交 state snapshot 并解析最终 view model。
 - feat(runtime): 新增 merge 执行器，支持 V2 fan-in 策略与自定义 merge hook。
 - feat(runtime): 新增 QueryExecutor 适配层，负责编译 query 节点并执行 datasource 查询。
 - feat(runtime): 新增面向 V2 runtime node 的纯 NodeExecutor 分发系统。

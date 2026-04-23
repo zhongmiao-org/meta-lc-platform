@@ -25,7 +25,7 @@ export async function executeMergeNode(
   dependencies: MergeExecutorDependencies = {}
 ): Promise<MergeExecutorResult> {
   const strategy = node.strategy ?? "objectMerge";
-  const inputs = resolveMergeInputs(node.inputs, state, strategy);
+  const inputs = resolveMergeInputs(node.inputs, state, strategy, context);
 
   switch (strategy) {
     case "objectMerge":
@@ -42,16 +42,18 @@ export async function executeMergeNode(
 function resolveMergeInputs(
   inputs: MergeNodeDefinition["inputs"],
   state: RuntimeStateStore,
-  strategy: MergeStrategy
+  strategy: MergeStrategy,
+  context: RuntimeContext
 ): Record<string, unknown> {
   if (!inputs || Object.keys(inputs).length === 0) {
     throw new MergeExecutorError(`Merge node requires a non-empty inputs object for "${strategy}".`, strategy);
   }
 
   const resolved: Record<string, unknown> = {};
+  const expressionStateSource = new MergeExpressionStateSource(state, context);
 
   for (const [key, expression] of Object.entries(inputs)) {
-    const value = resolveExpression(expression, state);
+    const value = resolveExpression(expression, expressionStateSource);
     if (value === undefined) {
       throw new MergeExecutorError(`Merge input "${key}" resolved to undefined.`, strategy);
     }
@@ -107,4 +109,41 @@ async function executeCustomMerge(
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+class MergeExpressionStateSource {
+  constructor(
+    private readonly state: RuntimeStateStore,
+    private readonly context: RuntimeContext
+  ) {}
+
+  get(path: string): unknown {
+    if (!path.trim()) {
+      return undefined;
+    }
+
+    const stateValue = this.state.get(path);
+    if (stateValue !== undefined) {
+      return stateValue;
+    }
+
+    return getNestedValue(this.context, path);
+  }
+}
+
+function getNestedValue(source: Record<string, unknown>, path: string): unknown {
+  return path.split(".").reduce<unknown>((current, segment) => {
+    if (!isRecordLike(current)) {
+      return undefined;
+    }
+    return current[segment];
+  }, source);
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isRecordLike(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

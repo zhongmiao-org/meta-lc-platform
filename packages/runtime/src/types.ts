@@ -13,6 +13,7 @@ import type {
   RuntimePageDsl,
   RuntimeTemplateDependency
 } from "@zhongmiao/meta-lc-contracts";
+import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
 
 export type ViewExpression =
   | string
@@ -97,6 +98,39 @@ export type RuntimeContext = Record<string, unknown>;
 
 export interface RuntimeStateStore {
   get(path: string): unknown;
+}
+
+export type RuntimeExecutionStage = "schedule" | "execute" | "output";
+
+export interface RuntimeQueryNodeResult {
+  rows: QueryResultRow[];
+  row: QueryResultRow | null;
+}
+
+export interface RuntimeValueNodeResult {
+  value: unknown;
+}
+
+export type RuntimeNodeResult = RuntimeQueryNodeResult | RuntimeValueNodeResult;
+
+export interface RuntimeExecutionResult {
+  viewModel: Record<string, unknown>;
+  state: Record<string, unknown>;
+  nodeResults: Record<string, RuntimeNodeResult>;
+  layers: string[][];
+}
+
+export class RuntimeExecutionError extends Error {
+  constructor(
+    message: string,
+    public readonly stage: RuntimeExecutionStage,
+    public readonly cause?: unknown,
+    public readonly nodeId?: string,
+    public readonly nodeType?: ExecutionNode["type"]
+  ) {
+    super(message);
+    this.name = "RuntimeExecutionError";
+  }
 }
 
 export type DagEdges = Record<string, string[]>;
