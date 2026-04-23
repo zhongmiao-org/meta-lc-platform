@@ -5,6 +5,7 @@ export * from "./dsl/expression";
 export * from "./executor/node-executor";
 export * from "./executor/merge-executor";
 export * from "./executor/query-executor";
+export * from "./executor/runtime-executor";
 export * from "./adapter/query-adapter";
 export * from "./graph/dependency-graph";
 export * from "./graph/topo-sort";
