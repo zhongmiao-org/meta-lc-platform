@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(runtime): add a query executor adapter that compiles query nodes and runs datasource queries.
 - feat(runtime): add a pure NodeExecutor dispatch system for V2 runtime nodes.
 - feat(runtime): add a deterministic expression resolver for V2 runtime values.
 - feat(runtime): add a pure DAG scheduler for V2 ExecutionPlan edges.

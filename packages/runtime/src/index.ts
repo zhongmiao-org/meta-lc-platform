@@ -3,6 +3,8 @@ export * from "./compiler/view-compiler";
 export * from "./compiler/plan-builder";
 export * from "./dsl/expression";
 export * from "./executor/node-executor";
+export * from "./executor/query-executor";
+export * from "./adapter/query-adapter";
 export * from "./graph/dependency-graph";
 export * from "./graph/topo-sort";
 export * from "./graph/dep-resolver";
