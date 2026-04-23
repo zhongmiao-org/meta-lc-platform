@@ -22,6 +22,14 @@ export type ViewExpression =
   | ViewExpression[]
   | { [key: string]: ViewExpression };
 
+export type Expression = ViewExpression;
+
+export interface ExpressionStateGetter {
+  get(path: string): unknown;
+}
+
+export type ExpressionStateSource = Record<string, unknown> | Map<string, unknown> | ExpressionStateGetter;
+
 export interface ViewDefinition {
   name: string;
   params?: Record<string, ViewExpression>;
@@ -107,6 +115,13 @@ export class DagSchedulerError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "DagSchedulerError";
+  }
+}
+
+export class ExpressionResolverError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ExpressionResolverError";
   }
 }
 

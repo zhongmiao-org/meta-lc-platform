@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(runtime): 新增面向 V2 runtime value 的确定性表达式解析器。
 - feat(runtime): 新增面向 V2 ExecutionPlan edges 的纯 DAG 调度器。
 - feat(runtime): 新增 V2 Runtime Orchestrator 的纯 ViewDefinition 到 ExecutionPlan 编译器。
 - docs(readme): 新增双语子包 README 与最小架构流程图。
