@@ -1,4 +1,6 @@
 export * from "./runtime-dsl-parser";
+export * from "./compiler/view-compiler";
+export * from "./compiler/plan-builder";
 export * from "./dependency-graph";
 export * from "./function-registry";
 export * from "./manager-adapter";

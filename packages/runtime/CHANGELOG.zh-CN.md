@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(runtime): 新增 V2 Runtime Orchestrator 的纯 ViewDefinition 到 ExecutionPlan 编译器。
 - docs(readme): 新增双语子包 README 与最小架构流程图。
 - chore(package): 为 release 治理切换到 `@zhongmiao/meta-lc-runtime` 正式包名。
 - feat(runtime): 新增依赖图构建与自动刷新规划，覆盖 state 与 mutation 成功事件。
