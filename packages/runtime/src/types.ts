@@ -75,6 +75,22 @@ export interface ExecutionPlan {
   submit?: SubmitDefinition;
 }
 
+export type DagEdges = Record<string, string[]>;
+
+export interface DagGraphNode {
+  id: string;
+  dependencies: string[];
+  downstream: string[];
+}
+
+export interface DagDependencyGraph {
+  nodes: Record<string, DagGraphNode>;
+}
+
+export interface DagCycleResult {
+  path: string[];
+}
+
 export interface ViewCompilerDependency {
   nodeId: string;
   expression: string;
@@ -84,6 +100,13 @@ export class ViewCompilerError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "ViewCompilerError";
+  }
+}
+
+export class DagSchedulerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DagSchedulerError";
   }
 }
 

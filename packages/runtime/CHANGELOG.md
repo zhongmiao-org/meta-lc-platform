@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(runtime): add a pure DAG scheduler for V2 ExecutionPlan edges.
 - feat(runtime): add a pure ViewDefinition to ExecutionPlan compiler for V2 Runtime Orchestrator.
 - docs(readme): add bilingual package README and minimal architecture flow.
 - chore(package): adopt the `@zhongmiao/meta-lc-runtime` scoped package identity for release governance.
