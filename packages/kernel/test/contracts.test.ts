@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateSchema } from "../src/contracts";
+import { validateSchema } from "../src/types/contracts";
 
 test("validateSchema accepts minimal valid schema", () => {
   assert.doesNotThrow(() =>

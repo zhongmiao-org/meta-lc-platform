@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { loadDbConfig } from "../src/config";
+import { loadDbConfig } from "../src/infra/config";
 
 test("loadDbConfig reads env values", () => {
   process.env.LC_DB_HOST = "127.0.0.1";

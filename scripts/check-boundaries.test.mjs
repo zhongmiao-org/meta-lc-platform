@@ -11,7 +11,7 @@ test('allows current explicit pg edge files', () => {
       dependencies: { pg: '^8.13.1' },
       devDependencies: { '@types/pg': '^8.11.10' }
     }),
-    'packages/datasource/src/postgres-datasource-adapter.ts': 'import { Pool } from "pg";\n'
+    'packages/datasource/src/infra/postgres/postgres.adapter.ts': 'import { Pool } from "pg";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), []);

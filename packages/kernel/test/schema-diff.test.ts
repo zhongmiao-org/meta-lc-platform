@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { diffSchemas, generateMigrationSql } from "../src/schema-diff";
+import { diffSchemas, generateMigrationSql } from "../src/domain/schema-diff";
 
 test("diffSchemas returns table and field level changes", () => {
   const from = {

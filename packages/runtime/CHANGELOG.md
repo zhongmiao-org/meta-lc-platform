@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - feat(runtime): add a RuntimeExecutor main engine that schedules DAG layers, commits state snapshots atomically, and resolves final view models.
 - feat(runtime): add a merge executor for V2 fan-in strategies and custom merge hooks.
 - feat(runtime): add a query executor adapter that compiles query nodes and runs datasource queries.

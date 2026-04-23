@@ -7,8 +7,8 @@ import {
   computeSnapshotChecksum,
   validateMigrationDslV1,
   validateSnapshotV1
-} from "../src/snapshot-dsl";
-import { assertMigrationSafety } from "../src/migration-safety";
+} from "../src/domain/snapshot-dsl";
+import { assertMigrationSafety } from "../src/application/migration-safety";
 import type { MigrationDslV1, SnapshotV1 } from "../src/types";
 
 function createSnapshot(version: string, tables: SnapshotV1["tables"]): SnapshotV1 {

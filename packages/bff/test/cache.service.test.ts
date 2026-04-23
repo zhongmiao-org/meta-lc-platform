@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CacheService } from "../src/cache/cache.service";
+import { CacheService } from "../src/infra/cache/cache.service";
 
 test("cache remember returns cached value without reloading", async () => {
   const cache = new CacheService();

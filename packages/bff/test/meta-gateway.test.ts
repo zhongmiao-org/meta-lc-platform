@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AggregationService } from "../src/aggregation/aggregation.service";
-import { CacheService } from "../src/cache/cache.service";
-import { MetaController } from "../src/gateway/meta.controller";
-import { MetaRegistryService } from "../src/gateway/meta-registry.service";
+import { AggregationService } from "../src/application/orchestrator/aggregation.service";
+import { CacheService } from "../src/infra/cache/cache.service";
+import { MetaController } from "../src/interface/gateway/meta.controller";
+import { MetaRegistryService } from "../src/interface/gateway/meta-registry.service";
 
 test("meta controller returns stable envelope and request id", async () => {
   const controller = createController();

@@ -12,9 +12,9 @@ import {
   type RuntimeWsBroadcastBus,
   type RuntimeWsBroadcastHandler,
   type RuntimeWsBroadcastPublishOptions
-} from "../src/gateway/runtime-ws-broadcast.bus";
-import { RuntimeWsHealthController } from "../src/gateway/runtime-ws-health.controller";
-import { RuntimeWsOperationsState } from "../src/gateway/runtime-ws-operations.state";
+} from "../src/interface/gateway/runtime-ws-broadcast.bus";
+import { RuntimeWsHealthController } from "../src/interface/gateway/runtime-ws-health.controller";
+import { RuntimeWsOperationsState } from "../src/interface/gateway/runtime-ws-operations.state";
 import {
   InMemoryRuntimeWsReplayStore,
   parseRuntimeWsReplayLimit,
@@ -25,14 +25,14 @@ import {
   type RedisRuntimeWsStreamEntry,
   type RedisRuntimeWsReplayClient,
   type RuntimeWsReplayStore
-} from "../src/gateway/runtime-ws-replay.store";
+} from "../src/interface/gateway/runtime-ws-replay.store";
 import {
   buildPageTopic,
   RuntimeWsGateway,
   type PageSubscribedEvent,
   type WsClientLike,
   type WsServerLike
-} from "../src/gateway/ws.gateway";
+} from "../src/interface/gateway/ws.gateway";
 
 function createUpdate(topic = "tenant.tenant-a.page.orders.instance.instance-1"): RuntimeManagerExecutedEvent {
   return {

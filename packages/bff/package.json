@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
     "lint": "echo lint:bff",
-    "start": "sh -c 'if [ -f ../../.env ]; then exec node --env-file=../../.env dist/bff/src/main.js; else exec node dist/bff/src/main.js; fi'"
+    "start": "sh -c 'if [ -f ../../.env ]; then exec node --env-file=../../.env dist/src/interface/bootstrap/main.js; else exec node dist/src/interface/bootstrap/main.js; fi'"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.12",
@@ -29,6 +29,6 @@
     "@types/pg": "^8.11.10",
     "typescript": "^5.7.2"
   },
-  "main": "dist/bff/src/index.js",
-  "types": "dist/bff/src/index.d.ts"
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts"
 }

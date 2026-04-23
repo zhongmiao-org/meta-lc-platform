@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { AuditLogService } from "../src/common/audit-log.service";
+import { AuditLogService } from "../src/interface/common/audit-log.service";
 
 test("logQuerySuccess degrades when persistence throws", async () => {
   const service = new AuditLogService({
