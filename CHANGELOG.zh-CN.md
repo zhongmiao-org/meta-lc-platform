@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(bff): 强制 BFF 严格分层，固定 controller/http/ws/cli 入口，拆分 type/interface 契约，并新增 ESLint 与 boundary 守护。
 - feat(bff): 新增 `POST /view/:name` gateway，并接入临时的 runtime-backed adapter，让页面请求进入 runtime 执行链路。
 - fix(runtime): 将 runtime 包入口对齐到重构后的 `dist/runtime/src` 输出，确保下游包在运行时可正确解析。
 - refactor(package-structure): 将工作区包重整为 domain/application/infra/interface/types/utils 分层目录，并同步刷新边界检查。

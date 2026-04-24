@@ -1,8 +1,3 @@
-export * from "./bootstrap";
-export * from "./application";
-export * from "./common";
-export * from "./domain";
-export * from "./infra";
-export * from "./interface";
-export * from "./types";
-export * from "./utils";
+export { AppModule } from "./bootstrap/app.module";
+export { BootstrapService } from "./bootstrap/bootstrap.service";
+export { startBffServer } from "./bootstrap/main";

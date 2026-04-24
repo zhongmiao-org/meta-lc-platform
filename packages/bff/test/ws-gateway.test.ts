@@ -7,32 +7,36 @@ import {
 import {
   InProcessRuntimeWsBroadcastBus,
   parseRuntimeWsBroadcastBusMode,
-  RedisRuntimeWsBroadcastBus,
-  type RedisRuntimeWsBroadcastClient,
-  type RuntimeWsBroadcastBus,
-  type RuntimeWsBroadcastHandler,
-  type RuntimeWsBroadcastPublishOptions
-} from "../src/interface/ws/runtime-ws-broadcast.bus";
-import { RuntimeWsHealthController } from "../src/interface/ws/runtime-ws-health.controller";
-import { RuntimeWsOperationsState } from "../src/interface/ws/runtime-ws-operations.state";
+  RedisRuntimeWsBroadcastBus
+} from "../src/controller/ws/runtime/broadcast.bus";
+import type {
+  RedisRuntimeWsBroadcastClient,
+  RuntimeWsBroadcastBus,
+  RedisRuntimeWsStreamReplayClient,
+  RedisRuntimeWsReplayClient,
+  RuntimeWsReplayStore,
+  WsClientLike,
+  WsServerLike
+} from "../src/contracts/interfaces/runtime-ws.interface";
+import type {
+  PageSubscribedEvent,
+  RedisRuntimeWsStreamEntry,
+  RuntimeWsBroadcastHandler,
+  RuntimeWsBroadcastPublishOptions
+} from "../src/contracts/types/runtime-ws.type";
+import { RuntimeWsHealthController } from "../src/controller/ws/runtime/health.controller";
+import { RuntimeWsOperationsState } from "../src/controller/ws/runtime/operations.state";
 import {
   InMemoryRuntimeWsReplayStore,
   parseRuntimeWsReplayLimit,
   parseRuntimeWsReplayStoreMode,
   RedisRuntimeWsReplayStore,
-  RedisStreamRuntimeWsReplayStore,
-  type RedisRuntimeWsStreamReplayClient,
-  type RedisRuntimeWsStreamEntry,
-  type RedisRuntimeWsReplayClient,
-  type RuntimeWsReplayStore
-} from "../src/interface/ws/runtime-ws-replay.store";
+  RedisStreamRuntimeWsReplayStore
+} from "../src/controller/ws/runtime/replay.store";
 import {
   buildPageTopic,
-  RuntimeWsGateway,
-  type PageSubscribedEvent,
-  type WsClientLike,
-  type WsServerLike
-} from "../src/interface/ws/ws.gateway";
+  RuntimeWsGateway
+} from "../src/controller/ws/runtime/ws.gateway";
 
 function createUpdate(topic = "tenant.tenant-a.page.orders.instance.instance-1"): RuntimeManagerExecutedEvent {
   return {

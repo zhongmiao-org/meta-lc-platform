@@ -1,9 +1,5 @@
 import { Injectable } from "@nestjs/common";
-
-export interface CacheHit<T> {
-  value: T;
-  cached: boolean;
-}
+import type { CacheHit } from "../types/cache.type";
 
 @Injectable()
 export class CacheService {

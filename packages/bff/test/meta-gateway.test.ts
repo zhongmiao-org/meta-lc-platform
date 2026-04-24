@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { AggregationService } from "../src/application/orchestrator/aggregation.orchestrator";
+import { MetaQueryService } from "../src/application/services/meta-query.service";
 import { MetaRegistryService } from "../src/application/services/meta-registry.service";
 import { CacheService } from "../src/infra/cache/cache.service";
-import { MetaController } from "../src/interface/http/controller/meta.controller";
+import { MetaController } from "../src/controller/http/meta.controller";
 
 test("meta controller returns stable envelope and request id", async () => {
   const controller = createController();
@@ -49,7 +50,7 @@ test("meta summary endpoint uses cached aggregation envelope", async () => {
 
 function createController(): MetaController {
   const registry = new MetaRegistryService();
-  return new MetaController(registry, new CacheService(), new AggregationService(registry));
+  return new MetaController(new MetaQueryService(registry, new CacheService(), new AggregationService(registry)));
 }
 
 function request(requestId: string): { headers: Record<string, string> } {

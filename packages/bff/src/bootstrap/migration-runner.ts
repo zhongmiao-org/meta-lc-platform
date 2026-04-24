@@ -1,9 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Pool } from "pg";
-import type { DbConfig } from "../types";
-
-export type MigrationTarget = "meta" | "business" | "audit";
+import type { DbConfig } from "../contracts/types/bff-api.type";
+import type { MigrationTarget } from "../infra/types/migration.type";
 
 const TARGET_TO_FILE: Record<MigrationTarget, string> = {
   meta: "100_meta_baseline.sql",

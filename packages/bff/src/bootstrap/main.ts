@@ -2,7 +2,7 @@ import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { BootstrapService } from "./bootstrap.service";
-import { shouldAutoBootstrap } from "../types/config";
+import { shouldAutoBootstrap } from "../config/config";
 
 export async function startBffServer(): Promise<void> {
   if (shouldAutoBootstrap()) {

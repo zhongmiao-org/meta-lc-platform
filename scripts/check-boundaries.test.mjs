@@ -47,6 +47,7 @@ test('rejects unapproved pg imports inside db-boundary packages', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/random-db-helper.ts: unsupported BFF top-level source file.',
     'packages/bff/src/random-db-helper.ts: direct pg import is not allowed here.'
   ]);
 });
@@ -63,6 +64,61 @@ test('keeps deep import and kernel reverse dependency checks', () => {
     'packages/kernel/src/index.ts: deep import from package internals is forbidden.',
     'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-bff.',
     'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-query.'
+  ]);
+});
+
+test('rejects legacy BFF interface/types directories and unsupported top-level dirs', () => {
+  const workspace = createWorkspace({
+    'packages/bff/src/interface/.gitkeep': '',
+    'packages/bff/src/types/.gitkeep': '',
+    'packages/bff/src/gateway/query.controller.ts': 'export class QueryController {}\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/interface: forbidden BFF source directory.',
+    'packages/bff/src/types: forbidden BFF source directory.',
+    'packages/bff/src/gateway: unsupported BFF top-level source directory.'
+  ]);
+});
+
+test('rejects BFF type/interface mixing and implementation-local declarations', () => {
+  const workspace = createWorkspace({
+    'packages/bff/src/contracts/interfaces/bad.interface.ts': 'export type Bad = {};\n',
+    'packages/bff/src/contracts/types/bad.type.ts': 'export interface Bad {}\n',
+    'packages/bff/src/application/services/bad.service.ts': 'interface Bad {}\nexport class BadService {}\n',
+    'packages/bff/src/dto/bad.dto.ts': 'export type BadDto = {};\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/application/services/bad.service.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
+    'packages/bff/src/contracts/interfaces/bad.interface.ts: *.interface.ts files may not export type declarations.',
+    'packages/bff/src/contracts/types/bad.type.ts: *.type.ts files may not export interface declarations.',
+    'packages/bff/src/dto/bad.dto.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
+    'packages/bff/src/dto/bad.dto.ts: BFF dto files must be class-only.'
+  ]);
+});
+
+test('rejects BFF type and interface index aggregators', () => {
+  const workspace = createWorkspace({
+    'packages/bff/src/application/types/index.ts': 'export type { QueryInput } from "./query.type";\n',
+    'packages/bff/src/application/interfaces/index.ts': 'export { QueryService } from "./query.interface";\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/application/interfaces/index.ts: type/interface index aggregators are forbidden in BFF.',
+    'packages/bff/src/application/types/index.ts: type/interface index aggregators are forbidden in BFF.'
+  ]);
+});
+
+test('rejects controller-to-infra and shared-layer reverse imports in BFF', () => {
+  const workspace = createWorkspace({
+    'packages/bff/src/controller/http/query.controller.ts': 'import { Db } from "../../infra/integration/db";\n',
+    'packages/bff/src/contracts/types/bad.type.ts': 'import { QueryController } from "../../controller/http/query.controller";\nexport type Bad = {};\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/contracts/types/bad.type.ts: shared contracts layer must not import controller (../../controller/http/query.controller).',
+    'packages/bff/src/controller/http/query.controller.ts: controller layer must not import infra directly (../../infra/integration/db).'
   ]);
 });
 

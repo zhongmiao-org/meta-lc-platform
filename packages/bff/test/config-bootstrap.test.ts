@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isProductionEnv, loadBootstrapMode, shouldAutoBootstrap } from "../src/types/config";
+import { isProductionEnv, loadBootstrapMode, shouldAutoBootstrap } from "../src/config/config";
 
 const originalEnv = { ...process.env };
 

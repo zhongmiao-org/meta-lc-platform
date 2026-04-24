@@ -17,17 +17,59 @@ const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-datasource'
 ];
+const BFF_TOP_LEVEL_DIRS = new Set([
+  'application',
+  'bootstrap',
+  'common',
+  'config',
+  'constants',
+  'contracts',
+  'controller',
+  'domain',
+  'dto',
+  'infra',
+  'mapper',
+  'utils'
+]);
+const BFF_FORBIDDEN_SOURCE_DIRS = [
+  'packages/bff/src/interface',
+  'packages/bff/src/types'
+];
 
 export function checkWorkspace(root = process.cwd()) {
   const packagesDir = path.join(root, 'packages');
   const violations = [];
+  checkBffLayout(root, violations);
   walk(packagesDir, root, violations);
   return violations;
 }
 
+function checkBffLayout(root, violations) {
+  const bffSrc = path.join(root, 'packages', 'bff', 'src');
+  if (!fs.existsSync(bffSrc)) return;
+
+  for (const forbidden of BFF_FORBIDDEN_SOURCE_DIRS) {
+    if (fs.existsSync(path.join(root, forbidden))) {
+      violations.push(`${forbidden}: forbidden BFF source directory.`);
+    }
+  }
+
+  for (const entry of sortedDirents(bffSrc)) {
+    if (entry.name.startsWith('.')) continue;
+    const rel = normalizePath(path.relative(root, path.join(bffSrc, entry.name)));
+    if (BFF_FORBIDDEN_SOURCE_DIRS.includes(rel)) continue;
+    if (entry.isDirectory() && !BFF_TOP_LEVEL_DIRS.has(entry.name)) {
+      violations.push(`${rel}: unsupported BFF top-level source directory.`);
+    }
+    if (entry.isFile() && entry.name !== 'index.ts') {
+      violations.push(`${rel}: unsupported BFF top-level source file.`);
+    }
+  }
+}
+
 function walk(dir, root, violations) {
   if (!fs.existsSync(dir)) return;
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  for (const entry of sortedDirents(dir)) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (entry.name === 'dist' || entry.name === 'node_modules') continue;
@@ -39,9 +81,14 @@ function walk(dir, root, violations) {
   }
 }
 
+function sortedDirents(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name));
+}
+
 function checkSourceFile(file, root, violations) {
   const rel = normalizePath(path.relative(root, file));
   const content = fs.readFileSync(file, 'utf8');
+  checkBffSourceFile(rel, content, file, root, violations);
 
   // No deep cross-package imports.
   const deepImport = content.match(/from\s+["'](?:@meta-lc\/[a-z-]+|@zhongmiao\/meta-lc-[a-z-]+)\//g);
@@ -67,6 +114,87 @@ function checkSourceFile(file, root, violations) {
       }
     }
   }
+}
+
+function checkBffSourceFile(rel, content, file, root, violations) {
+  if (!rel.startsWith('packages/bff/src/')) return;
+
+  if (/\/(?:types|interfaces)\/index\.ts$/.test(rel)) {
+    violations.push(`${rel}: type/interface index aggregators are forbidden in BFF.`);
+  }
+
+  if (rel.endsWith('.interface.ts')) {
+    if (/^\s*(?:export\s+)?type\s+\w+\s*=/m.test(content) || /^\s*export\s+type\s+\{/m.test(content)) {
+      violations.push(`${rel}: *.interface.ts files may not export type declarations.`);
+    }
+    if (/^\s*export\s+(?:class|const|let|var|function|enum)\b/m.test(content)) {
+      violations.push(`${rel}: *.interface.ts files may only export interface declarations.`);
+    }
+  } else if (rel.endsWith('.type.ts')) {
+    if (/^\s*(?:export\s+)?interface\s+\w+/m.test(content)) {
+      violations.push(`${rel}: *.type.ts files may not export interface declarations.`);
+    }
+    if (/^\s*export\s+(?:class|const|let|var|function|enum)\b/m.test(content)) {
+      violations.push(`${rel}: *.type.ts files may only export type declarations.`);
+    }
+  } else if (hasTypeOrInterfaceDeclaration(content)) {
+    violations.push(`${rel}: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.`);
+  }
+
+  if (rel.startsWith('packages/bff/src/dto/') && hasTypeOrInterfaceDeclaration(content)) {
+    violations.push(`${rel}: BFF dto files must be class-only.`);
+  }
+
+  checkBffDependencyDirection(rel, content, file, root, violations);
+}
+
+function hasTypeOrInterfaceDeclaration(content) {
+  return /^\s*(?:export\s+)?interface\s+\w+/m.test(content) || /^\s*(?:export\s+)?type\s+\w+\s*=/m.test(content);
+}
+
+function checkBffDependencyDirection(rel, content, file, root, violations) {
+  const sourceLayer = getBffLayer(rel);
+  if (!sourceLayer) return;
+
+  for (const specifier of findImportSpecifiers(content)) {
+    if (!specifier.startsWith('.')) continue;
+    const targetRel = normalizePath(path.relative(root, path.resolve(path.dirname(file), specifier)));
+    const targetLayer = getBffLayer(targetRel);
+    if (!targetLayer || targetLayer === sourceLayer) continue;
+
+    if (sourceLayer === 'controller' && targetLayer === 'infra') {
+      violations.push(`${rel}: controller layer must not import infra directly (${specifier}).`);
+    }
+    if (sourceLayer === 'application' && targetLayer === 'controller') {
+      violations.push(`${rel}: application layer must not import controller (${specifier}).`);
+    }
+    if (sourceLayer === 'domain' && ['controller', 'application', 'infra', 'bootstrap'].includes(targetLayer)) {
+      violations.push(`${rel}: domain layer must not import ${targetLayer} (${specifier}).`);
+    }
+    if (sourceLayer === 'infra' && ['controller', 'application', 'bootstrap'].includes(targetLayer)) {
+      violations.push(`${rel}: infra layer must not import ${targetLayer} (${specifier}).`);
+    }
+    if (['common', 'config', 'constants', 'contracts'].includes(sourceLayer)) {
+      if (['controller', 'application', 'domain', 'infra', 'bootstrap'].includes(targetLayer)) {
+        violations.push(`${rel}: shared ${sourceLayer} layer must not import ${targetLayer} (${specifier}).`);
+      }
+    }
+  }
+}
+
+function findImportSpecifiers(content) {
+  const specifiers = [];
+  const importPattern = /(?:from\s+|import\s*\(\s*|require\(\s*)["']([^"']+)["']/g;
+  let match;
+  while ((match = importPattern.exec(content)) !== null) {
+    specifiers.push(match[1]);
+  }
+  return specifiers;
+}
+
+function getBffLayer(rel) {
+  const match = normalizePath(rel).match(/^packages\/bff\/src\/([^/]+)/);
+  return match?.[1] ?? null;
 }
 
 function checkPackageManifest(file, root, violations) {

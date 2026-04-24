@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(layering): 将 `src` 重建为严格的 controller/application/domain/infra/contracts 分层，把 runtime WebSocket 固定到 `controller/ws/runtime`，拆分 type/interface 文件，并用 ESLint 与 boundary check 固化规则。
 - feat(gateway): 新增 `POST /view/:name`，并加入临时的 runtime-backed view adapter，让 BFF 的页面请求进入 runtime 执行链路。
 - refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。
 - docs(readme): 新增双语子包 README 与最小架构流程图。
