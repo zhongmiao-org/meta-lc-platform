@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(package-structure): 将工作区包重整为 domain/application/infra/interface/types/utils 分层目录，并同步刷新边界检查。
 - feat(runtime): 新增 RuntimeExecutor 主执行引擎，负责 DAG 分层调度、原子提交 state snapshot 并解析最终 view model。
 - feat(runtime): 新增 QueryExecutor 适配层，负责编译 query 节点并执行 datasource 查询。
 - docs(readme): 新增双语子包 README 索引与架构流程图。

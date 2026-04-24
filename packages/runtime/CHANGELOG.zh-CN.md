@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。
 - feat(runtime): 新增 RuntimeExecutor 主执行引擎，负责 DAG 分层调度、原子提交 state snapshot 并解析最终 view model。
 - feat(runtime): 新增 merge 执行器，支持 V2 fan-in 策略与自定义 merge hook。
 - feat(runtime): 新增 QueryExecutor 适配层，负责编译 query 节点并执行 datasource 查询。

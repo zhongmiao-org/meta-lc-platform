@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(package-structure): reorganize the workspace packages into layered domain/application/infra/interface/types/utils directories and refresh boundary checks.
 - feat(runtime): add a RuntimeExecutor main engine that schedules DAG layers, commits state snapshots atomically, and resolves final view models.
 - feat(runtime): add a query executor adapter that compiles query nodes and runs datasource queries.
 - docs(readme): add bilingual package README index and architecture diagrams.

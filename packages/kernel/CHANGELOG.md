@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - docs(readme): add bilingual package README and minimal architecture flow.
 - chore(package): adopt the `@zhongmiao/meta-lc-kernel` scoped package identity for release governance.
 - feat(sql-generator): add table, index, relation SQL generation and a compiler fixture baseline.

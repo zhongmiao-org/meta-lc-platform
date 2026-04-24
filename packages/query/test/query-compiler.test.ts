@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compileSelectQuery } from "../src/query-compiler";
+import { compileSelectQuery } from "../src/domain/query-compiler";
 
 test("compileSelectQuery builds parameterized SQL", () => {
   const compiled = compileSelectQuery({

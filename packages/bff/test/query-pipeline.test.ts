@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compileQueryWithPermission } from "../src/orchestration/query-orchestrator.service";
+import { compileQueryWithPermission } from "../src/application/orchestrator/query-orchestrator.service";
 
 test("compileQueryWithPermission injects DEPT scope filter", () => {
   const compiled = compileQueryWithPermission({

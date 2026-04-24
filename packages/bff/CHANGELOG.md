@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - docs(readme): add bilingual package README and minimal architecture flow.
 - feat(gateway): add meta API, in-memory cache, aggregation summary, and WebSocket lifecycle baseline.
 - feat(api-contracts): annotate query and mutation controller responses with shared API response contracts.

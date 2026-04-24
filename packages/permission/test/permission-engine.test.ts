@@ -6,7 +6,7 @@ import {
   canAccessOrg,
   injectPermissionClause,
   resolveDataScope
-} from "../src/permission-engine";
+} from "../src/domain/permission-engine";
 
 test("non-admin defaults to SELF scope", () => {
   const filter = buildRowLevelFilter({

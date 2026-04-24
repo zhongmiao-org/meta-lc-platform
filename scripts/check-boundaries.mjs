@@ -5,12 +5,12 @@ import { fileURLToPath } from 'node:url';
 const DB_DRIVER_PACKAGES = new Set(['bff', 'datasource', 'kernel']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
-  'packages/datasource/src/postgres-datasource-adapter.ts',
-  'packages/kernel/src/postgres-meta-kernel-repository.ts',
-  'packages/bff/src/integration/org-scope.service.ts',
-  'packages/bff/src/integration/audit-persistence.service.ts',
-  'packages/bff/src/integration/postgres-query-executor.service.ts',
-  'packages/bff/src/bootstrap/migration-runner.ts'
+  'packages/datasource/src/infra/postgres/postgres.adapter.ts',
+  'packages/kernel/src/infra/persistence/postgres-meta-kernel-repository.ts',
+  'packages/bff/src/infra/integration/org-scope.service.ts',
+  'packages/bff/src/infra/integration/audit-persistence.service.ts',
+  'packages/bff/src/infra/integration/postgres-query-executor.service.ts',
+  'packages/bff/src/interface/bootstrap/migration-runner.ts'
 ]);
 const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-bff',
