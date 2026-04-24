@@ -2,7 +2,7 @@ import { Body, Controller, InternalServerErrorException, Param, Post, Req, Res }
 import { HttpException } from "@nestjs/common";
 import { resolveRequestId } from "../common/request-id";
 import { TemporaryViewAdapter } from "../../application/view/temporary-view-adapter.service";
-import type { ViewApiRequest, ViewApiResponse } from "../../types";
+import type { ViewApiRequest, ViewApiResponse } from "../../application/view/view.contract";
 
 interface RequestLike {
   headers: Record<string, string | string[] | undefined>;
