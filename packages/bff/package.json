@@ -16,6 +16,7 @@
     "@nestjs/platform-socket.io": "^10.4.22",
     "@nestjs/websockets": "^10.4.22",
     "@zhongmiao/meta-lc-contracts": "workspace:*",
+    "@zhongmiao/meta-lc-datasource": "workspace:*",
     "@zhongmiao/meta-lc-runtime": "workspace:*",
     "pg": "^8.13.1",
     "redis": "^4.7.1",

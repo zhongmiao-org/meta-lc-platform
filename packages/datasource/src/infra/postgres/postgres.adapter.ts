@@ -1,18 +1,27 @@
 import { Pool } from "pg";
-import type { DbConfig, QueryResultRow } from "../../types/shared.types";
+import {
+  DatasourceAdapterError,
+  type DatasourceAdapter,
+  type DatasourceExecutionRequest,
+  type DatasourceExecutionResult,
+  type DatasourceParamValue,
+  type DbConfig,
+  type QueryResultRow
+} from "../../types/shared.types";
 
-export class PostgresDatasourceAdapter {
-  private readonly pool: Pool;
+interface PostgresPoolLike {
+  query(
+    sql: string,
+    params?: DatasourceParamValue[]
+  ): Promise<{ rows: QueryResultRow[]; rowCount: number | null }>;
+  end(): Promise<void>;
+}
 
-  constructor(config: DbConfig) {
-    this.pool = new Pool({
-      host: config.host,
-      port: config.port,
-      user: config.user,
-      password: config.password,
-      database: config.database,
-      ssl: config.ssl ? { rejectUnauthorized: false } : false
-    });
+export class PostgresDatasourceAdapter implements DatasourceAdapter {
+  private readonly pool: PostgresPoolLike;
+
+  constructor(config: DbConfig, pool?: PostgresPoolLike) {
+    this.pool = pool ?? createPool(config);
   }
 
   async healthCheck(): Promise<boolean> {
@@ -20,12 +29,55 @@ export class PostgresDatasourceAdapter {
     return result.rows[0]?.ok === 1;
   }
 
-  async query(sql: string, params: Array<string | number | boolean> = []): Promise<QueryResultRow[]> {
-    const result = await this.pool.query(sql, params);
+  async execute(request: DatasourceExecutionRequest): Promise<DatasourceExecutionResult> {
+    const startedAt = Date.now();
+    try {
+      const result = await this.pool.query(request.sql, request.params ?? []);
+      return {
+        rows: result.rows,
+        rowCount: result.rowCount ?? result.rows.length,
+        metadata: {
+          kind: request.kind,
+          durationMs: Date.now() - startedAt
+        }
+      };
+    } catch (error) {
+      throw new DatasourceAdapterError(
+        `Failed to execute ${request.kind} datasource request: ${getErrorMessage(error)}`,
+        request.kind,
+        error
+      );
+    }
+  }
+
+  async query(sql: string, params: DatasourceParamValue[] = []): Promise<QueryResultRow[]> {
+    const result = await this.execute({ kind: "query", sql, params });
     return result.rows;
   }
 
   async close(): Promise<void> {
     await this.pool.end();
   }
+}
+
+function createPool(config: DbConfig): Pool {
+  if (config.url) {
+    return new Pool({
+      connectionString: config.url,
+      ssl: config.ssl ? { rejectUnauthorized: false } : false
+    });
+  }
+
+  return new Pool({
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    database: config.database,
+    ssl: config.ssl ? { rejectUnauthorized: false } : false
+  });
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

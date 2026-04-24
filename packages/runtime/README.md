@@ -19,7 +19,8 @@ English | [中文文档](./README_zh.md)
 - Depends on `contracts` for shared runtime event and page topic contracts.
 - BFF websocket code can publish runtime events compatible with these contracts.
 - Frontend runtime adapters consume the package contract without direct database or business API access.
-- `query`, `permission`, and `datasource` remain server-side concerns composed by BFF.
+- Query nodes compile through `query` and execute through the shared `datasource` adapter contract.
+- BFF wires concrete datasource adapters; runtime does not read DB config or access physical data directly.
 
 ## Minimal Flow
 

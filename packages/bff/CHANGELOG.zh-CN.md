@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(datasource): BFF runtime view query 执行改为通过 datasource 包 adapter。
 - fix(boundaries): 移除旧 `/query` 与 `/mutation` 编排入口，让 BFF 只作为 runtime gateway。
 - test(gateway): e2e gate 从已移除的旧 query/mutation 入口改为验证 `POST /view/:name`。
 - refactor(gateway): view 执行改为调用 runtime view facade，并把 Postgres runtime adapter 装配移入 infra。

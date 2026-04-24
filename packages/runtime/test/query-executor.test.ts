@@ -33,7 +33,7 @@ function createQueryNode(): QueryNodeDefinition {
 
 test("executeQueryNode resolves expressions before compiling and querying", async () => {
   const compileCalls: QueryRequest[] = [];
-  const queryCalls: Array<{ sql: string; params: Array<string | number | boolean> }> = [];
+  const executeCalls: Array<{ kind: string; sql: string; params: unknown[] }> = [];
 
   const rows = [{ id: "row-1", owner: "user-1" }];
   const result = await executeQueryNode(createQueryNode(), runtimeState, runtimeContext, {
@@ -47,9 +47,20 @@ test("executeQueryNode resolves expressions before compiling and querying", asyn
       }
     },
     datasource: {
-      async query(sql, params = []) {
-        queryCalls.push({ sql, params });
-        return rows;
+      async execute(request) {
+        executeCalls.push({
+          kind: request.kind,
+          sql: request.sql,
+          params: request.params ?? []
+        });
+        return {
+          rows,
+          rowCount: rows.length,
+          metadata: {
+            kind: request.kind,
+            durationMs: 1
+          }
+        };
       }
     }
   });
@@ -65,8 +76,9 @@ test("executeQueryNode resolves expressions before compiling and querying", asyn
       limit: 7
     }
   ]);
-  assert.deepEqual(queryCalls, [
+  assert.deepEqual(executeCalls, [
     {
+      kind: "query",
       sql: 'SELECT "id", "owner" FROM "users" WHERE "owner" = $1 AND "status" = $2 LIMIT 7',
       params: ["user-1", "active"]
     }
@@ -84,7 +96,7 @@ test("executeQueryNode wraps query compilation errors with traceable stage infor
           }
         },
         datasource: {
-          async query() {
+          async execute() {
             throw new Error("should not be called");
           }
         }
@@ -106,7 +118,7 @@ test("executeQueryNode wraps datasource errors as node errors", async () => {
       executeQueryNode(createQueryNode(), runtimeState, runtimeContext, {
         compiler: createQueryCompilerAdapter(),
         datasource: {
-          async query() {
+          async execute() {
             throw new Error("database offline");
           }
         }
@@ -126,8 +138,15 @@ test("executeQueryNode returns empty results unchanged", async () => {
   const rows = await executeQueryNode(createQueryNode(), runtimeState, runtimeContext, {
     compiler: createQueryCompilerAdapter(),
     datasource: {
-      async query() {
-        return [];
+      async execute(request) {
+        return {
+          rows: [],
+          rowCount: 0,
+          metadata: {
+            kind: request.kind,
+            durationMs: 1
+          }
+        };
       }
     }
   });

@@ -49,7 +49,12 @@ export async function executeQueryNode(
   }
 
   try {
-    return await dependencies.datasource.query(compiled.sql, compiled.params);
+    const result = await dependencies.datasource.execute({
+      kind: "query",
+      sql: compiled.sql,
+      params: compiled.params
+    });
+    return result.rows;
   } catch (error) {
     throw new QueryExecutorError(
       `Failed to execute query node "${String(resolvedNode.type ?? node.type)}" for table "${request.table}". ${

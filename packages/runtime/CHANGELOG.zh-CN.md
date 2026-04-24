@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(datasource): query node 改为通过共享 datasource adapter 契约执行。
 - feat(runtime): 新增高层 runtime view executor facade，通过 RuntimeExecutor 编译并执行 ViewDefinition。
 - refactor(contracts): 从共享 contracts 包转导 V2 view 与 execution plan 契约。
 - fix(package): 将 runtime 包的 main/types 入口对齐到重构后的 `dist/runtime/src` 目录，确保下游包可在运行时正确解析。
