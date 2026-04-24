@@ -1,47 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";
-
-export type MetaResourceKind = "tables" | "pages" | "datasources" | "rules" | "permissions";
-
-export interface MetaRegistryItem {
-  id: string;
-  name: string;
-  updatedAt: string;
-  [key: string]: unknown;
-}
-
-const UPDATED_AT = "2026-04-20T00:00:00.000Z";
-const VIEW_FIXTURES: Record<string, ViewDefinition> = {
-  "orders-workbench": {
-    name: "orders-workbench",
-    nodes: {
-      orders: {
-        type: "query",
-        table: "orders",
-        fields: ["id", "owner", "channel", "priority", "status"],
-        filters: {
-          tenant_id: "{{context.tenantId}}",
-          owner: "{{input.owner}}",
-          created_by: "{{context.userId}}"
-        },
-        limit: "{{input.limit}}"
-      }
-    },
-    output: {
-      requestId: "{{context.requestId}}",
-      tenantId: "{{context.tenantId}}",
-      owner: "{{input.owner}}",
-      rows: "{{orders.rows}}"
-    }
-  }
-};
+import { META_REGISTRY_UPDATED_AT, META_REGISTRY_VIEW_FIXTURES } from "./constants/meta-registry.constants";
+import type { MetaRegistryItem, MetaResourceKind } from "./contracts/meta-registry.contract";
 
 const FIXTURES: Record<MetaResourceKind, MetaRegistryItem[]> = {
   tables: [
     {
       id: "orders",
       name: "Orders",
-      updatedAt: UPDATED_AT,
+      updatedAt: META_REGISTRY_UPDATED_AT,
       fields: ["id", "owner", "channel", "priority", "status", "tenant_id", "org_id"]
     }
   ],
@@ -49,7 +16,7 @@ const FIXTURES: Record<MetaResourceKind, MetaRegistryItem[]> = {
     {
       id: "orders-workbench",
       name: "Orders Workbench",
-      updatedAt: UPDATED_AT,
+      updatedAt: META_REGISTRY_UPDATED_AT,
       route: "/studio/page/orders"
     }
   ],
@@ -57,7 +24,7 @@ const FIXTURES: Record<MetaResourceKind, MetaRegistryItem[]> = {
     {
       id: "orders-query",
       name: "Orders Query",
-      updatedAt: UPDATED_AT,
+      updatedAt: META_REGISTRY_UPDATED_AT,
       type: "bff-query"
     }
   ],
@@ -65,7 +32,7 @@ const FIXTURES: Record<MetaResourceKind, MetaRegistryItem[]> = {
     {
       id: "orders-refresh-after-mutation",
       name: "Refresh Orders After Mutation",
-      updatedAt: UPDATED_AT,
+      updatedAt: META_REGISTRY_UPDATED_AT,
       trigger: "mutation.succeeded"
     }
   ],
@@ -73,7 +40,7 @@ const FIXTURES: Record<MetaResourceKind, MetaRegistryItem[]> = {
     {
       id: "orders-data-scope",
       name: "Orders Data Scope",
-      updatedAt: UPDATED_AT,
+      updatedAt: META_REGISTRY_UPDATED_AT,
       scopes: ["SELF", "DEPT", "DEPT_AND_CHILDREN", "CUSTOM_ORG_SET", "TENANT_ALL"]
     }
   ]
@@ -90,11 +57,11 @@ export class MetaRegistryService {
   }
 
   getView(name: string): ViewDefinition | null {
-    const view = VIEW_FIXTURES[name];
+    const view = META_REGISTRY_VIEW_FIXTURES[name];
     return view ? structuredClone(view) : null;
   }
 
   listViewNames(): string[] {
-    return Object.keys(VIEW_FIXTURES).sort((left, right) => left.localeCompare(right));
+    return Object.keys(META_REGISTRY_VIEW_FIXTURES).sort((left, right) => left.localeCompare(right));
   }
 }
