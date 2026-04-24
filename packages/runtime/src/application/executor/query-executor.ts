@@ -1,5 +1,7 @@
 import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
 import type { CompiledQuery, QueryRequest } from "@zhongmiao/meta-lc-query";
+import type { OrgScopeContext } from "@zhongmiao/meta-lc-contracts";
+import type { PermissionAstTransformContext } from "@zhongmiao/meta-lc-permission";
 import { resolveExpression } from "../../domain/dsl/expression";
 import {
   QueryExecutorError,
@@ -10,12 +12,15 @@ import {
 } from "../../types";
 import {
   createQueryCompilerAdapter,
+  createQueryPermissionAdapter,
   type QueryCompilerAdapter,
-  type QueryDatasourceAdapter
+  type QueryDatasourceAdapter,
+  type QueryPermissionAdapter
 } from "../../infra/adapter/query.adapter";
 
 export interface QueryExecutorDependencies {
   compiler?: QueryCompilerAdapter;
+  permission?: QueryPermissionAdapter;
   datasource: QueryDatasourceAdapter;
 }
 
@@ -32,12 +37,15 @@ export async function executeQueryNode(
   dependencies: QueryExecutorDependencies
 ): Promise<QueryResultRow[]> {
   const compiler = dependencies.compiler ?? createQueryCompilerAdapter();
+  const permission = dependencies.permission ?? createQueryPermissionAdapter();
   const resolvedNode = resolveExpression(node as unknown as ViewExpression, new QueryExpressionStateSource(state, context)) as ResolvedQueryNodeDefinition;
   const request = buildQueryRequest(resolvedNode);
 
   let compiled: CompiledQuery;
   try {
-    compiled = compiler.compile(request);
+    const ast = compiler.buildAst(request);
+    const transformedAst = permission.transform(ast, buildPermissionContext(context));
+    compiled = compiler.compileAst(transformedAst);
   } catch (error) {
     throw new QueryExecutorError(
       `Failed to compile query node "${String(resolvedNode.type ?? node.type)}" for table "${request.table}". ${
@@ -64,6 +72,57 @@ export async function executeQueryNode(
       error
     );
   }
+}
+
+function buildPermissionContext(context: RuntimeContext): PermissionAstTransformContext {
+  const auth = isPlainObject(context.auth) ? context.auth : {};
+  const tenantId = readContextString(context.tenantId ?? auth.tenantId, "tenantId");
+  const userId = readContextString(context.userId ?? auth.userId, "userId");
+  const roles = readContextStringArray(context.roles ?? auth.roles, "roles");
+  const orgScope = readOrgScopeContext(context.orgScope);
+
+  return {
+    tenantId,
+    userId,
+    roles,
+    ...(orgScope ? { orgScope } : {})
+  };
+}
+
+function readContextString(value: unknown, key: string): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new QueryExecutorError(`Runtime context is missing a valid permission "${key}" value.`, "validation");
+  }
+  return value.trim();
+}
+
+function readContextStringArray(value: unknown, key: string): string[] {
+  if (!Array.isArray(value)) {
+    throw new QueryExecutorError(`Runtime context permission "${key}" must be an array.`, "validation");
+  }
+  return value.map((item) => readContextString(item, key));
+}
+
+function readOrgScopeContext(value: unknown): OrgScopeContext | undefined {
+  if (!isPlainObject(value)) {
+    return undefined;
+  }
+
+  const tenantId = readContextString(value.tenantId, "orgScope.tenantId");
+  const userId = readContextString(value.userId, "orgScope.userId");
+  const roles = readContextStringArray(value.roles, "orgScope.roles");
+  const userOrgIds = readContextStringArray(value.userOrgIds, "orgScope.userOrgIds");
+  const rolePolicies = Array.isArray(value.rolePolicies) ? value.rolePolicies : [];
+  const orgNodes = Array.isArray(value.orgNodes) ? value.orgNodes : [];
+
+  return {
+    tenantId,
+    userId,
+    roles,
+    userOrgIds,
+    rolePolicies: rolePolicies as OrgScopeContext["rolePolicies"],
+    orgNodes: orgNodes as OrgScopeContext["orgNodes"]
+  };
 }
 
 function buildQueryRequest(node: ResolvedQueryNodeDefinition): QueryRequest {

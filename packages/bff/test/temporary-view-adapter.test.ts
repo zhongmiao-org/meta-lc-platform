@@ -14,7 +14,7 @@ test("temporary view adapter executes runtime view and propagates context into t
         assert.deepEqual(input, {
           tenantId: "tenant-a",
           userId: "user-a",
-          roles: ["USER"]
+          roles: ["MANAGER"]
         });
         return {
           tenantId: input.tenantId,
@@ -69,7 +69,7 @@ test("temporary view adapter executes runtime view and propagates context into t
     {
       tenantId: "tenant-a",
       userId: "user-a",
-      roles: ["USER"],
+      roles: ["MANAGER"],
       input: {
         owner: "Ada",
         limit: 2
@@ -86,8 +86,8 @@ test("temporary view adapter executes runtime view and propagates context into t
   assert.deepEqual(queryCalls, [
     {
       kind: "query",
-      sql: 'SELECT "id", "owner", "channel", "priority", "status" FROM "orders" WHERE "tenant_id" = $1 AND "owner" = $2 AND "created_by" = $3 LIMIT 2',
-      params: ["tenant-a", "Ada", "user-a"]
+      sql: 'SELECT "id", "owner", "channel", "priority", "status" FROM "orders" WHERE ("tenant_id" = $1 AND "owner" = $2 AND "created_by" = $3) AND ("tenant_id" = $4 AND ("org_id" IN ($5) OR ("org_id" IS NULL AND "created_by" = $6))) LIMIT 2',
+      params: ["tenant-a", "Ada", "user-a", "tenant-a", "dept-a", "user-a"]
     }
   ]);
   assert.deepEqual(result.runtime.viewModel, {

@@ -8,10 +8,14 @@
     "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
     "lint": "echo lint:permission"
   },
+  "dependencies": {
+    "@zhongmiao/meta-lc-contracts": "workspace:*",
+    "@zhongmiao/meta-lc-query": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "typescript": "^5.7.2"
   },
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts"
+  "main": "dist/permission/src/index.js",
+  "types": "dist/permission/src/index.d.ts"
 }

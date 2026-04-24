@@ -15,13 +15,15 @@ import type {
 } from "../../types";
 import type {
   QueryCompilerAdapter,
-  QueryDatasourceAdapter
+  QueryDatasourceAdapter,
+  QueryPermissionAdapter
 } from "../../infra/adapter/query.adapter";
 import type { MutationDatasourceAdapter } from "../../infra/adapter/mutation.adapter";
 import { compileViewDefinition } from "../compiler/view-compiler";
 
 export interface RuntimeViewExecutorDependencies {
   queryCompiler?: QueryCompilerAdapter;
+  queryPermission?: QueryPermissionAdapter;
   queryDatasource: QueryDatasourceAdapter;
   mutationDatasource: MutationDatasourceAdapter;
   merge?: MergeExecutorDependencies;
@@ -45,6 +47,7 @@ function createRuntimeViewExecutors(
     query: (node, state, context) =>
       executeQueryNode(node, state, context, {
         ...(dependencies.queryCompiler ? { compiler: dependencies.queryCompiler } : {}),
+        ...(dependencies.queryPermission ? { permission: dependencies.queryPermission } : {}),
         datasource: dependencies.queryDatasource
       }),
     mutation: (node, state, context) =>

@@ -153,6 +153,65 @@ test("compileSelectAst compiles permission-transformed AST predicates", () => {
   assert.deepEqual(compiled.params, ["tenant-a", "dept-a", "dept-b"]);
 });
 
+test("compileSelectAst compiles permission predicate shapes", () => {
+  const ast: SelectQueryAst = {
+    type: "select",
+    table: { name: "orders", alias: "o" },
+    fields: [{ name: "id", tableAlias: "o" }],
+    where: {
+      type: "logical",
+      operator: "and",
+      predicates: [
+        {
+          type: "in",
+          left: { name: "org_id", tableAlias: "o" },
+          values: ["dept-a", "dept-b"]
+        },
+        {
+          type: "logical",
+          operator: "or",
+          predicates: [
+            {
+              type: "is_null",
+              left: { name: "deleted_at", tableAlias: "o" }
+            },
+            {
+              type: "literal",
+              value: false
+            }
+          ]
+        }
+      ]
+    },
+    limit: 20
+  };
+
+  const compiled = compileSelectAst(ast);
+
+  assert.equal(
+    compiled.sql,
+    'SELECT "o"."id" FROM "orders" AS "o" WHERE "o"."org_id" IN ($1, $2) AND ("o"."deleted_at" IS NULL OR FALSE) LIMIT 20'
+  );
+  assert.deepEqual(compiled.params, ["dept-a", "dept-b"]);
+});
+
+test("compileSelectAst compiles empty IN as deny-all predicate", () => {
+  const compiled = compileSelectAst({
+    type: "select",
+    table: { name: "orders" },
+    fields: [{ name: "id" }],
+    where: {
+      type: "in",
+      left: { name: "org_id" },
+      values: []
+    },
+    limit: 10
+  });
+
+  assert.equal(compiled.sql, 'SELECT "id" FROM "orders" WHERE FALSE LIMIT 10');
+  assert.deepEqual(compiled.params, []);
+});
+
 test("compileSelectQuery rejects invalid identifiers", () => {
   assert.throws(
     () => compileSelectQuery({ table: "orders;drop", fields: ["id"] }),

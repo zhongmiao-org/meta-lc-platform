@@ -123,6 +123,10 @@ export function resolveDataScope(context: OrgScopeContext): DataScopeDecision {
   };
 }
 
+/**
+ * @deprecated Runtime query permissions should use transformSelectQueryAstWithPermission()
+ * and let the query compiler render SQL from AST.
+ */
 export function buildDataScopeFilter(decision: DataScopeDecision, context: PermissionContext): PermissionFilter {
   if (decision.tenantAll) {
     return {
@@ -191,6 +195,10 @@ export function canAccessOrg(
   };
 }
 
+/**
+ * @deprecated Runtime query permissions should use transformSelectQueryAstWithPermission()
+ * and let the query compiler render SQL from AST.
+ */
 export function buildRowLevelFilter(context: PermissionContext): PermissionFilter {
   return buildDataScopeFilter(
     {
@@ -204,6 +212,10 @@ export function buildRowLevelFilter(context: PermissionContext): PermissionFilte
   );
 }
 
+/**
+ * @deprecated SQL clause injection is retained only for legacy callers. Runtime
+ * query execution must use Permission AST Transform instead.
+ */
 export function injectPermissionClause(baseSql: string, filter: PermissionFilter): string {
   if (filter.clause === "1=1") {
     return baseSql;

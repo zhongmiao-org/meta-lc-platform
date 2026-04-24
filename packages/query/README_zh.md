@@ -16,7 +16,7 @@
 ## 与其他包关系
 
 - `runtime` 通过 query compiler adapter 在 datasource 执行前调用 query compiler。
-- `permission` 后续可以在最终 SQL 编译前 transform query AST。
+- `permission` 在最终 SQL 编译前 transform query AST。
 - `datasource` 执行编译后的 SQL；`query` 不依赖 `datasource`。
 - `contracts` 提供 V2 query node 形状，由 runtime 适配为 compiler input。
 
@@ -26,7 +26,8 @@
 flowchart LR
   Request["QueryRequest 兼容输入"] --> AstBuilder["Query AST Builder"]
   AstBuilder --> Ast["SelectQueryAst"]
-  Ast --> Compiler["AST SQL Compiler"]
+  Ast --> Permission["Permission AST Transform"]
+  Permission --> Compiler["AST SQL Compiler"]
   Compiler --> Sql["SQL + params"]
   Sql --> Executor["Datasource adapter"]
 ```
@@ -42,4 +43,4 @@ pnpm --filter @zhongmiao/meta-lc-query test
 
 - 不在这里打开数据库连接。
 - 不在这里新增 runtime orchestration 或 BFF 页面请求语义。
-- 权限策略解析留在包外；本包消费 AST predicates 或后续 permission-transformed AST。
+- 权限策略解析留在包外；本包消费 permission-transformed AST predicates。

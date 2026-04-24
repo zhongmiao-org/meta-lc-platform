@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(permission): add Query AST permission transforms and route runtime query compilation through them.
 - feat(datasource): converge runtime query execution onto the shared datasource adapter contract.
 - fix(boundaries): close Task 1-9 runtime boundary gaps by removing legacy BFF query/mutation orchestration and adding guards against regressions.
 - feat(runtime): add a high-level runtime view executor facade for BFF gateway integration.

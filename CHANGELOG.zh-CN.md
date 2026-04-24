@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(permission): 新增 Query AST permission transform，并让 runtime query 编译链路先经过权限 AST。
 - feat(datasource): 将 runtime query 执行收敛到共享 datasource adapter 契约。
 - fix(boundaries): 收口 Task 1-9 runtime 边界遗漏，移除旧 BFF query/mutation 编排并新增防回归边界守护。
 - feat(runtime): 新增面向 BFF gateway 集成的高层 runtime view executor facade。
