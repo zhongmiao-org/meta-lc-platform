@@ -10,29 +10,6 @@ test("temporary view adapter executes runtime view and propagates context into t
   const adapter = new TemporaryViewAdapter(
     registry,
     {
-      async query(sql: string, params: Array<string | number | boolean>) {
-        queryCalls.push({ sql, params });
-        return [
-          {
-            id: "order-1",
-            owner: "Ada",
-            channel: "web",
-            priority: "medium",
-            status: "active"
-          }
-        ];
-      },
-      async health() {
-        return true;
-      },
-      async mutateOrder() {
-        throw new Error("mutation should not be called for the fixture view");
-      },
-      async findOrderById() {
-        return null;
-      }
-    } as never,
-    {
       async resolveContext(input: { tenantId: string; userId: string; roles: string[] }) {
         assert.deepEqual(input, {
           tenantId: "tenant-a",
@@ -46,6 +23,31 @@ test("temporary view adapter executes runtime view and propagates context into t
           userOrgIds: ["dept-a"],
           rolePolicies: [],
           orgNodes: []
+        };
+      }
+    } as never,
+    {
+      create() {
+        return {
+          queryDatasource: {
+            async query(sql: string, params: Array<string | number | boolean>) {
+              queryCalls.push({ sql, params });
+              return [
+                {
+                  id: "order-1",
+                  owner: "Ada",
+                  channel: "web",
+                  priority: "medium",
+                  status: "active"
+                }
+              ];
+            }
+          },
+          mutationDatasource: {
+            async execute() {
+              throw new Error("mutation should not be called for the fixture view");
+            }
+          }
         };
       }
     } as never
@@ -96,20 +98,6 @@ test("temporary view adapter returns a stable 404 when the view is missing", asy
   const adapter = new TemporaryViewAdapter(
     new MetaRegistryService(),
     {
-      async query() {
-        throw new Error("should not be called");
-      },
-      async health() {
-        return true;
-      },
-      async mutateOrder() {
-        throw new Error("should not be called");
-      },
-      async findOrderById() {
-        return null;
-      }
-    } as never,
-    {
       async resolveContext() {
         return {
           tenantId: "tenant-a",
@@ -119,6 +107,11 @@ test("temporary view adapter returns a stable 404 when the view is missing", asy
           rolePolicies: [],
           orgNodes: []
         };
+      }
+    } as never,
+    {
+      create() {
+        throw new Error("runtime dependencies should not be created");
       }
     } as never
   );

@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(runtime-contracts): move V2 ViewDefinition, ExecutionPlan, and runtime node contracts into the shared contracts package.
+- fix(api-contracts): stop exporting removed legacy BFF query/mutation API contracts.
 - docs(readme): add bilingual package README and minimal architecture flow.
 - chore(package): adopt the `@zhongmiao/meta-lc-contracts` scoped package identity for release governance.
 - feat(runtime-contracts): add refresh planning event and target contracts for dependency graph execution.

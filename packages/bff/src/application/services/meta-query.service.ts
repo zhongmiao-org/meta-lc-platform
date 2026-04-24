@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { CacheService } from "../../infra/cache/cache.service";
-import { AggregationService } from "../orchestrator/aggregation.orchestrator";
+import { AggregationService } from "./aggregation.service";
 import { MetaRegistryService } from "./meta-registry.service";
 import type { MetaListEnvelope, MetaSummaryEnvelope } from "../../contracts/types/meta-http.type";
 import type {

@@ -69,15 +69,58 @@ test('keeps deep import and kernel reverse dependency checks', () => {
 
 test('rejects legacy BFF interface/types directories and unsupported top-level dirs', () => {
   const workspace = createWorkspace({
+    'packages/bff/src/application/orchestrator/.gitkeep': '',
     'packages/bff/src/interface/.gitkeep': '',
     'packages/bff/src/types/.gitkeep': '',
     'packages/bff/src/gateway/query.controller.ts': 'export class QueryController {}\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/application/orchestrator: forbidden BFF source directory.',
     'packages/bff/src/interface: forbidden BFF source directory.',
     'packages/bff/src/types: forbidden BFF source directory.',
     'packages/bff/src/gateway: unsupported BFF top-level source directory.'
+  ]);
+});
+
+test('rejects legacy BFF query/mutation orchestration surfaces', () => {
+  const workspace = createWorkspace({
+    'packages/bff/src/controller/http/query.controller.ts': [
+      'import { Post } from "@nestjs/common";',
+      'export class QueryController {',
+      '  @Post("query") query() {}',
+      '}'
+    ].join('\n'),
+    'packages/bff/src/application/services/bad.service.ts': [
+      'import { compileViewDefinition, executeQueryNode } from "@zhongmiao/meta-lc-runtime";',
+      'export class QueryOrchestratorService {}'
+    ].join('\n')
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/application/services/bad.service.ts: legacy BFF orchestrator symbol "QueryOrchestrator" is forbidden.',
+    'packages/bff/src/application/services/bad.service.ts: legacy BFF orchestrator symbol "QueryOrchestratorService" is forbidden.',
+    'packages/bff/src/application/services/bad.service.ts: BFF must call runtime facade instead of importing compileViewDefinition.',
+    'packages/bff/src/application/services/bad.service.ts: BFF must call runtime facade instead of importing executeQueryNode.',
+    'packages/bff/src/controller/http/query.controller.ts: legacy /query and /mutation endpoints are forbidden.'
+  ]);
+});
+
+test('rejects V2 core contract definitions outside contracts', () => {
+  const workspace = createWorkspace({
+    'packages/runtime/src/types/shared.types.ts': [
+      'export interface ViewDefinition {}',
+      'export type ExecutionPlan = {}'
+    ].join('\n'),
+    'packages/contracts/src/index.ts': [
+      'export interface ViewDefinition {}',
+      'export type ExecutionPlan = {}'
+    ].join('\n')
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/runtime/src/types/shared.types.ts: V2 core contract "ViewDefinition" must be defined in packages/contracts only.',
+    'packages/runtime/src/types/shared.types.ts: V2 core contract "ExecutionPlan" must be defined in packages/contracts only.'
   ]);
 });
 

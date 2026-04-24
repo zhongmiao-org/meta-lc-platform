@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(runtime): add a high-level runtime view executor facade that compiles and executes ViewDefinition through RuntimeExecutor.
+- refactor(contracts): re-export V2 view and execution plan contracts from the shared contracts package.
 - fix(package): align the runtime package main/types entrypoint with the refactored dist/runtime/src layout so downstream packages can resolve it at runtime.
 - refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - feat(runtime): add a RuntimeExecutor main engine that schedules DAG layers, commits state snapshots atomically, and resolves final view models.

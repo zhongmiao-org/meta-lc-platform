@@ -4,10 +4,6 @@ export type {
   DataScopeType,
   DbConfig,
   DbTargets,
-  MutationApiRequest,
-  MutationApiResponse,
   MutationOperation,
-  OrgScopeContext,
-  QueryApiRequest,
-  QueryApiResponse
+  OrgScopeContext
 } from "@zhongmiao/meta-lc-contracts";

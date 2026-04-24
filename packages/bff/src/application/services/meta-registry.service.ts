@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";
+import type { ViewDefinition } from "@zhongmiao/meta-lc-contracts";
 import { META_REGISTRY_UPDATED_AT, META_REGISTRY_VIEW_FIXTURES } from "../../constants/meta-registry.constants";
 import type {
   MetaRegistryItem,

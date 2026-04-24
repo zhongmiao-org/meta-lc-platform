@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- fix(boundaries): 收口 Task 1-9 runtime 边界遗漏，移除旧 BFF query/mutation 编排并新增防回归边界守护。
+- feat(runtime): 新增面向 BFF gateway 集成的高层 runtime view executor facade。
+- feat(contracts): 将 V2 ViewDefinition、ExecutionPlan 与 node 契约迁入共享 contracts 包。
 - refactor(bff): 强制 BFF 严格分层，固定 controller/http/ws/cli 入口，拆分 type/interface 契约，并新增 ESLint 与 boundary 守护。
 - feat(bff): 新增 `POST /view/:name` gateway，并接入临时的 runtime-backed adapter，让页面请求进入 runtime 执行链路。
 - fix(runtime): 将 runtime 包入口对齐到重构后的 `dist/runtime/src` 输出，确保下游包在运行时可正确解析。

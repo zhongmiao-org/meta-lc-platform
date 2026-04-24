@@ -1,4 +1,4 @@
-import type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";
+import type { ViewDefinition } from "@zhongmiao/meta-lc-contracts";
 
 export const META_REGISTRY_UPDATED_AT = "2026-04-20T00:00:00.000Z";
 

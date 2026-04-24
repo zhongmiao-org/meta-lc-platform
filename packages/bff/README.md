@@ -4,7 +4,7 @@ English | [中文文档](./README_zh.md)
 
 ## Package Role
 
-`bff` is the NestJS boundary package. It keeps protocol entry points, application orchestration, domain model, infrastructure integrations, bootstrap logic, and shared contracts in strict layers.
+`bff` is the NestJS Gateway boundary package. It keeps protocol entry points, Runtime invocation, domain model, infrastructure integrations, bootstrap logic, and shared contracts in strict layers; it must not own query or mutation orchestration.
 
 ## Source Layout
 
@@ -21,7 +21,6 @@ bff/src/
 │   │       └── replay.store.ts
 │   └── cli/
 ├── application/
-│   ├── orchestrator/
 │   ├── services/
 │   ├── types/
 │   └── interfaces/
@@ -54,7 +53,7 @@ bff/src/
 - `controller/http/**` is the HTTP API entry layer.
 - `controller/ws/**` is the WebSocket entry layer. Runtime WebSocket files must stay under `controller/ws/runtime/**`.
 - `controller/cli/**` is the CLI/RPC entry layer.
-- `application/**` owns orchestration and application services. It must not contain transport controllers or direct SQL implementation.
+- `application/**` owns application services and runtime invocation. It must not contain transport controllers, direct SQL implementation, or query/mutation orchestration.
 - `domain/**` owns entities, value objects, domain data shapes, and domain behavior contracts.
 - `infra/**` owns repository, integration, cache, and external dependency implementations.
 - `contracts/**` owns cross-layer request/response shapes and behavior contracts shared by entry/application layers.
@@ -88,7 +87,7 @@ controller -> application -> domain -> infra
 ```mermaid
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
-  Entry --> App["application orchestrator / services"]
+  Entry --> App["application services"]
   App --> Infra["infra integration"]
   App --> Response["HTTP response / WS event"]
 ```
@@ -106,3 +105,5 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - WebSocket is an entry protocol layer, not infra and not application orchestration.
 - Direct DB driver use must stay inside approved edge files and pass `pnpm test:boundaries`.
 - Runtime UI and kernel source-of-truth logic must not be moved into BFF.
+- Do not restore legacy `/query` or `/mutation` endpoints; page data requests must use `POST /view/:name`.
+- Do not add `application/orchestrator/**`; BFF is only a Gateway invoking Runtime.

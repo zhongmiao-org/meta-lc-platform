@@ -4,7 +4,7 @@
 
 ## 包定位
 
-`bff` 是 NestJS 边界包。它用严格分层隔离协议入口、应用编排、领域模型、基础设施集成、启动逻辑和共享契约。
+`bff` 是 NestJS Gateway 边界包。它用严格分层隔离协议入口、Runtime 调用、领域模型、基础设施集成、启动逻辑和共享契约；不得承载 query / mutation 编排。
 
 ## 源码结构
 
@@ -21,7 +21,6 @@ bff/src/
 │   │       └── replay.store.ts
 │   └── cli/
 ├── application/
-│   ├── orchestrator/
 │   ├── services/
 │   ├── types/
 │   └── interfaces/
@@ -54,7 +53,7 @@ bff/src/
 - `controller/http/**` 是 HTTP API 入口层。
 - `controller/ws/**` 是 WebSocket 入口层。Runtime WebSocket 文件必须固定在 `controller/ws/runtime/**`。
 - `controller/cli/**` 是 CLI/RPC 入口层。
-- `application/**` 只负责应用编排和应用服务，不放传输层 controller，也不直接放 SQL 实现。
+- `application/**` 只负责应用服务和 runtime invocation，不放传输层 controller，也不承载 query / mutation 编排。
 - `domain/**` 放实体、值对象、领域数据形状和领域行为契约。
 - `infra/**` 放 repository、integration、cache 等外部依赖实现。
 - `contracts/**` 只放跨层共享的请求/响应数据形状和行为契约。
@@ -88,7 +87,7 @@ controller -> application -> domain -> infra
 ```mermaid
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
-  Entry --> App["application orchestrator / services"]
+  Entry --> App["application services"]
   App --> Infra["infra integration"]
   App --> Response["HTTP response / WS event"]
 ```
@@ -106,3 +105,5 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - WebSocket 是入口协议层，不属于 infra，也不承载 application orchestration。
 - direct DB driver use 必须保留在允许的 edge files 内，并通过 `pnpm test:boundaries`。
 - 不把 runtime UI 或 kernel 的结构真源逻辑搬进 BFF。
+- 禁止恢复 `/query`、`/mutation` 旧入口；页面级数据请求必须走 `POST /view/:name`。
+- 禁止新增 `application/orchestrator/**`；BFF 只能作为 Gateway 调用 Runtime。

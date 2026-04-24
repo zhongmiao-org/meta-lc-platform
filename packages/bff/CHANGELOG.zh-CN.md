@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- fix(boundaries): 移除旧 `/query` 与 `/mutation` 编排入口，让 BFF 只作为 runtime gateway。
+- test(gateway): e2e gate 从已移除的旧 query/mutation 入口改为验证 `POST /view/:name`。
+- refactor(gateway): view 执行改为调用 runtime view facade，并把 Postgres runtime adapter 装配移入 infra。
 - refactor(layering): 将 `src` 重建为严格的 controller/application/domain/infra/contracts 分层，把 runtime WebSocket 固定到 `controller/ws/runtime`，拆分 type/interface 文件，并用 ESLint 与 boundary check 固化规则。
 - feat(gateway): 新增 `POST /view/:name`，并加入临时的 runtime-backed view adapter，让 BFF 的页面请求进入 runtime 执行链路。
 - refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。

@@ -32,8 +32,33 @@ const BFF_TOP_LEVEL_DIRS = new Set([
   'utils'
 ]);
 const BFF_FORBIDDEN_SOURCE_DIRS = [
+  'packages/bff/src/application/orchestrator',
   'packages/bff/src/interface',
   'packages/bff/src/types'
+];
+const FORBIDDEN_BFF_SYMBOLS = [
+  'QueryOrchestrator',
+  'MutationOrchestrator',
+  'QueryOrchestratorService',
+  'MutationOrchestratorService'
+];
+const FORBIDDEN_BFF_RUNTIME_IMPORTS = [
+  'compileViewDefinition',
+  'executeSubmitPlan',
+  'executeQueryNode',
+  'executeMutationNode'
+];
+const V2_CORE_CONTRACT_DECLARATIONS = [
+  'ViewDefinition',
+  'NodeDefinition',
+  'QueryNodeDefinition',
+  'MutationNodeDefinition',
+  'TransformNodeDefinition',
+  'MergeNodeDefinition',
+  'OutputDefinition',
+  'SubmitDefinition',
+  'ExecutionNode',
+  'ExecutionPlan'
 ];
 
 export function checkWorkspace(root = process.cwd()) {
@@ -89,6 +114,7 @@ function checkSourceFile(file, root, violations) {
   const rel = normalizePath(path.relative(root, file));
   const content = fs.readFileSync(file, 'utf8');
   checkBffSourceFile(rel, content, file, root, violations);
+  checkV2CoreContractDefinitions(rel, content, violations);
 
   // No deep cross-package imports.
   const deepImport = content.match(/from\s+["'](?:@meta-lc\/[a-z-]+|@zhongmiao\/meta-lc-[a-z-]+)\//g);
@@ -119,6 +145,18 @@ function checkSourceFile(file, root, violations) {
 function checkBffSourceFile(rel, content, file, root, violations) {
   if (!rel.startsWith('packages/bff/src/')) return;
 
+  for (const symbol of FORBIDDEN_BFF_SYMBOLS) {
+    if (content.includes(symbol)) {
+      violations.push(`${rel}: legacy BFF orchestrator symbol "${symbol}" is forbidden.`);
+    }
+  }
+
+  if (rel.startsWith('packages/bff/src/controller/') && /@Post\(\s*["'](?:query|mutation)["']\s*\)/.test(content)) {
+    violations.push(`${rel}: legacy /query and /mutation endpoints are forbidden.`);
+  }
+
+  checkBffRuntimeImports(rel, content, violations);
+
   if (/\/(?:types|interfaces)\/index\.ts$/.test(rel)) {
     violations.push(`${rel}: type/interface index aggregators are forbidden in BFF.`);
   }
@@ -146,6 +184,27 @@ function checkBffSourceFile(rel, content, file, root, violations) {
   }
 
   checkBffDependencyDirection(rel, content, file, root, violations);
+}
+
+function checkBffRuntimeImports(rel, content, violations) {
+  const runtimeImports = findNamedImportsFrom(content, '@zhongmiao/meta-lc-runtime');
+  for (const importedName of runtimeImports) {
+    if (FORBIDDEN_BFF_RUNTIME_IMPORTS.includes(importedName)) {
+      violations.push(`${rel}: BFF must call runtime facade instead of importing ${importedName}.`);
+    }
+  }
+}
+
+function checkV2CoreContractDefinitions(rel, content, violations) {
+  if (rel.startsWith('packages/contracts/src/')) return;
+  if (!rel.endsWith('.ts')) return;
+
+  for (const name of V2_CORE_CONTRACT_DECLARATIONS) {
+    const declaration = new RegExp(`^\\s*export\\s+(?:interface|type)\\s+${name}\\b`, 'm');
+    if (declaration.test(content)) {
+      violations.push(`${rel}: V2 core contract "${name}" must be defined in packages/contracts only.`);
+    }
+  }
 }
 
 function hasTypeOrInterfaceDeclaration(content) {
@@ -190,6 +249,20 @@ function findImportSpecifiers(content) {
     specifiers.push(match[1]);
   }
   return specifiers;
+}
+
+function findNamedImportsFrom(content, packageName) {
+  const importedNames = [];
+  const importPattern = /import\s+(?:type\s+)?\{([\s\S]*?)\}\s+from\s+["']([^"']+)["']/g;
+  let match;
+  while ((match = importPattern.exec(content)) !== null) {
+    if (match[2] !== packageName) continue;
+    for (const rawName of match[1].split(',')) {
+      const name = rawName.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0]?.trim();
+      if (name) importedNames.push(name);
+    }
+  }
+  return importedNames;
 }
 
 function getBffLayer(rel) {
