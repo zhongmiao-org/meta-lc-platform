@@ -2,6 +2,9 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- fix(boundaries): close Task 1-9 runtime boundary gaps by removing legacy BFF query/mutation orchestration and adding guards against regressions.
+- feat(runtime): add a high-level runtime view executor facade for BFF gateway integration.
+- feat(contracts): move V2 ViewDefinition, ExecutionPlan, and node contracts into the shared contracts package.
 - refactor(bff): enforce strict BFF layering with controller/http/ws/cli entry points, split type/interface contracts, and add ESLint plus boundary guards.
 - feat(bff): add a `POST /view/:name` gateway with a temporary runtime-backed adapter so page requests flow through the runtime executor.
 - fix(runtime): align the runtime package entrypoint with the refactored `dist/runtime/src` output so downstream packages can resolve it at runtime.
