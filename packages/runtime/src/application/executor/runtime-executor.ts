@@ -187,7 +187,7 @@ function createRuntimeStateStore(snapshot: Record<string, unknown>): RuntimeStat
         return undefined;
       }
 
-      return getNestedValue(snapshot, path);
+      return getNestedValueWithValueFallback(snapshot, path);
     }
   };
 }
@@ -202,22 +202,32 @@ function createRuntimeExpressionStateSource(
         return undefined;
       }
 
-      const stateValue = getNestedValue(snapshot, path);
+      const stateValue = getNestedValueWithValueFallback(snapshot, path);
       if (stateValue !== undefined) {
         return stateValue;
       }
 
-      return getNestedValue(context, path);
+      return getNestedValueWithValueFallback(context, path);
     }
   };
 }
 
-function getNestedValue(source: Record<string, unknown>, path: string): unknown {
+function getNestedValueWithValueFallback(source: Record<string, unknown>, path: string): unknown {
   return path.split(".").reduce<unknown>((current, segment) => {
     if (!isRecordLike(current)) {
       return undefined;
     }
-    return current[segment];
+
+    if (segment in current) {
+      return current[segment];
+    }
+
+    const wrappedValue = current.value;
+    if (isRecordLike(wrappedValue) && segment in wrappedValue) {
+      return wrappedValue[segment];
+    }
+
+    return undefined;
   }, source);
 }
 

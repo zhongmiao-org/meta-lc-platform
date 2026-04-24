@@ -2,6 +2,7 @@ import type {
   RuntimeDependencyTargetKind,
   RuntimeDependencyTargetRef,
   RuntimeFunctionCallDefinition,
+  MutationOperation,
   RuntimeRuleDefinition,
   RuntimeRuleTrigger,
   RuntimeRuleValueDefinition,
@@ -59,6 +60,10 @@ export interface QueryNodeDefinition extends BaseNodeDefinition {
 
 export interface MutationNodeDefinition extends BaseNodeDefinition {
   type: "mutation";
+  model?: ViewExpression;
+  operation?: ViewExpression;
+  payload?: Record<string, ViewExpression>;
+  condition?: ViewExpression;
 }
 
 export interface TransformNodeDefinition extends BaseNodeDefinition {
@@ -193,6 +198,17 @@ export class QueryExecutorError extends NodeExecutorError {
   }
 }
 
+export class MutationExecutorError extends NodeExecutorError {
+  constructor(
+    message: string,
+    public readonly stage: "validation" | "execute",
+    public readonly cause?: unknown
+  ) {
+    super(message);
+    this.name = "MutationExecutorError";
+  }
+}
+
 export class MergeExecutorError extends NodeExecutorError {
   constructor(
     message: string,
@@ -211,6 +227,32 @@ export interface ParsedRuntimeDatasourceDefinition extends RuntimeDatasourceDefi
 export interface ParsedRuntimeActionDefinition extends RuntimeActionDefinition {
   dependencies: RuntimeTemplateDependency[];
   outputStateKeys: string[];
+}
+
+export interface MutationExecutionResult {
+  skipped: boolean;
+  model: string;
+  operation: MutationOperation;
+  payload: Record<string, unknown>;
+  rowCount: number;
+  row: Record<string, unknown> | null;
+  beforeData: Record<string, unknown> | null;
+  afterData: Record<string, unknown> | null;
+  condition: boolean | null;
+}
+
+export interface MutationAdapterCommand {
+  model: string;
+  operation: MutationOperation;
+  payload: Record<string, unknown>;
+  context: RuntimeContext;
+}
+
+export interface MutationAdapterResult {
+  rowCount: number;
+  row: Record<string, unknown> | null;
+  beforeData: Record<string, unknown> | null;
+  afterData: Record<string, unknown> | null;
 }
 
 export interface ParsedRuntimeNodeSchema extends RuntimeNodeSchema {
