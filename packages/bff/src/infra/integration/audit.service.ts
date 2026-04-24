@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import type { RuntimeAuditEvent } from "@zhongmiao/meta-lc-audit";
 import { Pool } from "pg";
 import { loadDbTargets } from "../../config/config";
 import type {
@@ -149,6 +150,18 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
       )
     `);
     await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS runtime_audit_events (
+        id BIGSERIAL PRIMARY KEY,
+        request_id TEXT NOT NULL,
+        plan_id TEXT NOT NULL,
+        node_id TEXT NULL,
+        event_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        payload JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await this.pool.query(`
       CREATE INDEX IF NOT EXISTS idx_bff_query_audit_logs_request_id
       ON bff_query_audit_logs (request_id)
     `);
@@ -159,6 +172,22 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
     await this.pool.query(`
       CREATE INDEX IF NOT EXISTS idx_query_logs_request_id
       ON query_logs (request_id)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_audit_events_request_id
+      ON runtime_audit_events (request_id)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_audit_events_plan_id
+      ON runtime_audit_events (plan_id)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_audit_events_node_id
+      ON runtime_audit_events (node_id)
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_runtime_audit_events_event_type
+      ON runtime_audit_events (event_type)
     `);
   }
 
@@ -270,6 +299,33 @@ export class AuditPersistenceService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.warn(
         `persist mutation audit failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  async persistRuntimeEvent(event: RuntimeAuditEvent): Promise<void> {
+    try {
+      await this.pool.query(
+        `INSERT INTO runtime_audit_events (
+          request_id,
+          plan_id,
+          node_id,
+          event_type,
+          status,
+          payload
+        ) VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+        [
+          event.requestId,
+          event.planId,
+          event.nodeId ?? null,
+          event.type,
+          event.status,
+          JSON.stringify(event)
+        ]
+      );
+    } catch (error) {
+      this.logger.warn(
+        `persist runtime audit event failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

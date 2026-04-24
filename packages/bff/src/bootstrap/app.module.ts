@@ -31,6 +31,7 @@ import { RuntimeWsGateway } from "../controller/ws/runtime/ws.gateway";
 import { AuditPersistenceService } from "../infra/integration/audit.service";
 import { OrgScopeService } from "../infra/integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../infra/integration/postgres-query.service";
+import { RuntimeAuditObserverService } from "../infra/integration/runtime-audit-observer.service";
 import { RuntimeViewDependenciesService } from "../infra/integration/runtime-view-dependencies.service";
 
 @Module({
@@ -43,6 +44,7 @@ import { RuntimeViewDependenciesService } from "../infra/integration/runtime-vie
     MetaQueryService,
     MetaRegistryService,
     PostgresQueryExecutorService,
+    RuntimeAuditObserverService,
     RuntimeViewDependenciesService,
     OrgScopeService,
     AuditPersistenceService,

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(observability): 在 plan、node、permission、datasource 边界发出可选、非阻塞 runtime audit event。
 - feat(permission): query node 在 SQL 编译前接入 Permission AST Transform。
 - refactor(datasource): query node 改为通过共享 datasource adapter 契约执行。
 - feat(runtime): 新增高层 runtime view executor facade，通过 RuntimeExecutor 编译并执行 ViewDefinition。

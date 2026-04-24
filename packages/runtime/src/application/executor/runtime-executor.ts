@@ -3,6 +3,12 @@ import { resolveExpression } from "../../domain/dsl/expression";
 import { resolveExecutionOrder } from "../../domain/graph/dep-resolver";
 import { executeNode, type NodeExecutorDependencies } from "./node-executor";
 import {
+  createRuntimeAuditDispatchContext,
+  emitRuntimeAuditEvent,
+  getErrorMessage,
+  type RuntimeAuditDispatchContext
+} from "./runtime-audit";
+import {
   type ExecutionNode,
   type ExecutionPlan,
   RuntimeExecutionError,
@@ -14,9 +20,11 @@ import {
   type RuntimeValueNodeResult,
   type RuntimeContext
 } from "../../types";
+import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 
 export interface RuntimeExecutorDependencies {
   executors: NodeExecutorDependencies;
+  auditObserver?: RuntimeAuditObserver;
 }
 
 export class RuntimeExecutor {
@@ -24,6 +32,48 @@ export class RuntimeExecutor {
     plan: ExecutionPlan,
     context: RuntimeContext,
     deps: RuntimeExecutorDependencies
+  ): Promise<RuntimeExecutionResult> {
+    const auditContext = createRuntimeAuditDispatchContext(context, deps.auditObserver, plan);
+    const startedAt = Date.now();
+    emitRuntimeAuditEvent(auditContext, {
+      type: "runtime.plan.started",
+      status: "started",
+      metadata: {
+        nodeCount: plan.nodes.length
+      }
+    });
+
+    try {
+      const result = await this.executeInternal(plan, context, deps, auditContext);
+      emitRuntimeAuditEvent(auditContext, {
+        type: "runtime.plan.finished",
+        status: "success",
+        durationMs: Date.now() - startedAt,
+        metadata: {
+          layerCount: result.layers.length,
+          nodeCount: plan.nodes.length
+        }
+      });
+      return result;
+    } catch (error) {
+      emitRuntimeAuditEvent(auditContext, {
+        type: "runtime.plan.finished",
+        status: "failure",
+        durationMs: Date.now() - startedAt,
+        errorMessage: getErrorMessage(error),
+        metadata: {
+          nodeCount: plan.nodes.length
+        }
+      });
+      throw error;
+    }
+  }
+
+  private async executeInternal(
+    plan: ExecutionPlan,
+    context: RuntimeContext,
+    deps: RuntimeExecutorDependencies,
+    auditContext: RuntimeAuditDispatchContext
   ): Promise<RuntimeExecutionResult> {
     const nodeById = buildNodeLookup(plan.nodes);
     validatePlanCoverage(plan, nodeById);
@@ -54,22 +104,39 @@ export class RuntimeExecutor {
             );
           }
 
+          const nodeStartedAt = Date.now();
           try {
             const result = await executeNode(node, layerState, context, deps.executors);
+            const normalized = normalizeNodeResult(node, result, nodeId);
+            emitRuntimeAuditEvent(auditContext, {
+              type: "runtime.node.succeeded",
+              status: "success",
+              nodeId,
+              nodeType: node.type,
+              durationMs: Date.now() - nodeStartedAt
+            });
             return {
               node,
               nodeId,
-              result
+              result: normalized
             };
           } catch (error) {
+            emitRuntimeAuditEvent(auditContext, {
+              type: "runtime.node.failed",
+              status: "failure",
+              nodeId,
+              nodeType: node.type,
+              durationMs: Date.now() - nodeStartedAt,
+              errorMessage: getErrorMessage(error)
+            });
             throw wrapRuntimeExecutionError("execute", error, node);
           }
         })
       );
 
       const committedLayerResults: Record<string, RuntimeNodeResult> = {};
-      for (const { node, nodeId, result } of layerResults) {
-        const normalized = normalizeNodeResult(node, result, nodeId);
+      for (const { nodeId, result } of layerResults) {
+        const normalized = result;
         committedLayerResults[nodeId] = cloneValue(normalized);
         nodeResults[nodeId] = cloneValue(normalized);
       }
@@ -258,10 +325,6 @@ function wrapRuntimeExecutionError(
 
 function cloneValue<T>(value: T): T {
   return structuredClone(value);
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

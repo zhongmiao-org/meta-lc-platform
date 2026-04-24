@@ -4,6 +4,7 @@ import {
   executeMergeNode,
   RuntimeExecutionError,
   RuntimeExecutor,
+  type RuntimeAuditEvent,
   type ExecutionNode,
   type ExecutionPlan,
   type NodeExecutorDependencies,
@@ -141,6 +142,138 @@ test("RuntimeExecutor executes a single query plan and resolves output against t
   (result.state.orders as { row: { id: string } }).row.id = "mutated";
   assert.deepEqual(result.viewModel, snapshot.viewModel);
   assert.deepEqual(result.nodeResults, snapshot.nodeResults);
+});
+
+test("RuntimeExecutor emits plan and node observability events", async () => {
+  const events: RuntimeAuditEvent[] = [];
+  const plan = createPlan(
+    [createQueryNode("orders", "orders")],
+    {
+      orders: []
+    },
+    {
+      rows: "{{orders.rows}}"
+    }
+  );
+
+  await executor.execute(
+    plan,
+    {
+      ...runtimeContext,
+      requestId: "req-runtime-1",
+      planId: "plan-runtime-1",
+      viewName: "orders-workbench",
+      tenantId: "tenant-a",
+      userId: "user-a"
+    },
+    {
+      auditObserver: {
+        recordRuntimeEvent(event) {
+          events.push(event);
+        }
+      },
+      executors: createExecutors({
+        query: async () => [{ id: "order-1" }]
+      })
+    }
+  );
+
+  assert.deepEqual(
+    events.map((event) => event.type),
+    [
+      "runtime.plan.started",
+      "runtime.node.succeeded",
+      "runtime.plan.finished"
+    ]
+  );
+  assert.deepEqual(
+    events.map((event) => event.requestId),
+    ["req-runtime-1", "req-runtime-1", "req-runtime-1"]
+  );
+  assert.equal(events[1]?.nodeId, "orders");
+  assert.equal(events[1]?.nodeType, "query");
+  assert.equal(events[2]?.planId, "plan-runtime-1");
+});
+
+test("RuntimeExecutor emits node failure events with correlation and preserves the runtime error", async () => {
+  const events: RuntimeAuditEvent[] = [];
+  const plan = createPlan(
+    [createQueryNode("orders", "orders")],
+    {
+      orders: []
+    },
+    {
+      rows: "{{orders.rows}}"
+    }
+  );
+
+  await assert.rejects(
+    () =>
+      executor.execute(
+        plan,
+        {
+          ...runtimeContext,
+          requestId: "req-runtime-2"
+        },
+        {
+          auditObserver: {
+            recordRuntimeEvent(event) {
+              events.push(event);
+            }
+          },
+          executors: createExecutors({
+            query: async () => {
+              throw new Error("node exploded");
+            }
+          })
+        }
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof RuntimeExecutionError);
+      assert.equal(error.nodeId, "orders");
+      return true;
+    }
+  );
+
+  assert.deepEqual(
+    events.map((event) => event.type),
+    [
+      "runtime.plan.started",
+      "runtime.node.failed",
+      "runtime.plan.finished"
+    ]
+  );
+  assert.equal(events[1]?.requestId, "req-runtime-2");
+  assert.equal(events[1]?.planId, "req-runtime-2");
+  assert.equal(events[1]?.nodeId, "orders");
+  assert.match(events[1]?.errorMessage ?? "", /node exploded/);
+});
+
+test("RuntimeExecutor ignores observer failures", async () => {
+  const plan = createPlan(
+    [createQueryNode("orders", "orders")],
+    {
+      orders: []
+    },
+    {
+      rows: "{{orders.rows}}"
+    }
+  );
+
+  const result = await executor.execute(plan, runtimeContext, {
+    auditObserver: {
+      recordRuntimeEvent() {
+        throw new Error("observer unavailable");
+      }
+    },
+    executors: createExecutors({
+      query: async () => [{ id: "order-1" }]
+    })
+  });
+
+  assert.deepEqual(result.viewModel, {
+    rows: [{ id: "order-1" }]
+  });
 });
 
 test("RuntimeExecutor commits a layer atomically when one sibling fails", async () => {

@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NotFoundException } from "@nestjs/common";
+import type { RuntimeAuditEvent } from "@zhongmiao/meta-lc-audit";
 import { TemporaryViewAdapter } from "../src/application/services/temporary-view-adapter.service";
 import { MetaRegistryService } from "../src/application/services/meta-registry.service";
 
 test("temporary view adapter executes runtime view and propagates context into the query node", async () => {
   const queryCalls: Array<{ kind: string; sql: string; params: unknown[] }> = [];
+  const auditEvents: RuntimeAuditEvent[] = [];
   const registry = new MetaRegistryService();
   const adapter = new TemporaryViewAdapter(
     registry,
@@ -29,6 +31,11 @@ test("temporary view adapter executes runtime view and propagates context into t
     {
       create() {
         return {
+          auditObserver: {
+            recordRuntimeEvent(event: RuntimeAuditEvent) {
+              auditEvents.push(event);
+            }
+          },
           queryDatasource: {
             async execute(request: { kind: "query"; sql: string; params?: unknown[] }) {
               queryCalls.push({
@@ -83,6 +90,20 @@ test("temporary view adapter executes runtime view and propagates context into t
 
   assert.equal(result.requestId, "req-view-1");
   assert.equal(result.viewName, "orders-workbench");
+  assert.deepEqual(
+    auditEvents.map((event) => event.type),
+    [
+      "runtime.plan.started",
+      "runtime.permission.decision",
+      "runtime.datasource.succeeded",
+      "runtime.node.succeeded",
+      "runtime.plan.finished"
+    ]
+  );
+  assert.deepEqual(
+    auditEvents.map((event) => event.requestId),
+    ["req-view-1", "req-view-1", "req-view-1", "req-view-1", "req-view-1"]
+  );
   assert.deepEqual(queryCalls, [
     {
       kind: "query",

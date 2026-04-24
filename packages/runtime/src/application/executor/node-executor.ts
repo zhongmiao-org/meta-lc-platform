@@ -12,10 +12,16 @@ import {
 
 export type NodeExecutionResult = unknown;
 
+export interface NodeExecutionMetadata {
+  nodeId: string;
+  nodeType: ExecutionNode["type"];
+}
+
 export type NodeTypeExecutor<TNode extends NodeDefinition = NodeDefinition> = (
   node: TNode,
   state: RuntimeStateStore,
-  context: RuntimeContext
+  context: RuntimeContext,
+  metadata?: NodeExecutionMetadata
 ) => NodeExecutionResult | Promise<NodeExecutionResult>;
 
 export interface NodeExecutorDependencies {
@@ -33,13 +39,25 @@ export async function executeNode(
 ): Promise<NodeExecutionResult> {
   switch (node.type) {
     case "query":
-      return runExecutor("query", executors.query, node.definition as QueryNodeDefinition, state, context);
+      return runExecutor("query", executors.query, node.definition as QueryNodeDefinition, state, context, {
+        nodeId: node.id,
+        nodeType: node.type
+      });
     case "mutation":
-      return runExecutor("mutation", executors.mutation, node.definition as MutationNodeDefinition, state, context);
+      return runExecutor("mutation", executors.mutation, node.definition as MutationNodeDefinition, state, context, {
+        nodeId: node.id,
+        nodeType: node.type
+      });
     case "merge":
-      return runExecutor("merge", executors.merge, node.definition as MergeNodeDefinition, state, context);
+      return runExecutor("merge", executors.merge, node.definition as MergeNodeDefinition, state, context, {
+        nodeId: node.id,
+        nodeType: node.type
+      });
     case "transform":
-      return runExecutor("transform", executors.transform, node.definition as TransformNodeDefinition, state, context);
+      return runExecutor("transform", executors.transform, node.definition as TransformNodeDefinition, state, context, {
+        nodeId: node.id,
+        nodeType: node.type
+      });
     default:
       throw new NodeExecutorError(`Unsupported node type "${String(node.type)}".`);
   }
@@ -50,11 +68,12 @@ async function runExecutor<TNode extends NodeDefinition>(
   executor: NodeTypeExecutor<TNode> | undefined,
   node: TNode,
   state: RuntimeStateStore,
-  context: RuntimeContext
+  context: RuntimeContext,
+  metadata: NodeExecutionMetadata
 ): Promise<NodeExecutionResult> {
   if (typeof executor !== "function") {
     throw new NodeExecutorError(`Missing node executor for "${kind}".`);
   }
 
-  return executor(node, state, context);
+  return executor(node, state, context, metadata);
 }

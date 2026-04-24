@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(audit): 新增非阻塞 runtime observability event，并在 BFF 持久化 plan、node、permission、datasource execution 事件。
 - feat(kernel): 新增覆盖 view、datasource 与 permission policy 定义的版本化 meta definition registry。
 - feat(permission): 新增 Query AST permission transform，并让 runtime query 编译链路先经过权限 AST。
 - feat(datasource): 将 runtime query 执行收敛到共享 datasource adapter 契约。

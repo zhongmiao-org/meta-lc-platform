@@ -15,6 +15,7 @@
     "@nestjs/platform-express": "^10.4.22",
     "@nestjs/platform-socket.io": "^10.4.22",
     "@nestjs/websockets": "^10.4.22",
+    "@zhongmiao/meta-lc-audit": "workspace:*",
     "@zhongmiao/meta-lc-contracts": "workspace:*",
     "@zhongmiao/meta-lc-datasource": "workspace:*",
     "@zhongmiao/meta-lc-kernel": "workspace:*",

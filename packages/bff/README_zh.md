@@ -8,6 +8,8 @@
 
 BFF 在调用 Runtime facade 前从 Kernel-backed meta registry 读取 view definition；它不发布元数据，也不执行 registry migration。
 
+BFF 还会把 runtime audit observer 注入 Runtime facade，并把 observability event 作为 infra 职责持久化；audit 失败只记录并降级，不阻塞页面执行。
+
 ## 源码结构
 
 ```text
@@ -91,7 +93,9 @@ flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
   Entry --> App["application services"]
   App --> Kernel["Kernel meta registry"]
+  App --> Runtime["Runtime facade"]
   App --> Infra["infra integration"]
+  Runtime --> Audit["runtime audit observer"]
   App --> Response["HTTP response / WS event"]
 ```
 
@@ -108,5 +112,6 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - WebSocket 是入口协议层，不属于 infra，也不承载 application orchestration。
 - direct DB driver use 必须保留在允许的 edge files 内，并通过 `pnpm test:boundaries`。
 - 不把 runtime UI 或 kernel 的结构真源逻辑搬进 BFF。
+- Runtime audit persistence 属于 infra integration，不得变成 request orchestration。
 - 禁止恢复 `/query`、`/mutation` 旧入口；页面级数据请求必须走 `POST /view/:name`。
 - 禁止新增 `application/orchestrator/**`；BFF 只能作为 Gateway 调用 Runtime。

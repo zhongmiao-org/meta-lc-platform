@@ -1,7 +1,8 @@
 import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
-import type { CompiledQuery, QueryRequest } from "@zhongmiao/meta-lc-query";
+import type { CompiledQuery, QueryRequest, SelectQueryAst } from "@zhongmiao/meta-lc-query";
 import type { OrgScopeContext } from "@zhongmiao/meta-lc-contracts";
 import type { PermissionAstTransformContext } from "@zhongmiao/meta-lc-permission";
+import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import { resolveExpression } from "../../domain/dsl/expression";
 import {
   QueryExecutorError,
@@ -17,11 +18,23 @@ import {
   type QueryDatasourceAdapter,
   type QueryPermissionAdapter
 } from "../../infra/adapter/query.adapter";
+import {
+  createRuntimeAuditDispatchContext,
+  emitRuntimeAuditEvent,
+  getErrorMessage
+} from "./runtime-audit";
+
+export interface QueryAuditDependencies {
+  observer?: RuntimeAuditObserver;
+  nodeId?: string;
+  nodeType?: string;
+}
 
 export interface QueryExecutorDependencies {
   compiler?: QueryCompilerAdapter;
   permission?: QueryPermissionAdapter;
   datasource: QueryDatasourceAdapter;
+  audit?: QueryAuditDependencies;
 }
 
 export interface QueryExecutionResult {
@@ -38,13 +51,41 @@ export async function executeQueryNode(
 ): Promise<QueryResultRow[]> {
   const compiler = dependencies.compiler ?? createQueryCompilerAdapter();
   const permission = dependencies.permission ?? createQueryPermissionAdapter();
+  const auditContext = createRuntimeAuditDispatchContext(context, dependencies.audit?.observer);
   const resolvedNode = resolveExpression(node as unknown as ViewExpression, new QueryExpressionStateSource(state, context)) as ResolvedQueryNodeDefinition;
   const request = buildQueryRequest(resolvedNode);
+  const nodeId = dependencies.audit?.nodeId;
+  const nodeType = dependencies.audit?.nodeType ?? node.type;
 
   let compiled: CompiledQuery;
   try {
     const ast = compiler.buildAst(request);
-    const transformedAst = permission.transform(ast, buildPermissionContext(context));
+    let transformedAst: SelectQueryAst;
+    try {
+      transformedAst = permission.transform(ast, buildPermissionContext(context));
+      emitRuntimeAuditEvent(auditContext, {
+        type: "runtime.permission.decision",
+        status: "allow",
+        nodeId,
+        nodeType,
+        metadata: {
+          table: request.table,
+          fields: request.fields
+        }
+      });
+    } catch (error) {
+      emitRuntimeAuditEvent(auditContext, {
+        type: "runtime.permission.decision",
+        status: "deny",
+        nodeId,
+        nodeType,
+        errorMessage: getErrorMessage(error),
+        metadata: {
+          table: request.table
+        }
+      });
+      throw error;
+    }
     compiled = compiler.compileAst(transformedAst);
   } catch (error) {
     throw new QueryExecutorError(
@@ -56,14 +97,39 @@ export async function executeQueryNode(
     );
   }
 
+  const datasourceStartedAt = Date.now();
   try {
     const result = await dependencies.datasource.execute({
       kind: "query",
       sql: compiled.sql,
       params: compiled.params
     });
+    emitRuntimeAuditEvent(auditContext, {
+      type: "runtime.datasource.succeeded",
+      status: "success",
+      nodeId,
+      nodeType,
+      durationMs: result.metadata.durationMs,
+      metadata: {
+        kind: result.metadata.kind,
+        rowCount: result.rowCount,
+        table: request.table
+      }
+    });
     return result.rows;
   } catch (error) {
+    emitRuntimeAuditEvent(auditContext, {
+      type: "runtime.datasource.failed",
+      status: "failure",
+      nodeId,
+      nodeType,
+      durationMs: Date.now() - datasourceStartedAt,
+      errorMessage: getErrorMessage(error),
+      metadata: {
+        kind: "query",
+        table: request.table
+      }
+    });
     throw new QueryExecutorError(
       `Failed to execute query node "${String(resolvedNode.type ?? node.type)}" for table "${request.table}". ${
         getErrorMessage(error)
@@ -196,10 +262,6 @@ function readOptionalFiniteNumber(value: unknown): number | undefined {
     throw new QueryExecutorError('Query node "limit" must resolve to a finite number.', "validation");
   }
   return value;
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function getNestedValue(source: Record<string, unknown>, path: string): unknown {
