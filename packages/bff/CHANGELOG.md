@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- test(permission): assert BFF view gateway context flows into runtime Permission AST Transform.
 - refactor(datasource): route BFF runtime view query execution through the datasource package adapter.
 - fix(boundaries): remove legacy `/query` and `/mutation` orchestration surfaces so BFF only acts as a runtime gateway.
 - test(gateway): retarget the e2e gate from removed legacy query/mutation endpoints to `POST /view/:name`.

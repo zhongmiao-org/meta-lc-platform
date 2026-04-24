@@ -25,6 +25,9 @@ test("executeRuntimeView compiles a view and executes through the runtime entryp
   const result = await executeRuntimeView(
     view,
     {
+      tenantId: "tenant-a",
+      userId: "user-1",
+      roles: ["USER"],
       input: {
         tenantId: "tenant-a"
       }
@@ -58,8 +61,8 @@ test("executeRuntimeView compiles a view and executes through the runtime entryp
   assert.deepEqual(queryCalls, [
     {
       kind: "query",
-      sql: 'SELECT "id", "owner" FROM "orders" WHERE "tenant_id" = $1 LIMIT 100',
-      params: ["tenant-a"]
+      sql: 'SELECT "id", "owner" FROM "orders" WHERE ("tenant_id" = $1) AND ("tenant_id" = $2 AND "created_by" = $3) LIMIT 100',
+      params: ["tenant-a", "tenant-a", "user-1"]
     }
   ]);
   assert.deepEqual(result.viewModel, {

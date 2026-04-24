@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { QueryRequest } from "@zhongmiao/meta-lc-query";
+import {
+  buildSelectQueryAst,
+  compileSelectAst,
+  type QueryRequest,
+  type SelectQueryAst
+} from "@zhongmiao/meta-lc-query";
 import { createQueryCompilerAdapter, executeQueryNode, QueryExecutorError, type QueryNodeDefinition, type RuntimeContext, type RuntimeStateStore } from "../src";
 
 const runtimeState: RuntimeStateStore = {
@@ -13,6 +18,9 @@ const runtimeState: RuntimeStateStore = {
 };
 
 const runtimeContext: RuntimeContext = {
+  tenantId: "tenant-a",
+  userId: "user-1",
+  roles: ["USER"],
   params: {
     limit: 7
   }
@@ -33,16 +41,43 @@ function createQueryNode(): QueryNodeDefinition {
 
 test("executeQueryNode resolves expressions before compiling and querying", async () => {
   const compileCalls: QueryRequest[] = [];
+  const permissionCalls: Array<{ ast: SelectQueryAst; tenantId: string }> = [];
+  const compileAstCalls: SelectQueryAst[] = [];
   const executeCalls: Array<{ kind: string; sql: string; params: unknown[] }> = [];
 
   const rows = [{ id: "row-1", owner: "user-1" }];
   const result = await executeQueryNode(createQueryNode(), runtimeState, runtimeContext, {
     compiler: {
-      compile(request) {
+      buildAst(request) {
         compileCalls.push(request);
+        return buildSelectQueryAst(request);
+      },
+      compileAst(ast) {
+        compileAstCalls.push(ast);
+        return compileSelectAst(ast);
+      },
+      compile() {
+        throw new Error("legacy compile should not be called");
+      }
+    },
+    permission: {
+      transform(ast, context) {
+        permissionCalls.push({ ast, tenantId: context.tenantId });
         return {
-          sql: 'SELECT "id", "owner" FROM "users" WHERE "owner" = $1 AND "status" = $2 LIMIT 7',
-          params: ["user-1", "active"]
+          ...ast,
+          where: {
+            type: "logical",
+            operator: "and",
+            predicates: [
+              ...(ast.where ? [ast.where] : []),
+              {
+                type: "comparison",
+                left: { name: "tenant_id" },
+                operator: "eq",
+                value: context.tenantId
+              }
+            ]
+          }
         };
       }
     },
@@ -79,10 +114,13 @@ test("executeQueryNode resolves expressions before compiling and querying", asyn
   assert.deepEqual(executeCalls, [
     {
       kind: "query",
-      sql: 'SELECT "id", "owner" FROM "users" WHERE "owner" = $1 AND "status" = $2 LIMIT 7',
-      params: ["user-1", "active"]
+      sql: 'SELECT "id", "owner" FROM "users" WHERE ("owner" = $1 AND "status" = $2) AND "tenant_id" = $3 LIMIT 7',
+      params: ["user-1", "active", "tenant-a"]
     }
   ]);
+  assert.equal(permissionCalls.length, 1);
+  assert.equal(permissionCalls[0]?.tenantId, "tenant-a");
+  assert.equal(compileAstCalls.length, 1);
   assert.deepEqual(result, rows);
 });
 
@@ -91,8 +129,14 @@ test("executeQueryNode wraps query compilation errors with traceable stage infor
     () =>
       executeQueryNode(createQueryNode(), runtimeState, runtimeContext, {
         compiler: {
-          compile() {
+          buildAst() {
             throw new Error("invalid query request");
+          },
+          compileAst() {
+            throw new Error("should not compile ast");
+          },
+          compile() {
+            throw new Error("legacy compile should not be called");
           }
         },
         datasource: {
@@ -107,6 +151,31 @@ test("executeQueryNode wraps query compilation errors with traceable stage infor
       assert.equal(error.cause instanceof Error, true);
       assert.match(error.message, /Failed to compile query node/);
       assert.match(error.message, /invalid query request/);
+      return true;
+    }
+  );
+});
+
+test("executeQueryNode wraps permission transform errors as compile errors", async () => {
+  await assert.rejects(
+    () =>
+      executeQueryNode(createQueryNode(), runtimeState, runtimeContext, {
+        compiler: createQueryCompilerAdapter(),
+        permission: {
+          transform() {
+            throw new Error("permission transform failed");
+          }
+        },
+        datasource: {
+          async execute() {
+            throw new Error("should not be called");
+          }
+        }
+      }),
+    (error: unknown) => {
+      assert.ok(error instanceof QueryExecutorError);
+      assert.equal(error.stage, "compile");
+      assert.match(error.message, /permission transform failed/);
       return true;
     }
   );

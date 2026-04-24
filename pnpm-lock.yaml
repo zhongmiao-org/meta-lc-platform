@@ -160,6 +160,13 @@ importers:
         version: 5.9.3
 
   packages/permission:
+    dependencies:
+      '@zhongmiao/meta-lc-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@zhongmiao/meta-lc-query':
+        specifier: workspace:*
+        version: link:../query
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -203,6 +210,9 @@ importers:
       '@zhongmiao/meta-lc-datasource':
         specifier: workspace:*
         version: link:../datasource
+      '@zhongmiao/meta-lc-permission':
+        specifier: workspace:*
+        version: link:../permission
       '@zhongmiao/meta-lc-query':
         specifier: workspace:*
         version: link:../query

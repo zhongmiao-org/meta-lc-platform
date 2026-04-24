@@ -35,13 +35,34 @@ export interface QueryComparisonPredicate {
   value: QueryScalarValue;
 }
 
+export interface QueryInPredicate {
+  type: "in";
+  left: QueryFieldRef;
+  values: QueryScalarValue[];
+}
+
+export interface QueryIsNullPredicate {
+  type: "is_null";
+  left: QueryFieldRef;
+}
+
+export interface QueryLiteralPredicate {
+  type: "literal";
+  value: boolean;
+}
+
 export interface QueryLogicalPredicate {
   type: "logical";
   operator: "and" | "or";
   predicates: QueryPredicate[];
 }
 
-export type QueryPredicate = QueryComparisonPredicate | QueryLogicalPredicate;
+export type QueryPredicate =
+  | QueryComparisonPredicate
+  | QueryInPredicate
+  | QueryIsNullPredicate
+  | QueryLiteralPredicate
+  | QueryLogicalPredicate;
 
 export interface SelectQueryAst {
   type: "select";

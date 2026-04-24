@@ -11,6 +11,7 @@
   "dependencies": {
     "@zhongmiao/meta-lc-contracts": "workspace:*",
     "@zhongmiao/meta-lc-datasource": "workspace:*",
+    "@zhongmiao/meta-lc-permission": "workspace:*",
     "@zhongmiao/meta-lc-query": "workspace:*"
   },
   "devDependencies": {

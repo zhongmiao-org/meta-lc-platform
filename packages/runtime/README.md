@@ -19,7 +19,7 @@ English | [中文文档](./README_zh.md)
 - Depends on `contracts` for shared runtime event and page topic contracts.
 - BFF websocket code can publish runtime events compatible with these contracts.
 - Frontend runtime adapters consume the package contract without direct database or business API access.
-- Query nodes compile through `query` and execute through the shared `datasource` adapter contract.
+- Query nodes build AST through `query`, apply `permission` AST transforms, compile SQL, and execute through the shared `datasource` adapter contract.
 - BFF wires concrete datasource adapters; runtime does not read DB config or access physical data directly.
 
 ## Minimal Flow
@@ -44,3 +44,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 
 - Runtime orchestration must not embed business-specific backend logic.
 - Runtime consumers must still access data through BFF contracts.
+- Runtime query execution must not inject SQL permission clauses; it calls the permission AST transform before SQL compilation.

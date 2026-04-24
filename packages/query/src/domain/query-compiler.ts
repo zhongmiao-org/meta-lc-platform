@@ -2,6 +2,9 @@ import type {
   CompiledQuery,
   QueryComparisonPredicate,
   QueryFieldRef,
+  QueryInPredicate,
+  QueryIsNullPredicate,
+  QueryLiteralPredicate,
   QueryLogicalPredicate,
   QueryPredicate,
   QueryRequest,
@@ -118,6 +121,15 @@ function compilePredicate(predicate: QueryPredicate, params: QueryScalarValue[],
   if (predicate.type === "comparison") {
     return compileComparisonPredicate(predicate, params);
   }
+  if (predicate.type === "in") {
+    return compileInPredicate(predicate, params);
+  }
+  if (predicate.type === "is_null") {
+    return compileIsNullPredicate(predicate);
+  }
+  if (predicate.type === "literal") {
+    return compileLiteralPredicate(predicate);
+  }
   return compileLogicalPredicate(predicate, params, isRoot);
 }
 
@@ -125,6 +137,26 @@ function compileComparisonPredicate(predicate: QueryComparisonPredicate, params:
   params.push(predicate.value);
   const operator = predicate.operator === "ilike" ? "ILIKE" : "=";
   return `${compileFieldRef(predicate.left)} ${operator} $${params.length}`;
+}
+
+function compileInPredicate(predicate: QueryInPredicate, params: QueryScalarValue[]): string {
+  if (!predicate.values.length) {
+    return "FALSE";
+  }
+
+  const placeholders = predicate.values.map((value) => {
+    params.push(value);
+    return `$${params.length}`;
+  });
+  return `${compileFieldRef(predicate.left)} IN (${placeholders.join(", ")})`;
+}
+
+function compileIsNullPredicate(predicate: QueryIsNullPredicate): string {
+  return `${compileFieldRef(predicate.left)} IS NULL`;
+}
+
+function compileLiteralPredicate(predicate: QueryLiteralPredicate): string {
+  return predicate.value ? "TRUE" : "FALSE";
 }
 
 function compileLogicalPredicate(

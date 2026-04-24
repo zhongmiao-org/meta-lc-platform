@@ -16,7 +16,7 @@ English | [中文文档](./README_zh.md)
 ## Relationship With Other Packages
 
 - `runtime` calls query compilation through its query compiler adapter before datasource execution.
-- `permission` can later transform query AST before final SQL compilation.
+- `permission` transforms query AST before final SQL compilation.
 - `datasource` executes compiled SQL; `query` does not depend on `datasource`.
 - `contracts` provides V2 query node shapes that runtime adapts into query compiler input.
 
@@ -26,7 +26,8 @@ English | [中文文档](./README_zh.md)
 flowchart LR
   Request["QueryRequest compatibility input"] --> AstBuilder["Query AST Builder"]
   AstBuilder --> Ast["SelectQueryAst"]
-  Ast --> Compiler["AST SQL Compiler"]
+  Ast --> Permission["Permission AST Transform"]
+  Permission --> Compiler["AST SQL Compiler"]
   Compiler --> Sql["SQL + params"]
   Sql --> Executor["Datasource adapter"]
 ```
@@ -42,4 +43,4 @@ pnpm --filter @zhongmiao/meta-lc-query test
 
 - Do not open DB connections here.
 - Do not add runtime orchestration or BFF page request semantics here.
-- Keep permission policy resolution outside this package; consume AST predicates or later permission-transformed AST.
+- Keep permission policy resolution outside this package; consume permission-transformed AST predicates.
