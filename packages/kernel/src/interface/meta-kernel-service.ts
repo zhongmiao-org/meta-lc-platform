@@ -2,15 +2,30 @@ import { validateSchema } from "../types/contracts";
 import { createMigrationSafetyReport } from "../application/migration-safety";
 import { PostgresMetaKernelRepository } from "../infra/persistence/postgres-meta-kernel-repository";
 import type {
+  DatasourceDefinition,
+  MetaDefinitionDiff,
+  MetaDefinitionKind,
+  MetaDefinitionPublishInput,
+  MetaDefinitionVersion,
   MetaSchema,
   MetaVersion,
-  MigrationExecutionOptions
+  MigrationExecutionOptions,
+  PermissionPolicy,
+  ViewDefinition
 } from "../types/shared.types";
 import { diffSchemas, generateMigrationSql, type SchemaDiff } from "../domain/schema-diff";
+import { diffMetaDefinitions, validateMetaDefinition } from "../domain/meta-definition-registry";
 
 type KernelRepository = Pick<
   PostgresMetaKernelRepository,
-  "init" | "createVersion" | "getVersion" | "executeMigration"
+  | "init"
+  | "createVersion"
+  | "getVersion"
+  | "executeMigration"
+  | "createDefinitionVersion"
+  | "getDefinitionVersion"
+  | "getLatestDefinitionVersion"
+  | "listLatestDefinitionVersions"
 >;
 
 export interface MigrationExecutionResult {
@@ -43,6 +58,126 @@ export class MetaKernelService {
         author: input.author,
         message: input.message
       }
+    });
+  }
+
+  async publishViewDefinition(input: {
+    appId: string;
+    id?: string;
+    definition: ViewDefinition;
+    author: string;
+    message: string;
+  }): Promise<MetaDefinitionVersion<"view">> {
+    return this.publishDefinition({
+      appId: input.appId,
+      kind: "view",
+      id: input.id ?? input.definition.name,
+      definition: input.definition,
+      metadata: {
+        author: input.author,
+        message: input.message
+      }
+    });
+  }
+
+  async getViewDefinition(
+    appId: string,
+    id: string,
+    version?: number
+  ): Promise<MetaDefinitionVersion<"view"> | null> {
+    return this.getDefinition(appId, "view", id, version);
+  }
+
+  async publishDatasourceDefinition(input: {
+    appId: string;
+    definition: DatasourceDefinition;
+    author: string;
+    message: string;
+  }): Promise<MetaDefinitionVersion<"datasource">> {
+    return this.publishDefinition({
+      appId: input.appId,
+      kind: "datasource",
+      id: input.definition.id,
+      definition: input.definition,
+      metadata: {
+        author: input.author,
+        message: input.message
+      }
+    });
+  }
+
+  async getDatasourceDefinition(
+    appId: string,
+    id: string,
+    version?: number
+  ): Promise<MetaDefinitionVersion<"datasource"> | null> {
+    return this.getDefinition(appId, "datasource", id, version);
+  }
+
+  async publishPermissionPolicy(input: {
+    appId: string;
+    definition: PermissionPolicy;
+    author: string;
+    message: string;
+  }): Promise<MetaDefinitionVersion<"permissionPolicy">> {
+    return this.publishDefinition({
+      appId: input.appId,
+      kind: "permissionPolicy",
+      id: input.definition.id,
+      definition: input.definition,
+      metadata: {
+        author: input.author,
+        message: input.message
+      }
+    });
+  }
+
+  async getPermissionPolicy(
+    appId: string,
+    id: string,
+    version?: number
+  ): Promise<MetaDefinitionVersion<"permissionPolicy"> | null> {
+    return this.getDefinition(appId, "permissionPolicy", id, version);
+  }
+
+  async listLatestDefinitions<K extends MetaDefinitionKind>(
+    appId: string,
+    kind: K
+  ): Promise<Array<MetaDefinitionVersion<K>>> {
+    return this.repository.listLatestDefinitionVersions(appId, kind);
+  }
+
+  async diffDefinition(input: {
+    appId: string;
+    kind: MetaDefinitionKind;
+    id: string;
+    fromVersion: number;
+    toVersion: number;
+  }): Promise<MetaDefinitionDiff> {
+    const from = await this.repository.getDefinitionVersion(
+      input.appId,
+      input.kind,
+      input.id,
+      input.fromVersion
+    );
+    const to = await this.repository.getDefinitionVersion(
+      input.appId,
+      input.kind,
+      input.id,
+      input.toVersion
+    );
+    if (!from || !to) {
+      throw new Error("Cannot diff definition: one of the versions does not exist.");
+    }
+
+    return diffMetaDefinitions({
+      appId: input.appId,
+      kind: input.kind,
+      id: input.id,
+      fromVersion: input.fromVersion,
+      toVersion: input.toVersion,
+      fromDefinition: from.definition,
+      toDefinition: to.definition
     });
   }
 
@@ -142,5 +277,24 @@ export class MetaKernelService {
     }
 
     return results;
+  }
+
+  private async publishDefinition<K extends MetaDefinitionKind>(
+    input: MetaDefinitionPublishInput<K>
+  ): Promise<MetaDefinitionVersion<K>> {
+    validateMetaDefinition(input.kind, input.definition);
+    return this.repository.createDefinitionVersion(input);
+  }
+
+  private async getDefinition<K extends MetaDefinitionKind>(
+    appId: string,
+    kind: K,
+    id: string,
+    version?: number
+  ): Promise<MetaDefinitionVersion<K> | null> {
+    if (version === undefined) {
+      return this.repository.getLatestDefinitionVersion(appId, kind, id);
+    }
+    return this.repository.getDefinitionVersion(appId, kind, id, version);
   }
 }

@@ -6,15 +6,16 @@ import type { MetaSummary } from "../types/meta-summary.type";
 export class AggregationService {
   constructor(private readonly registry: MetaRegistryService) {}
 
-  summarizeMeta(): MetaSummary {
-    return this.registry.listKinds().reduce((summary, kind) => {
-      const items = this.registry.list(kind);
+  async summarizeMeta(): Promise<MetaSummary> {
+    const summary = {} as MetaSummary;
+    for (const kind of this.registry.listKinds()) {
+      const items = await this.registry.list(kind);
       summary[kind] = {
         count: items.length,
         updatedAt: newestUpdatedAt(items.map((item) => item.updatedAt))
       };
-      return summary;
-    }, {} as MetaSummary);
+    }
+    return summary;
   }
 }
 

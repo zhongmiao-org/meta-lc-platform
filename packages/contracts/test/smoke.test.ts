@@ -4,7 +4,9 @@ import {
   buildRuntimePageTopic,
   createRuntimeManagerExecutedEvent,
   RUNTIME_MANAGER_EXECUTED_EVENT,
+  type DatasourceDefinition,
   type ExecutionPlan,
+  type PermissionPolicy,
   type ViewDefinition,
   type RuntimeManagerExecutedEvent,
   type RuntimeFunctionCallDefinition,
@@ -50,6 +52,26 @@ test("contracts exports V2 view and execution plan contracts", () => {
 
   assert.equal(view.nodes.orders?.type, "query");
   assert.equal(plan.nodes[0]?.id, "orders");
+});
+
+test("contracts exports meta definition registry contracts", () => {
+  const datasource: DatasourceDefinition = {
+    id: "orders-query",
+    type: "postgres",
+    config: {
+      target: "business"
+    }
+  };
+  const policy: PermissionPolicy = {
+    id: "orders-query-policy",
+    resource: "orders",
+    action: "query",
+    roles: ["SALES"],
+    scope: "DEPT"
+  };
+
+  assert.equal(datasource.id, "orders-query");
+  assert.equal(policy.scope, "DEPT");
 });
 
 test("contracts exports runtime dsl types", () => {

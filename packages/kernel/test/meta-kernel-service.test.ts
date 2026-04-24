@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MetaKernelService } from "../src/interface/meta-kernel-service";
+import { InMemoryMetaKernelRepository, MetaKernelService } from "../src";
 import type { MetaVersion } from "../src/types";
 
 function createVersion(version: number, schema: MetaVersion["schema"]): MetaVersion {
@@ -34,7 +34,8 @@ test("buildMigrationPlan returns SQL statements between versions", async () => {
       throw new Error("not used in test");
     },
     getVersion: async (_appId: string, version: number) => versions.get(version) ?? null,
-    executeMigration: async (_statements: string[]) => ({ auditCount: 0 })
+    executeMigration: async (_statements: string[]) => ({ auditCount: 0 }),
+    ...definitionRepositoryStubs()
   };
 
   const service = new MetaKernelService(repository);
@@ -73,7 +74,8 @@ test("replayFromVersion executes migrations sequentially", async () => {
     executeMigration: async (statements: string[]) => {
       executed.push(statements);
       return { auditCount: statements.length };
-    }
+    },
+    ...definitionRepositoryStubs()
   };
 
   const service = new MetaKernelService(repository);
@@ -114,7 +116,8 @@ test("migrateToVersion passes guard options to repository", async () => {
       optionsSeen.push(options);
       contextSeen.push(context);
       return { auditCount: 1 };
-    }
+    },
+    ...definitionRepositoryStubs()
   };
 
   const service = new MetaKernelService(repository);
@@ -137,3 +140,168 @@ test("migrateToVersion passes guard options to repository", async () => {
     requestId: "req-1"
   });
 });
+
+test("publishes and fetches versioned view definitions", async () => {
+  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const first = await service.publishViewDefinition({
+    appId: "demo-app",
+    definition: createOrdersView(["id"]),
+    author: "tester",
+    message: "Publish orders view"
+  });
+  const second = await service.publishViewDefinition({
+    appId: "demo-app",
+    definition: createOrdersView(["id", "owner"]),
+    author: "tester",
+    message: "Add owner field"
+  });
+
+  assert.equal(first.version, 1);
+  assert.equal(second.version, 2);
+  assert.equal(second.id, "orders-workbench");
+  assert.deepEqual((await service.getViewDefinition("demo-app", "orders-workbench", 1))?.definition, first.definition);
+  assert.deepEqual((await service.getViewDefinition("demo-app", "orders-workbench"))?.definition, second.definition);
+});
+
+test("diffDefinition returns stable changed paths for view versions", async () => {
+  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  await service.publishViewDefinition({
+    appId: "demo-app",
+    definition: createOrdersView(["id"]),
+    author: "tester",
+    message: "Publish orders view"
+  });
+  await service.publishViewDefinition({
+    appId: "demo-app",
+    definition: createOrdersView(["id", "owner"]),
+    author: "tester",
+    message: "Add owner field"
+  });
+
+  const diff = await service.diffDefinition({
+    appId: "demo-app",
+    kind: "view",
+    id: "orders-workbench",
+    fromVersion: 1,
+    toVersion: 2
+  });
+
+  assert.deepEqual(diff.changedPaths, ["nodes.orders.fields.1"]);
+});
+
+test("publishes and fetches datasource definitions", async () => {
+  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const published = await service.publishDatasourceDefinition({
+    appId: "demo-app",
+    definition: {
+      id: "orders-query",
+      type: "postgres",
+      config: { target: "business" }
+    },
+    author: "tester",
+    message: "Publish datasource"
+  });
+
+  assert.equal(published.version, 1);
+  assert.deepEqual(await service.getDatasourceDefinition("demo-app", "orders-query"), published);
+});
+
+test("rejects invalid datasource definitions", async () => {
+  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+
+  await assert.rejects(
+    () =>
+      service.publishDatasourceDefinition({
+        appId: "demo-app",
+        definition: {
+          id: "orders-query",
+          type: ""
+        },
+        author: "tester",
+        message: "Invalid datasource"
+      }),
+    /requires a type/
+  );
+});
+
+test("publishes and fetches permission policies", async () => {
+  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const published = await service.publishPermissionPolicy({
+    appId: "demo-app",
+    definition: {
+      id: "orders-query-policy",
+      resource: "orders",
+      action: "query",
+      roles: ["SALES"],
+      scope: "DEPT"
+    },
+    author: "tester",
+    message: "Publish permission policy"
+  });
+
+  assert.equal(published.version, 1);
+  assert.deepEqual(await service.getPermissionPolicy("demo-app", "orders-query-policy"), published);
+});
+
+test("rejects invalid permission policies", async () => {
+  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+
+  await assert.rejects(
+    () =>
+      service.publishPermissionPolicy({
+        appId: "demo-app",
+        definition: {
+          id: "orders-query-policy",
+          resource: "orders",
+          action: "query",
+          roles: ["SALES", "SALES"]
+        },
+        author: "tester",
+        message: "Invalid permission policy"
+      }),
+    /duplicate role "SALES"/
+  );
+
+  await assert.rejects(
+    () =>
+      service.publishPermissionPolicy({
+        appId: "demo-app",
+        definition: {
+          id: "orders-query-policy",
+          resource: "orders",
+          action: "query",
+          roles: [""]
+        },
+        author: "tester",
+        message: "Invalid permission policy"
+      }),
+    /empty role/
+  );
+});
+
+function createOrdersView(fields: string[]) {
+  return {
+    name: "orders-workbench",
+    nodes: {
+      orders: {
+        type: "query" as const,
+        table: "orders",
+        fields
+      }
+    },
+    output: {
+      rows: "{{orders.rows}}"
+    }
+  };
+}
+
+function definitionRepositoryStubs() {
+  return {
+    createDefinitionVersion: async () => {
+      throw new Error("not used in test");
+    },
+    getDefinitionVersion: async () => null,
+    getLatestDefinitionVersion: async () => null,
+    listLatestDefinitionVersions: async () => []
+  };
+}

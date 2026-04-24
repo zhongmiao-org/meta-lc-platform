@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(meta): demo view、datasource 与 permission definition 改为从 Kernel-backed registry 读取。
 - test(permission): 验证 BFF view gateway context 会进入 runtime Permission AST Transform。
 - refactor(datasource): BFF runtime view query 执行改为通过 datasource 包 adapter。
 - fix(boundaries): 移除旧 `/query` 与 `/mutation` 编排入口，让 BFF 只作为 runtime gateway。

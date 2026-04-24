@@ -39,6 +39,21 @@ export interface DataScopeDecision {
   reason: string;
 }
 
+export interface DatasourceDefinition {
+  id: string;
+  type: string;
+  config?: Record<string, unknown>;
+  description?: string;
+}
+
+export interface PermissionPolicy {
+  id: string;
+  resource: string;
+  action: string;
+  roles: string[];
+  scope?: DataScopeType;
+}
+
 export interface DbConfig {
   url?: string;
   host: string;

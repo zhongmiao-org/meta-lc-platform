@@ -1,3 +1,9 @@
+import type {
+  DatasourceDefinition,
+  PermissionPolicy,
+  ViewDefinition
+} from "@zhongmiao/meta-lc-contracts";
+
 export type Primitive = string | number | boolean | null;
 
 export interface MetaField {
@@ -198,3 +204,55 @@ export interface MigrationAuditRecord {
   durationMs: number;
   requestId: string;
 }
+
+export type MetaDefinitionKind = "view" | "datasource" | "permissionPolicy";
+
+export interface MetaDefinitionByKind {
+  view: ViewDefinition;
+  datasource: DatasourceDefinition;
+  permissionPolicy: PermissionPolicy;
+}
+
+export interface MetaDefinitionVersionMetadata {
+  author: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface MetaDefinitionVersion<K extends MetaDefinitionKind = MetaDefinitionKind> {
+  appId: string;
+  kind: K;
+  id: string;
+  version: number;
+  definition: MetaDefinitionByKind[K];
+  metadata: MetaDefinitionVersionMetadata;
+}
+
+export interface MetaDefinitionPublishInput<K extends MetaDefinitionKind = MetaDefinitionKind> {
+  appId: string;
+  kind: K;
+  id: string;
+  definition: MetaDefinitionByKind[K];
+  metadata: {
+    author: string;
+    message: string;
+  };
+}
+
+export interface MetaDefinitionDiff {
+  appId: string;
+  kind: MetaDefinitionKind;
+  id: string;
+  fromVersion: number;
+  toVersion: number;
+  changedPaths: string[];
+}
+
+export type LatestMetaDefinitionVersion<K extends MetaDefinitionKind = MetaDefinitionKind> =
+  MetaDefinitionVersion<K>;
+
+export type {
+  DatasourceDefinition,
+  PermissionPolicy,
+  ViewDefinition
+} from "@zhongmiao/meta-lc-contracts";

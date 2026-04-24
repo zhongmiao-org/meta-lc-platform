@@ -6,6 +6,8 @@ English | [中文文档](./README_zh.md)
 
 `bff` is the NestJS Gateway boundary package. It keeps protocol entry points, Runtime invocation, domain model, infrastructure integrations, bootstrap logic, and shared contracts in strict layers; it must not own query or mutation orchestration.
 
+BFF reads view definitions from the Kernel-backed meta registry before invoking the Runtime facade; it does not publish metadata or execute registry migrations itself.
+
 ## Source Layout
 
 ```text
@@ -88,6 +90,7 @@ controller -> application -> domain -> infra
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
   Entry --> App["application services"]
+  App --> Kernel["Kernel meta registry"]
   App --> Infra["infra integration"]
   App --> Response["HTTP response / WS event"]
 ```

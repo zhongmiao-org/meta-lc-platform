@@ -9,6 +9,7 @@
     "lint": "echo lint:kernel"
   },
   "dependencies": {
+    "@zhongmiao/meta-lc-contracts": "workspace:*",
     "pg": "^8.13.1"
   },
   "devDependencies": {
@@ -16,6 +17,6 @@
     "@types/pg": "^8.11.10",
     "typescript": "^5.7.2"
   },
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts"
+  "main": "dist/kernel/src/index.js",
+  "types": "dist/kernel/src/index.d.ts"
 }
