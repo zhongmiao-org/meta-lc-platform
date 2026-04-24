@@ -26,7 +26,7 @@ test("aggregation summary returns resource counts and updated timestamps", async
   const registry = new MetaRegistryService();
   const aggregation = new AggregationService(registry);
 
-  const summary = aggregation.summarizeMeta();
+  const summary = await aggregation.summarizeMeta();
 
   assert.equal(summary.tables.count, 1);
   assert.equal(summary.pages.count, 1);

@@ -79,6 +79,9 @@ importers:
       '@zhongmiao/meta-lc-datasource':
         specifier: workspace:*
         version: link:../datasource
+      '@zhongmiao/meta-lc-kernel':
+        specifier: workspace:*
+        version: link:../kernel
       '@zhongmiao/meta-lc-runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -132,6 +135,9 @@ importers:
 
   packages/kernel:
     dependencies:
+      '@zhongmiao/meta-lc-contracts':
+        specifier: workspace:*
+        version: link:../contracts
       pg:
         specifier: ^8.13.1
         version: 8.20.0

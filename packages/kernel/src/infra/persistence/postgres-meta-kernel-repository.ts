@@ -3,6 +3,9 @@ import { createMigrationSafetyReport, type MigrationGuardOptions } from "../../a
 import { randomUUID } from "node:crypto";
 import type {
   DbConfig,
+  MetaDefinitionKind,
+  MetaDefinitionPublishInput,
+  MetaDefinitionVersion,
   MetaSchema,
   MetaVersion,
   MigrationAuditRecord
@@ -62,6 +65,23 @@ export class PostgresMetaKernelRepository {
     await this.pool.query(`
       CREATE INDEX IF NOT EXISTS idx_meta_kernel_migration_audits_app_created
       ON meta_kernel_migration_audits (app_id, created_at DESC)
+    `);
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS meta_kernel_definition_versions (
+        id BIGSERIAL PRIMARY KEY,
+        app_id TEXT NOT NULL,
+        definition_kind TEXT NOT NULL,
+        definition_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        definition_json JSONB NOT NULL,
+        metadata_json JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (app_id, definition_kind, definition_id, version)
+      );
+    `);
+    await this.pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_meta_kernel_definition_versions_latest
+      ON meta_kernel_definition_versions (app_id, definition_kind, definition_id, version DESC)
     `);
   }
 
@@ -132,6 +152,101 @@ export class PostgresMetaKernelRepository {
       [input.appId, nextVersion, JSON.stringify(input.schema), JSON.stringify(metadata)]
     );
     return mapRow(result.rows[0]);
+  }
+
+  async getLatestDefinitionVersion<K extends MetaDefinitionKind>(
+    appId: string,
+    kind: K,
+    id: string
+  ): Promise<MetaDefinitionVersion<K> | null> {
+    const result = await this.pool.query(
+      `SELECT app_id, definition_kind, definition_id, version, definition_json, metadata_json
+       FROM meta_kernel_definition_versions
+       WHERE app_id = $1 AND definition_kind = $2 AND definition_id = $3
+       ORDER BY version DESC
+       LIMIT 1`,
+      [appId, kind, id]
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+    return mapDefinitionRow<K>(result.rows[0]);
+  }
+
+  async getDefinitionVersion<K extends MetaDefinitionKind>(
+    appId: string,
+    kind: K,
+    id: string,
+    version: number
+  ): Promise<MetaDefinitionVersion<K> | null> {
+    const result = await this.pool.query(
+      `SELECT app_id, definition_kind, definition_id, version, definition_json, metadata_json
+       FROM meta_kernel_definition_versions
+       WHERE app_id = $1 AND definition_kind = $2 AND definition_id = $3 AND version = $4
+       LIMIT 1`,
+      [appId, kind, id, version]
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+    return mapDefinitionRow<K>(result.rows[0]);
+  }
+
+  async listLatestDefinitionVersions<K extends MetaDefinitionKind>(
+    appId: string,
+    kind: K
+  ): Promise<Array<MetaDefinitionVersion<K>>> {
+    const result = await this.pool.query(
+      `SELECT DISTINCT ON (definition_id)
+        app_id,
+        definition_kind,
+        definition_id,
+        version,
+        definition_json,
+        metadata_json
+       FROM meta_kernel_definition_versions
+       WHERE app_id = $1 AND definition_kind = $2
+       ORDER BY definition_id ASC, version DESC`,
+      [appId, kind]
+    );
+
+    return result.rows.map(mapDefinitionRow<K>);
+  }
+
+  async createDefinitionVersion<K extends MetaDefinitionKind>(
+    input: MetaDefinitionPublishInput<K>
+  ): Promise<MetaDefinitionVersion<K>> {
+    const latest = await this.getLatestDefinitionVersion(input.appId, input.kind, input.id);
+    const nextVersion = latest ? latest.version + 1 : 1;
+    const metadata = {
+      author: input.metadata.author,
+      message: input.metadata.message,
+      createdAt: new Date().toISOString()
+    };
+
+    const result = await this.pool.query(
+      `INSERT INTO meta_kernel_definition_versions (
+        app_id,
+        definition_kind,
+        definition_id,
+        version,
+        definition_json,
+        metadata_json
+      )
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb)
+       RETURNING app_id, definition_kind, definition_id, version, definition_json, metadata_json`,
+      [
+        input.appId,
+        input.kind,
+        input.id,
+        nextVersion,
+        JSON.stringify(input.definition),
+        JSON.stringify(metadata)
+      ]
+    );
+    return mapDefinitionRow<K>(result.rows[0]);
   }
 
   async executeMigration(
@@ -281,6 +396,24 @@ function mapRow(row: {
     appId: row.app_id,
     version: row.version,
     schema: row.schema_json,
+    metadata: row.metadata_json
+  };
+}
+
+function mapDefinitionRow<K extends MetaDefinitionKind>(row: {
+  app_id: string;
+  definition_kind: K;
+  definition_id: string;
+  version: number;
+  definition_json: MetaDefinitionVersion<K>["definition"];
+  metadata_json: MetaDefinitionVersion<K>["metadata"];
+}): MetaDefinitionVersion<K> {
+  return {
+    appId: row.app_id,
+    kind: row.definition_kind,
+    id: row.definition_id,
+    version: row.version,
+    definition: row.definition_json,
     metadata: row.metadata_json
   };
 }

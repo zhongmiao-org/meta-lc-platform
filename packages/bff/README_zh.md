@@ -6,6 +6,8 @@
 
 `bff` 是 NestJS Gateway 边界包。它用严格分层隔离协议入口、Runtime 调用、领域模型、基础设施集成、启动逻辑和共享契约；不得承载 query / mutation 编排。
 
+BFF 在调用 Runtime facade 前从 Kernel-backed meta registry 读取 view definition；它不发布元数据，也不执行 registry migration。
+
 ## 源码结构
 
 ```text
@@ -88,6 +90,7 @@ controller -> application -> domain -> infra
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
   Entry --> App["application services"]
+  App --> Kernel["Kernel meta registry"]
   App --> Infra["infra integration"]
   App --> Response["HTTP response / WS event"]
 ```

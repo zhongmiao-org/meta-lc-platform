@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(meta-contracts): 新增 Kernel meta registry 使用的 datasource 与 permission policy definition 契约。
 - feat(runtime-contracts): 将 V2 ViewDefinition、ExecutionPlan 与 runtime node 契约迁入共享 contracts 包。
 - fix(api-contracts): 停止导出已移除的旧 BFF query/mutation API 契约。
 - docs(readme): 新增双语子包 README 与最小架构流程图。

@@ -19,7 +19,7 @@ export class TemporaryViewAdapter {
   ) {}
 
   async execute(viewName: string, request: ViewApiRequest, requestId: string): Promise<TemporaryViewExecutionResult> {
-    const view = this.lookupView(viewName);
+    const view = await this.lookupView(viewName);
     const runtimeContext = await this.buildRuntimeContext(request, requestId, viewName);
     const runtime = await executeRuntimeView(view, runtimeContext, this.runtimeDependencies.create());
 
@@ -30,8 +30,8 @@ export class TemporaryViewAdapter {
     };
   }
 
-  private lookupView(viewName: string): ViewDefinition {
-    const view = this.registry.getView(viewName);
+  private async lookupView(viewName: string): Promise<ViewDefinition> {
+    const view = await this.registry.getView(viewName);
     if (!view) {
       throw new NotFoundException(`view "${viewName}" not found`);
     }
