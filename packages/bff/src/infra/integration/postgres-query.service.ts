@@ -1,31 +1,10 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
-import { loadDbConfig } from "../../types/config";
-import type { MutationOperation } from "../../types";
-
-interface OrderMutationPayload {
-  id: string;
-  orgId: string | null;
-  owner?: string;
-  channel?: string;
-  priority?: string;
-  status?: string;
-}
-
-export interface OrderMutationCommand {
-  operation: MutationOperation;
-  tenantId: string;
-  userId: string;
-  superAdmin: boolean;
-  orgId: string | null;
-  payload: OrderMutationPayload;
-}
-
-export interface MutationExecutionRecord {
-  rowCount: number;
-  beforeData: Record<string, unknown> | null;
-  afterData: Record<string, unknown> | null;
-}
+import { loadDbConfig } from "../../config/config";
+import type {
+  MutationExecutionRecord,
+  OrderMutationCommand
+} from "../types/postgres-query.type";
 
 @Injectable()
 export class PostgresQueryExecutorService implements OnModuleDestroy {

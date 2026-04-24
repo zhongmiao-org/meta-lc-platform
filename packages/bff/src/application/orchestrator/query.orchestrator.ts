@@ -2,16 +2,11 @@ import { Injectable } from "@nestjs/common";
 import { buildDataScopeFilter, injectPermissionClause, resolveDataScope } from "@zhongmiao/meta-lc-permission";
 import { compileSelectQuery } from "@zhongmiao/meta-lc-query";
 import { formatSqlWithParams, shiftSqlParams } from "@zhongmiao/meta-lc-shared";
-import type { DataScopeDecision, QueryApiRequest } from "@zhongmiao/meta-lc-contracts";
 import { ForbiddenDataScopeError } from "../../common/permission-errors";
 import { OrgScopeService } from "../../infra/integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query.service";
-
-export interface QueryExecutionResult {
-  rows: Record<string, unknown>[];
-  finalSql: string;
-  permissionDecision: DataScopeDecision;
-}
+import type { DataScopeDecision, QueryApiRequest } from "../../contracts/types/bff-api.type";
+import type { QueryExecutionResult } from "../types/query.type";
 
 @Injectable()
 export class QueryOrchestratorService {

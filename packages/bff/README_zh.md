@@ -4,81 +4,90 @@
 
 ## 包定位
 
-`bff` 是 NestJS 边界包。它把应用编排、HTTP/WS 入口、基础设施集成、启动逻辑与通用工具明确分层。
+`bff` 是 NestJS 边界包。它用严格分层隔离协议入口、应用编排、领域模型、基础设施集成、启动逻辑和共享契约。
 
 ## 源码结构
 
 ```text
 bff/src/
+├── controller/
+│   ├── http/
+│   ├── ws/
+│   │   └── runtime/
+│   │       ├── ws.gateway.ts
+│   │       ├── broadcast.bus.ts
+│   │       ├── health.controller.ts
+│   │       ├── operations.state.ts
+│   │       └── replay.store.ts
+│   └── cli/
 ├── application/
 │   ├── orchestrator/
-│   │   ├── aggregation.orchestrator.ts
-│   │   ├── mutation.orchestrator.ts
-│   │   ├── query.orchestrator.ts
-│   │   └── query-pipeline.orchestrator.ts
 │   ├── services/
-│   │   └── meta-registry.service.ts
-│   └── index.ts
-├── interface/
-│   ├── http/
-│   │   └── controller/
-│   │       ├── meta.controller.ts
-│   │       ├── query.controller.ts
-│   │       └── view.controller.ts
-│   ├── ws/
-│   │   ├── runtime-ws-broadcast.bus.ts
-│   │   ├── runtime-ws-health.controller.ts
-│   │   ├── runtime-ws-operations.state.ts
-│   │   ├── runtime-ws-replay.store.ts
-│   │   └── ws.gateway.ts
-│   ├── contracts/
-│   │   ├── meta-registry.contract.ts
-│   │   └── view.contract.ts
-│   ├── protocols/
-│   │   ├── meta.http.ts
-│   │   └── view.http.ts
-│   └── index.ts
+│   ├── types/
+│   └── interfaces/
+├── domain/
+│   ├── entities/
+│   ├── value-objects/
+│   ├── types/
+│   └── interfaces/
 ├── infra/
-│   ├── cache/
+│   ├── repository/
 │   ├── integration/
-│   │   ├── audit.service.ts
-│   │   ├── org-scope.service.ts
-│   │   └── postgres-query.service.ts
-│   └── index.ts
-├── bootstrap/
-│   ├── app.module.ts
-│   ├── bootstrap.service.ts
-│   ├── cli.ts
-│   ├── main.ts
-│   └── migration-runner.ts
+│   ├── cache/
+│   ├── types/
+│   └── interfaces/
+├── contracts/
+│   ├── types/
+│   └── interfaces/
+├── dto/
+├── mapper/
+├── constants/
 ├── common/
-├── types/
+├── config/
+├── bootstrap/
 ├── utils/
 └── index.ts
 ```
 
-## 核心职责
+## 文件夹约束
 
-- 接收 HTTP query、mutation、health、meta、view request。
-- 将编排保留在 `application`，尤其是 query/mutation 与 view 编译执行。
-- 将 HTTP 和 WS 入口保留在 `interface`。
-- 将 Postgres 与外部依赖保留在 `infra`。
-- 将启动与 bootstrap 逻辑隔离在 `bootstrap`。
-- 在配置允许时为 dev/test 环境 bootstrap meta、business、audit database baseline。
+- `controller/http/**` 是 HTTP API 入口层。
+- `controller/ws/**` 是 WebSocket 入口层。Runtime WebSocket 文件必须固定在 `controller/ws/runtime/**`。
+- `controller/cli/**` 是 CLI/RPC 入口层。
+- `application/**` 只负责应用编排和应用服务，不放传输层 controller，也不直接放 SQL 实现。
+- `domain/**` 放实体、值对象、领域数据形状和领域行为契约。
+- `infra/**` 放 repository、integration、cache 等外部依赖实现。
+- `contracts/**` 只放跨层共享的请求/响应数据形状和行为契约。
+- `dto/**` 只能放 class DTO，禁止声明 `type` 或 `interface`。
+- `mapper/**` 负责 protocol DTO、contracts 与 application input 之间的转换。
+- `constants/**` 放包级常量和 provider token。
+- `config/**` 放环境变量与配置加载。
+- `common/**` 只放少量框架级 helper 和异常工具。
+- `bootstrap/**` 放 Nest module 装配、进程启动和 migration/bootstrap runner。
+- `utils/**` 只保留纯函数工具，必须尽量收敛。
 
-## 与其他包关系
+## Type 与 Interface 规则
 
-- 使用 `contracts` 与 `protocols` 描述请求/响应形状与传输层 DTO。
-- 使用 `query` 与 `permission` 完成服务端 query 与 access decision。
-- 在受允许的 BFF edge files 中使用 shared helper 与直接 Postgres integration。
-- 随着 meta API 成熟，应编排接入 `kernel` 完成 metadata versioning 与 migration orchestration。
-- `apps/bff-server` 是基于本包构建的可运行进程入口。
+- `*.interface.ts` = 行为契约/结构抽象，只允许 `export interface`。
+- `*.type.ts` = 数据形状/结构组合，只允许 `export type`。
+- 禁止在 `*.interface.ts` 中混写 `export type`。
+- 禁止在 `*.type.ts` 中混写 `export interface`。
+- 禁止在 controller/service/infra implementation 文件中声明 TypeScript `type` 或 `interface`。
+- 禁止新增 `types/index.ts` 或 `interfaces/index.ts` 聚合类型入口。
+
+## 依赖方向
+
+```text
+controller -> application -> domain -> infra
+```
+
+`bootstrap` 只负责装配各层。`common`、`contracts`、`config`、`constants` 是共享支撑层，但不能反向依赖 implementation layer。
 
 ## 最小闭环
 
 ```mermaid
 flowchart LR
-  Http["HTTP / WS request"] --> Entry["interface/http/controller or interface/ws"]
+  Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
   Entry --> App["application orchestrator / services"]
   App --> Infra["infra integration"]
   App --> Response["HTTP response / WS event"]
@@ -94,6 +103,6 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 
 ## 边界约束
 
-- `interface` 是唯一入口层。
-- direct DB driver use 必须保留在允许的 edge files 内，并通过 boundary check。
+- WebSocket 是入口协议层，不属于 infra，也不承载 application orchestration。
+- direct DB driver use 必须保留在允许的 edge files 内，并通过 `pnpm test:boundaries`。
 - 不把 runtime UI 或 kernel 的结构真源逻辑搬进 BFF。

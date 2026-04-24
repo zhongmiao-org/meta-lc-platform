@@ -1,13 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { MetaRegistryService } from "../services/meta-registry.service";
-import type { MetaResourceKind } from "../../interface/contracts/meta-registry.contract";
-
-export interface MetaSummaryEntry {
-  count: number;
-  updatedAt: string | null;
-}
-
-export type MetaSummary = Record<MetaResourceKind, MetaSummaryEntry>;
+import type { MetaSummary } from "../types/meta-summary.type";
 
 @Injectable()
 export class AggregationService {

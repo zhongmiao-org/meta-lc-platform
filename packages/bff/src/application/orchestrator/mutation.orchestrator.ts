@@ -1,28 +1,13 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { canAccessOrg, resolveDataScope } from "@zhongmiao/meta-lc-permission";
-import type { DataScopeDecision } from "@zhongmiao/meta-lc-contracts";
 import { ForbiddenDataScopeError } from "../../common/permission-errors";
 import { OrgScopeService } from "../../infra/integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query.service";
-import type { MutationApiRequest, MutationOperation } from "../../types";
-
-interface OrderMutationPayload {
-  id: string;
-  orgId: string | null;
-  owner?: string;
-  channel?: string;
-  priority?: string;
-  status?: string;
-}
-
-export interface MutationExecutionResult {
-  rowCount: number;
-  operation: MutationOperation;
-  table: string;
-  beforeData: Record<string, unknown> | null;
-  afterData: Record<string, unknown> | null;
-  permissionDecision: DataScopeDecision;
-}
+import type { MutationApiRequest } from "../../contracts/types/bff-api.type";
+import type {
+  MutationExecutionResult,
+  OrderMutationPayload
+} from "../types/mutation.type";
 
 @Injectable()
 export class MutationOrchestratorService {

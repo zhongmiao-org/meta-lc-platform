@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(layering): rebuild `src` into strict controller/application/domain/infra/contracts layering, move runtime WebSocket under `controller/ws/runtime`, split type/interface files, and enforce the rules with ESLint plus boundary checks.
 - feat(gateway): add `POST /view/:name` and a temporary runtime-backed view adapter so BFF can route page requests through the runtime executor.
 - refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - docs(readme): add bilingual package README and minimal architecture flow.

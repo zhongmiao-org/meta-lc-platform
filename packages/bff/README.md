@@ -4,81 +4,90 @@ English | [中文文档](./README_zh.md)
 
 ## Package Role
 
-`bff` is the NestJS boundary package. It keeps the application orchestration core separate from the HTTP/WS entry layer, infrastructure integrations, bootstrap logic, and shared helpers.
+`bff` is the NestJS boundary package. It keeps protocol entry points, application orchestration, domain model, infrastructure integrations, bootstrap logic, and shared contracts in strict layers.
 
 ## Source Layout
 
 ```text
 bff/src/
+├── controller/
+│   ├── http/
+│   ├── ws/
+│   │   └── runtime/
+│   │       ├── ws.gateway.ts
+│   │       ├── broadcast.bus.ts
+│   │       ├── health.controller.ts
+│   │       ├── operations.state.ts
+│   │       └── replay.store.ts
+│   └── cli/
 ├── application/
 │   ├── orchestrator/
-│   │   ├── aggregation.orchestrator.ts
-│   │   ├── mutation.orchestrator.ts
-│   │   ├── query.orchestrator.ts
-│   │   └── query-pipeline.orchestrator.ts
 │   ├── services/
-│   │   └── meta-registry.service.ts
-│   └── index.ts
-├── interface/
-│   ├── http/
-│   │   └── controller/
-│   │       ├── meta.controller.ts
-│   │       ├── query.controller.ts
-│   │       └── view.controller.ts
-│   ├── ws/
-│   │   ├── runtime-ws-broadcast.bus.ts
-│   │   ├── runtime-ws-health.controller.ts
-│   │   ├── runtime-ws-operations.state.ts
-│   │   ├── runtime-ws-replay.store.ts
-│   │   └── ws.gateway.ts
-│   ├── contracts/
-│   │   ├── meta-registry.contract.ts
-│   │   └── view.contract.ts
-│   ├── protocols/
-│   │   ├── meta.http.ts
-│   │   └── view.http.ts
-│   └── index.ts
+│   ├── types/
+│   └── interfaces/
+├── domain/
+│   ├── entities/
+│   ├── value-objects/
+│   ├── types/
+│   └── interfaces/
 ├── infra/
-│   ├── cache/
+│   ├── repository/
 │   ├── integration/
-│   │   ├── audit.service.ts
-│   │   ├── org-scope.service.ts
-│   │   └── postgres-query.service.ts
-│   └── index.ts
-├── bootstrap/
-│   ├── app.module.ts
-│   ├── bootstrap.service.ts
-│   ├── cli.ts
-│   ├── main.ts
-│   └── migration-runner.ts
+│   ├── cache/
+│   ├── types/
+│   └── interfaces/
+├── contracts/
+│   ├── types/
+│   └── interfaces/
+├── dto/
+├── mapper/
+├── constants/
 ├── common/
-├── types/
+├── config/
+├── bootstrap/
 ├── utils/
 └── index.ts
 ```
 
-## Responsibilities
+## Folder Constraints
 
-- Accept HTTP query, mutation, health, meta, and view requests.
-- Keep orchestration in `application`, especially query/mutation and view compilation.
-- Keep HTTP and WS entry points in `interface`.
-- Keep Postgres and external integrations in `infra`.
-- Keep bootstrapping isolated in `bootstrap`.
-- Bootstrap meta, business, and audit database baselines for dev/test environments when configured.
+- `controller/http/**` is the HTTP API entry layer.
+- `controller/ws/**` is the WebSocket entry layer. Runtime WebSocket files must stay under `controller/ws/runtime/**`.
+- `controller/cli/**` is the CLI/RPC entry layer.
+- `application/**` owns orchestration and application services. It must not contain transport controllers or direct SQL implementation.
+- `domain/**` owns entities, value objects, domain data shapes, and domain behavior contracts.
+- `infra/**` owns repository, integration, cache, and external dependency implementations.
+- `contracts/**` owns cross-layer request/response shapes and behavior contracts shared by entry/application layers.
+- `dto/**` is class-only. Do not declare `type` or `interface` in DTO files.
+- `mapper/**` owns conversion between protocol DTOs, contracts, and application inputs.
+- `constants/**` owns package-level constants and provider tokens.
+- `config/**` owns environment/config loading.
+- `common/**` owns small framework-level helpers and exception utilities only.
+- `bootstrap/**` owns Nest module wiring, process startup, and migration/bootstrap runners.
+- `utils/**` is reserved for pure helpers and should stay small.
 
-## Relationship With Other Packages
+## Type And Interface Rules
 
-- Uses `contracts` and `protocols` for request/response shapes and transport-specific DTOs.
-- Uses `query` and `permission` for server-side query and access decisions.
-- Uses shared helpers and direct Postgres integration at approved BFF edge files.
-- Should compose `kernel` for metadata versioning and migration orchestration as meta APIs mature.
-- `apps/bff-server` is the runnable process entry built from this package.
+- `*.interface.ts` means behavior contracts or structural abstractions and may only export `interface`.
+- `*.type.ts` means data shapes or structural composition and may only export `type`.
+- Do not mix `export type` inside `*.interface.ts`.
+- Do not mix `export interface` inside `*.type.ts`.
+- Do not declare TypeScript `type` or `interface` in controller/service/infra implementation files.
+- Do not add `types/index.ts` or `interfaces/index.ts` aggregators.
+
+## Dependency Direction
+
+```text
+controller -> application -> domain -> infra
+```
+
+`bootstrap` wires the layers together. `common`, `contracts`, `config`, and `constants` may be shared support layers, but they must not import implementation layers back upward.
 
 ## Minimal Flow
 
 ```mermaid
 flowchart LR
-  Http["HTTP / WS request"] --> Entry["interface/http/controller or interface/ws"]
+  Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
   Entry --> App["application orchestrator / services"]
   App --> Infra["infra integration"]
   App --> Response["HTTP response / WS event"]
@@ -94,6 +103,6 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 
 ## Boundary Notes
 
-- `interface` is the only entry layer.
-- Keep direct DB driver use inside approved edge files and boundary checks.
-- Do not move runtime UI or package-level kernel source-of-truth logic into BFF.
+- WebSocket is an entry protocol layer, not infra and not application orchestration.
+- Direct DB driver use must stay inside approved edge files and pass `pnpm test:boundaries`.
+- Runtime UI and kernel source-of-truth logic must not be moved into BFF.

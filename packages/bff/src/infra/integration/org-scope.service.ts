@@ -1,22 +1,8 @@
 import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
 import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-contracts";
 import { Pool } from "pg";
-import { loadDbConfig } from "../../types/config";
-
-interface RolePolicyRow {
-  role_code: string;
-  data_scope: string;
-  custom_org_ids: string[] | null;
-}
-
-interface OrgNodeRow {
-  id: string;
-  tenant_id: string;
-  parent_id: string | null;
-  path: string;
-  name: string;
-  type: string;
-}
+import { loadDbConfig } from "../../config/config";
+import type { OrgNodeRow, RolePolicyRow } from "../types/org-scope.type";
 
 @Injectable()
 export class OrgScopeService implements OnModuleDestroy {

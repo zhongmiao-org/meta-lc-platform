@@ -2,28 +2,31 @@ import { randomUUID } from "node:crypto";
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import { AggregationService } from "../application/orchestrator/aggregation.orchestrator";
+import { MetaQueryService } from "../application/services/meta-query.service";
 import { MetaRegistryService } from "../application/services/meta-registry.service";
-import { TemporaryViewAdapter } from "../application/view/temporary-view-adapter.service";
+import { TemporaryViewAdapter } from "../application/services/temporary-view-adapter.service";
 import { CacheService } from "../infra/cache/cache.service";
-import { AuditLogService } from "../common/audit-log.service";
+import { AuditLogService } from "../application/services/audit-log.service";
 import { HttpExceptionFilter } from "../common/http-exception.filter";
-import { MetaController } from "../interface/http/controller/meta.controller";
-import { ViewController } from "../interface/http/controller/view.controller";
+import { MetaController } from "../controller/http/meta.controller";
+import { ViewController } from "../controller/http/view.controller";
 import {
   createRuntimeWsBroadcastBusFromEnv,
   parseRuntimeWsBroadcastBusMode,
+} from "../controller/ws/runtime/broadcast.bus";
+import {
   RUNTIME_WS_BROADCAST_BUS,
-  RUNTIME_WS_INSTANCE_ID
-} from "../interface/ws/runtime-ws-broadcast.bus";
-import { RuntimeWsHealthController } from "../interface/ws/runtime-ws-health.controller";
-import { RuntimeWsOperationsState } from "../interface/ws/runtime-ws-operations.state";
+  RUNTIME_WS_INSTANCE_ID,
+  RUNTIME_WS_REPLAY_STORE
+} from "../constants/runtime-ws.constants";
+import { RuntimeWsHealthController } from "../controller/ws/runtime/health.controller";
+import { RuntimeWsOperationsState } from "../controller/ws/runtime/operations.state";
 import {
   createRuntimeWsReplayStoreFromEnv,
-  parseRuntimeWsReplayStoreMode,
-  RUNTIME_WS_REPLAY_STORE
-} from "../interface/ws/runtime-ws-replay.store";
-import { QueryController } from "../interface/http/controller/query.controller";
-import { RuntimeWsGateway } from "../interface/ws/ws.gateway";
+  parseRuntimeWsReplayStoreMode
+} from "../controller/ws/runtime/replay.store";
+import { QueryController } from "../controller/http/query.controller";
+import { RuntimeWsGateway } from "../controller/ws/runtime/ws.gateway";
 import { AuditPersistenceService } from "../infra/integration/audit.service";
 import { OrgScopeService } from "../infra/integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../infra/integration/postgres-query.service";
@@ -36,6 +39,7 @@ import { QueryOrchestratorService } from "../application/orchestrator/query.orch
   providers: [
     AggregationService,
     CacheService,
+    MetaQueryService,
     MetaRegistryService,
     PostgresQueryExecutorService,
     OrgScopeService,

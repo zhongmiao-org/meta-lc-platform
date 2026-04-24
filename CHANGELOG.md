@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(bff): enforce strict BFF layering with controller/http/ws/cli entry points, split type/interface contracts, and add ESLint plus boundary guards.
 - feat(bff): add a `POST /view/:name` gateway with a temporary runtime-backed adapter so page requests flow through the runtime executor.
 - fix(runtime): align the runtime package entrypoint with the refactored `dist/runtime/src` output so downstream packages can resolve it at runtime.
 - refactor(package-structure): reorganize the workspace packages into layered domain/application/infra/interface/types/utils directories and refresh boundary checks.

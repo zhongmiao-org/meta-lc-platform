@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { InternalServerErrorException, NotFoundException } from "@nestjs/common";
-import { ViewController } from "../src/interface/http/controller/view.controller";
-import type { ViewApiRequest } from "../src/interface/contracts/view.contract";
+import { ViewController } from "../src/controller/http/view.controller";
+import type { ViewApiRequest } from "../src/contracts/types/view.type";
 
 test("view controller returns the runtime view model and request id", async () => {
   const headers: Record<string, string> = {};
