@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(query-ast): add AST-first select query builder and SQL compiler while keeping the legacy request entrypoint.
 - refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - docs(readme): add bilingual package README and minimal architecture flow.
 - chore(package): adopt the `@zhongmiao/meta-lc-query` scoped package identity for release governance.

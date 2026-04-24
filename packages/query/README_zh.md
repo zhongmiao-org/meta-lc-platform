@@ -4,29 +4,31 @@
 
 ## 包定位
 
-`query` 将平台 Query DSL 编译成 SQL 与参数列表。它是 compiler 包，不是数据库执行器。
+`query` 将平台 Query AST 编译成 SQL 与参数列表。它是 AST-first compiler 包，不是数据库执行器，也不是编排层。
 
 ## 核心职责
 
-- 定义 query compiler 的输入与输出类型。
-- 将 table、fields、filters、limit 转成安全 SQL 片段。
+- 定义 Query AST、compiler 输入与输出类型。
+- 为兼容旧调用，将 `QueryRequest` 构建为 `SelectQueryAst`。
+- 将 AST table、fields、predicates、limit 转成安全 SQL 片段。
 - 保持 SQL 生成逻辑可在无数据库环境下测试。
 
 ## 与其他包关系
 
-- `bff` 在 datasource 执行前调用 query compiler。
-- `permission` 的决策可以在最终执行前贡献 filters 或数据域约束。
+- `runtime` 通过 query compiler adapter 在 datasource 执行前调用 query compiler。
+- `permission` 后续可以在最终 SQL 编译前 transform query AST。
 - `datasource` 执行编译后的 SQL；`query` 不依赖 `datasource`。
-- `contracts` 提供 API request 形状，由 BFF 适配为 compiler input。
+- `contracts` 提供 V2 query node 形状，由 runtime 适配为 compiler input。
 
 ## 最小闭环
 
 ```mermaid
 flowchart LR
-  Request["QueryApiRequest"] --> BFF["BFF adapter"]
-  BFF --> Compiler["QueryCompiler"]
+  Request["QueryRequest 兼容输入"] --> AstBuilder["Query AST Builder"]
+  AstBuilder --> Ast["SelectQueryAst"]
+  Ast --> Compiler["AST SQL Compiler"]
   Compiler --> Sql["SQL + params"]
-  Sql --> Executor["BFF datasource executor"]
+  Sql --> Executor["Datasource adapter"]
 ```
 
 ## 常用命令
@@ -39,4 +41,5 @@ pnpm --filter @zhongmiao/meta-lc-query test
 ## 边界约束
 
 - 不在这里打开数据库连接。
-- 权限策略解析留在包外；本包消费已经解析好的 filters 或约束。
+- 不在这里新增 runtime orchestration 或 BFF 页面请求语义。
+- 权限策略解析留在包外；本包消费 AST predicates 或后续 permission-transformed AST。
