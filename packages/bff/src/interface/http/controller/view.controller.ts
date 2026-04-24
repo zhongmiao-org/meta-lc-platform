@@ -1,9 +1,9 @@
 import { Body, Controller, InternalServerErrorException, Param, Post, Req, Res } from "@nestjs/common";
 import { HttpException } from "@nestjs/common";
-import { resolveRequestId } from "../common/request-id";
-import { TemporaryViewAdapter } from "../../application/view/temporary-view-adapter.service";
-import type { ViewApiRequest, ViewApiResponse } from "../../application/view/view.contract";
-import type { ViewRequestLike, ViewResponseLike } from "./view.http";
+import { resolveRequestId } from "../../../common/request-id";
+import { TemporaryViewAdapter } from "../../../application/view/temporary-view-adapter.service";
+import type { ViewApiRequest, ViewApiResponse } from "../../contracts/view.contract";
+import type { ViewRequestLike, ViewResponseLike } from "../../protocols/view.http";
 
 @Controller()
 export class ViewController {

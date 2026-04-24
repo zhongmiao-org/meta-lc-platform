@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveRequestId } from "../src/interface/common/request-id";
+import { resolveRequestId } from "../src/common/request-id";
 
 test("resolveRequestId reuses incoming request id header", () => {
   const id = resolveRequestId("req-123");

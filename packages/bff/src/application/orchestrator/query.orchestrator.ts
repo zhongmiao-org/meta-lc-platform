@@ -3,9 +3,9 @@ import { buildDataScopeFilter, injectPermissionClause, resolveDataScope } from "
 import { compileSelectQuery } from "@zhongmiao/meta-lc-query";
 import { formatSqlWithParams, shiftSqlParams } from "@zhongmiao/meta-lc-shared";
 import type { DataScopeDecision, QueryApiRequest } from "@zhongmiao/meta-lc-contracts";
-import { ForbiddenDataScopeError } from "../../interface/common/permission-errors";
+import { ForbiddenDataScopeError } from "../../common/permission-errors";
 import { OrgScopeService } from "../../infra/integration/org-scope.service";
-import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query-executor.service";
+import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query.service";
 
 export interface QueryExecutionResult {
   rows: Record<string, unknown>[];

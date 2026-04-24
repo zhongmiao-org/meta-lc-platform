@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from "@nestjs/common";
-import { QueryOrchestratorService } from "../../application/orchestrator/query-orchestrator.service";
-import type { QueryApiRequest, QueryApiResponse } from "../../types";
+import { QueryOrchestratorService } from "../application/orchestrator/query.orchestrator";
+import type { QueryApiRequest, QueryApiResponse } from "../types";
 
 @Controller()
 export class AppController {

@@ -12,10 +12,10 @@ import {
   type ViewDefinition,
   type RuntimeExecutorDependencies
 } from "@zhongmiao/meta-lc-runtime";
-import { MetaRegistryService } from "../../interface/gateway/meta-registry.service";
+import { MetaRegistryService } from "../services/meta-registry.service";
 import { OrgScopeService } from "../../infra/integration/org-scope.service";
-import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query-executor.service";
-import type { ViewApiRequest } from "./view.contract";
+import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query.service";
+import type { ViewApiRequest } from "../../interface/contracts/view.contract";
 
 export interface TemporaryViewExecutionResult {
   requestId: string;

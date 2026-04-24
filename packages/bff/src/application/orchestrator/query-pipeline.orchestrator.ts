@@ -3,7 +3,7 @@ import type { QueryApiRequest } from "@zhongmiao/meta-lc-contracts";
 import {
   compileQueryWithPermission as compileQueryWithScopedPermission,
   QueryOrchestratorService as QueryPipelineService
-} from "./query-orchestrator.service";
+} from "./query.orchestrator";
 
 export { QueryPipelineService };
 

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Pool } from "pg";
-import type { DbConfig } from "../../types";
+import type { DbConfig } from "../types";
 
 export type MigrationTarget = "meta" | "business" | "audit";
 

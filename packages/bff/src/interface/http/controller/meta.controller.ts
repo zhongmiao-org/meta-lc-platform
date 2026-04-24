@@ -1,15 +1,15 @@
 import { Controller, Get, Req, Res } from "@nestjs/common";
-import { AggregationService, type MetaSummary } from "../../application/orchestrator/aggregation.service";
-import { CacheService } from "../../infra/cache/cache.service";
-import { resolveRequestId } from "../common/request-id";
-import { MetaRegistryService } from "./meta-registry.service";
+import { AggregationService, type MetaSummary } from "../../../application/orchestrator/aggregation.orchestrator";
+import { MetaRegistryService } from "../../../application/services/meta-registry.service";
+import { CacheService } from "../../../infra/cache/cache.service";
+import { resolveRequestId } from "../../../common/request-id";
 import type {
   MetaListEnvelope,
   MetaRequestLike,
   MetaResponseLike,
   MetaSummaryEnvelope
-} from "./contracts/meta.http";
-import type { MetaRegistryItem, MetaResourceKind } from "./contracts/meta-registry.contract";
+} from "../../protocols/meta.http";
+import type { MetaRegistryItem, MetaResourceKind } from "../../contracts/meta-registry.contract";
 
 @Controller("meta")
 export class MetaController {
