@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { MetaRegistryService, type MetaResourceKind } from "../../interface/gateway/meta-registry.service";
+import { MetaRegistryService } from "../../interface/gateway/meta-registry.service";
+import type { MetaResourceKind } from "../../interface/gateway/contracts/meta-registry.contract";
 
 export interface MetaSummaryEntry {
   count: number;

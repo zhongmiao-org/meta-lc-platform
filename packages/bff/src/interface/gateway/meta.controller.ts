@@ -2,33 +2,14 @@ import { Controller, Get, Req, Res } from "@nestjs/common";
 import { AggregationService, type MetaSummary } from "../../application/orchestrator/aggregation.service";
 import { CacheService } from "../../infra/cache/cache.service";
 import { resolveRequestId } from "../common/request-id";
-import {
-  MetaRegistryService,
-  type MetaRegistryItem,
-  type MetaResourceKind
-} from "./meta-registry.service";
-
-interface RequestLike {
-  headers: Record<string, string | string[] | undefined>;
-}
-
-interface ResponseLike {
-  setHeader(name: string, value: string): void;
-}
-
-export interface MetaListEnvelope {
-  items: MetaRegistryItem[];
-  source: "memory";
-  cached: boolean;
-  requestId: string;
-}
-
-export interface MetaSummaryEnvelope {
-  summary: MetaSummary;
-  source: "memory";
-  cached: boolean;
-  requestId: string;
-}
+import { MetaRegistryService } from "./meta-registry.service";
+import type {
+  MetaListEnvelope,
+  MetaRequestLike,
+  MetaResponseLike,
+  MetaSummaryEnvelope
+} from "./contracts/meta.http";
+import type { MetaRegistryItem, MetaResourceKind } from "./contracts/meta-registry.contract";
 
 @Controller("meta")
 export class MetaController {
@@ -39,43 +20,52 @@ export class MetaController {
   ) {}
 
   @Get("tables")
-  tables(@Req() req: RequestLike, @Res({ passthrough: true }) res: ResponseLike): Promise<MetaListEnvelope> {
+  tables(
+    @Req() req: MetaRequestLike,
+    @Res({ passthrough: true }) res: MetaResponseLike
+  ): Promise<MetaListEnvelope<MetaRegistryItem>> {
     return this.list("tables", req, res);
   }
 
   @Get("pages")
-  pages(@Req() req: RequestLike, @Res({ passthrough: true }) res: ResponseLike): Promise<MetaListEnvelope> {
+  pages(
+    @Req() req: MetaRequestLike,
+    @Res({ passthrough: true }) res: MetaResponseLike
+  ): Promise<MetaListEnvelope<MetaRegistryItem>> {
     return this.list("pages", req, res);
   }
 
   @Get("datasources")
   datasources(
-    @Req() req: RequestLike,
-    @Res({ passthrough: true }) res: ResponseLike
-  ): Promise<MetaListEnvelope> {
+    @Req() req: MetaRequestLike,
+    @Res({ passthrough: true }) res: MetaResponseLike
+  ): Promise<MetaListEnvelope<MetaRegistryItem>> {
     return this.list("datasources", req, res);
   }
 
   @Get("rules")
-  rules(@Req() req: RequestLike, @Res({ passthrough: true }) res: ResponseLike): Promise<MetaListEnvelope> {
+  rules(
+    @Req() req: MetaRequestLike,
+    @Res({ passthrough: true }) res: MetaResponseLike
+  ): Promise<MetaListEnvelope<MetaRegistryItem>> {
     return this.list("rules", req, res);
   }
 
   @Get("permissions")
   permissions(
-    @Req() req: RequestLike,
-    @Res({ passthrough: true }) res: ResponseLike
-  ): Promise<MetaListEnvelope> {
+    @Req() req: MetaRequestLike,
+    @Res({ passthrough: true }) res: MetaResponseLike
+  ): Promise<MetaListEnvelope<MetaRegistryItem>> {
     return this.list("permissions", req, res);
   }
 
   @Get("summary")
   async summary(
-    @Req() req: RequestLike,
-    @Res({ passthrough: true }) res: ResponseLike
-  ): Promise<MetaSummaryEnvelope> {
+    @Req() req: MetaRequestLike,
+    @Res({ passthrough: true }) res: MetaResponseLike
+  ): Promise<MetaSummaryEnvelope<MetaSummary>> {
     const requestId = this.bindRequestId(req, res);
-    const result = await this.cache.remember("meta:summary", () => this.aggregation.summarizeMeta());
+    const result = await this.cache.remember<MetaSummary>("meta:summary", () => this.aggregation.summarizeMeta());
     return {
       summary: result.value,
       source: "memory",
@@ -84,9 +74,13 @@ export class MetaController {
     };
   }
 
-  private async list(kind: MetaResourceKind, req: RequestLike, res: ResponseLike): Promise<MetaListEnvelope> {
+  private async list(
+    kind: MetaResourceKind,
+    req: MetaRequestLike,
+    res: MetaResponseLike
+  ): Promise<MetaListEnvelope<MetaRegistryItem>> {
     const requestId = this.bindRequestId(req, res);
-    const result = await this.cache.remember(`meta:${kind}`, () => this.registry.list(kind));
+    const result = await this.cache.remember<MetaRegistryItem[]>(`meta:${kind}`, () => this.registry.list(kind));
     return {
       items: result.value,
       source: "memory",
@@ -95,7 +89,7 @@ export class MetaController {
     };
   }
 
-  private bindRequestId(req: RequestLike, res: ResponseLike): string {
+  private bindRequestId(req: MetaRequestLike, res: MetaResponseLike): string {
     const requestId = resolveRequestId(req.headers["x-request-id"]);
     res.setHeader("x-request-id", requestId);
     return requestId;
