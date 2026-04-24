@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MutationOrchestratorService } from "../src/application/orchestrator/mutation-orchestrator.service";
+import { MutationOrchestratorService } from "../src/application/orchestrator/mutation.orchestrator";
 
 test("mutation orchestrator rejects unsupported tables", async () => {
   const service = new MutationOrchestratorService({} as never, {} as never);

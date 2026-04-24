@@ -1,9 +1,9 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { canAccessOrg, resolveDataScope } from "@zhongmiao/meta-lc-permission";
 import type { DataScopeDecision } from "@zhongmiao/meta-lc-contracts";
-import { ForbiddenDataScopeError } from "../../interface/common/permission-errors";
+import { ForbiddenDataScopeError } from "../../common/permission-errors";
 import { OrgScopeService } from "../../infra/integration/org-scope.service";
-import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query-executor.service";
+import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query.service";
 import type { MutationApiRequest, MutationOperation } from "../../types";
 
 interface OrderMutationPayload {

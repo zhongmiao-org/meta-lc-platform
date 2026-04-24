@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { AuditPersistenceService } from "../../infra/integration/audit-persistence.service";
+import { AuditPersistenceService } from "../infra/integration/audit.service";
 
 export interface QueryAuditPayload {
   requestId: string;

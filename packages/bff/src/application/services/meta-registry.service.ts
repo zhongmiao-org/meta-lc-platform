@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";
-import { META_REGISTRY_UPDATED_AT, META_REGISTRY_VIEW_FIXTURES } from "./constants/meta-registry.constants";
-import type { MetaRegistryItem, MetaResourceKind } from "./contracts/meta-registry.contract";
+import { META_REGISTRY_UPDATED_AT, META_REGISTRY_VIEW_FIXTURES } from "../constants/meta-registry.constants";
+import type { MetaRegistryItem, MetaResourceKind } from "../../interface/contracts/meta-registry.contract";
 
 const FIXTURES: Record<MetaResourceKind, MetaRegistryItem[]> = {
   tables: [

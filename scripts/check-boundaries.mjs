@@ -8,9 +8,9 @@ const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/infra/postgres/postgres.adapter.ts',
   'packages/kernel/src/infra/persistence/postgres-meta-kernel-repository.ts',
   'packages/bff/src/infra/integration/org-scope.service.ts',
-  'packages/bff/src/infra/integration/audit-persistence.service.ts',
-  'packages/bff/src/infra/integration/postgres-query-executor.service.ts',
-  'packages/bff/src/interface/bootstrap/migration-runner.ts'
+  'packages/bff/src/infra/integration/audit.service.ts',
+  'packages/bff/src/infra/integration/postgres-query.service.ts',
+  'packages/bff/src/bootstrap/migration-runner.ts'
 ]);
 const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-bff',

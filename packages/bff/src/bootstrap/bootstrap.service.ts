@@ -4,7 +4,7 @@ import {
   loadBootstrapAdminConfig,
   loadBootstrapMode,
   loadDbTargets
-} from "../../types/config";
+} from "../types/config";
 import { createPool, MigrationRunner } from "./migration-runner";
 
 function quoteIdentifier(value: string): string {

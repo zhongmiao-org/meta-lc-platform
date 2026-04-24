@@ -4,19 +4,71 @@ English | [中文文档](./README_zh.md)
 
 ## Package Role
 
-`bff` is the NestJS middleware orchestration package. It exposes the BFF module, query/mutation controllers, meta gateway, cache, audit integration, Postgres execution integration, organization-scope integration, and runtime websocket gateway.
+`bff` is the NestJS boundary package. It keeps the application orchestration core separate from the HTTP/WS entry layer, infrastructure integrations, bootstrap logic, and shared helpers.
+
+## Source Layout
+
+```text
+bff/src/
+├── application/
+│   ├── orchestrator/
+│   │   ├── aggregation.orchestrator.ts
+│   │   ├── mutation.orchestrator.ts
+│   │   ├── query.orchestrator.ts
+│   │   └── query-pipeline.orchestrator.ts
+│   ├── services/
+│   │   └── meta-registry.service.ts
+│   └── index.ts
+├── interface/
+│   ├── http/
+│   │   └── controller/
+│   │       ├── meta.controller.ts
+│   │       ├── query.controller.ts
+│   │       └── view.controller.ts
+│   ├── ws/
+│   │   ├── runtime-ws-broadcast.bus.ts
+│   │   ├── runtime-ws-health.controller.ts
+│   │   ├── runtime-ws-operations.state.ts
+│   │   ├── runtime-ws-replay.store.ts
+│   │   └── ws.gateway.ts
+│   ├── contracts/
+│   │   ├── meta-registry.contract.ts
+│   │   └── view.contract.ts
+│   ├── protocols/
+│   │   ├── meta.http.ts
+│   │   └── view.http.ts
+│   └── index.ts
+├── infra/
+│   ├── cache/
+│   ├── integration/
+│   │   ├── audit.service.ts
+│   │   ├── org-scope.service.ts
+│   │   └── postgres-query.service.ts
+│   └── index.ts
+├── bootstrap/
+│   ├── app.module.ts
+│   ├── bootstrap.service.ts
+│   ├── cli.ts
+│   ├── main.ts
+│   └── migration-runner.ts
+├── common/
+├── types/
+├── utils/
+└── index.ts
+```
 
 ## Responsibilities
 
-- Accept HTTP query, mutation, health, and meta requests.
-- Orchestrate query compilation, permission decisions, datasource execution, audit logging, caching, and response shaping.
-- Coordinate mutation execution and audit outcomes.
-- Serve runtime websocket events and replay/health support.
+- Accept HTTP query, mutation, health, meta, and view requests.
+- Keep orchestration in `application`, especially query/mutation and view compilation.
+- Keep HTTP and WS entry points in `interface`.
+- Keep Postgres and external integrations in `infra`.
+- Keep bootstrapping isolated in `bootstrap`.
 - Bootstrap meta, business, and audit database baselines for dev/test environments when configured.
 
 ## Relationship With Other Packages
 
-- Uses `contracts` for API request/response shapes.
+- Uses `contracts` and `protocols` for request/response shapes and transport-specific DTOs.
 - Uses `query` and `permission` for server-side query and access decisions.
 - Uses shared helpers and direct Postgres integration at approved BFF edge files.
 - Should compose `kernel` for metadata versioning and migration orchestration as meta APIs mature.
@@ -26,13 +78,10 @@ English | [中文文档](./README_zh.md)
 
 ```mermaid
 flowchart LR
-  Http["HTTP / WS request"] --> Controller["BFF controller / gateway"]
-  Controller --> Orchestrator["query / mutation / ws orchestrator"]
-  Orchestrator --> Permission["permission decision"]
-  Orchestrator --> Query["query compiler"]
-  Query --> Db["Postgres execution"]
-  Orchestrator --> Audit["audit log"]
-  Orchestrator --> Response["HTTP response / WS event"]
+  Http["HTTP / WS request"] --> Entry["interface/http/controller or interface/ws"]
+  Entry --> App["application orchestrator / services"]
+  App --> Infra["infra integration"]
+  App --> Response["HTTP response / WS event"]
 ```
 
 ## Commands
@@ -45,6 +94,6 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 
 ## Boundary Notes
 
-- BFF is the integration boundary for frontend and runtime data access.
+- `interface` is the only entry layer.
 - Keep direct DB driver use inside approved edge files and boundary checks.
 - Do not move runtime UI or package-level kernel source-of-truth logic into BFF.

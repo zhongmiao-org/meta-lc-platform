@@ -1,10 +1,10 @@
 import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
-import { ForbiddenDataScopeError } from "../common/permission-errors";
-import { AuditLogService } from "../common/audit-log.service";
-import { resolveRequestId } from "../common/request-id";
-import { MutationOrchestratorService } from "../../application/orchestrator/mutation-orchestrator.service";
-import { QueryOrchestratorService } from "../../application/orchestrator/query-orchestrator.service";
-import type { MutationApiRequest, MutationApiResponse, QueryApiRequest, QueryApiResponse } from "../../types";
+import { ForbiddenDataScopeError } from "../../../common/permission-errors";
+import { AuditLogService } from "../../../common/audit-log.service";
+import { resolveRequestId } from "../../../common/request-id";
+import { MutationOrchestratorService } from "../../../application/orchestrator/mutation.orchestrator";
+import { QueryOrchestratorService } from "../../../application/orchestrator/query.orchestrator";
+import type { MutationApiRequest, MutationApiResponse, QueryApiRequest, QueryApiResponse } from "../../../types";
 
 @Controller()
 export class QueryController {

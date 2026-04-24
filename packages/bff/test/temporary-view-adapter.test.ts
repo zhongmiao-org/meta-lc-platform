@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { NotFoundException } from "@nestjs/common";
 import { TemporaryViewAdapter } from "../src/application/view/temporary-view-adapter.service";
-import { MetaRegistryService } from "../src/interface/gateway/meta-registry.service";
+import { MetaRegistryService } from "../src/application/services/meta-registry.service";
 
 test("temporary view adapter executes runtime view and propagates context into the query node", async () => {
   const queryCalls: Array<{ sql: string; params: Array<string | number | boolean> }> = [];
