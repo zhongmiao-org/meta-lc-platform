@@ -11,6 +11,7 @@ export * from "./common/request-id";
 export * from "./gateway/meta-registry.service";
 export * from "./gateway/meta.controller";
 export * from "./gateway/query.controller";
+export * from "./gateway/view.controller";
 export * from "./gateway/runtime-ws-broadcast.bus";
 export * from "./gateway/runtime-ws-health.controller";
 export * from "./gateway/runtime-ws-operations.state";

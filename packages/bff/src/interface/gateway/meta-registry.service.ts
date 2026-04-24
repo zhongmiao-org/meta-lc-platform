@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";
 
 export type MetaResourceKind = "tables" | "pages" | "datasources" | "rules" | "permissions";
 
@@ -10,6 +11,30 @@ export interface MetaRegistryItem {
 }
 
 const UPDATED_AT = "2026-04-20T00:00:00.000Z";
+const VIEW_FIXTURES: Record<string, ViewDefinition> = {
+  "orders-workbench": {
+    name: "orders-workbench",
+    nodes: {
+      orders: {
+        type: "query",
+        table: "orders",
+        fields: ["id", "owner", "channel", "priority", "status"],
+        filters: {
+          tenant_id: "{{context.tenantId}}",
+          owner: "{{input.owner}}",
+          created_by: "{{context.userId}}"
+        },
+        limit: "{{input.limit}}"
+      }
+    },
+    output: {
+      requestId: "{{context.requestId}}",
+      tenantId: "{{context.tenantId}}",
+      owner: "{{input.owner}}",
+      rows: "{{orders.rows}}"
+    }
+  }
+};
 
 const FIXTURES: Record<MetaResourceKind, MetaRegistryItem[]> = {
   tables: [
@@ -62,5 +87,14 @@ export class MetaRegistryService {
 
   listKinds(): MetaResourceKind[] {
     return ["tables", "pages", "datasources", "rules", "permissions"];
+  }
+
+  getView(name: string): ViewDefinition | null {
+    const view = VIEW_FIXTURES[name];
+    return view ? structuredClone(view) : null;
+  }
+
+  listViewNames(): string[] {
+    return Object.keys(VIEW_FIXTURES).sort((left, right) => left.localeCompare(right));
   }
 }

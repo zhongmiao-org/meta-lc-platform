@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- feat(bff): 新增 `POST /view/:name` gateway，并接入临时的 runtime-backed adapter，让页面请求进入 runtime 执行链路。
+- fix(runtime): 将 runtime 包入口对齐到重构后的 `dist/runtime/src` 输出，确保下游包在运行时可正确解析。
 - refactor(package-structure): 将工作区包重整为 domain/application/infra/interface/types/utils 分层目录，并同步刷新边界检查。
 - feat(runtime): 新增 RuntimeExecutor 主执行引擎，负责 DAG 分层调度、原子提交 state snapshot 并解析最终 view model。
 - feat(runtime): 新增 QueryExecutor 适配层，负责编译 query 节点并执行 datasource 查询。

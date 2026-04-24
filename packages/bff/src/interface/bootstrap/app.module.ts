@@ -7,6 +7,7 @@ import { AuditLogService } from "../common/audit-log.service";
 import { HttpExceptionFilter } from "../common/http-exception.filter";
 import { MetaController } from "../gateway/meta.controller";
 import { MetaRegistryService } from "../gateway/meta-registry.service";
+import { ViewController } from "../gateway/view.controller";
 import {
   createRuntimeWsBroadcastBusFromEnv,
   parseRuntimeWsBroadcastBusMode,
@@ -27,10 +28,11 @@ import { OrgScopeService } from "../../infra/integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../../infra/integration/postgres-query-executor.service";
 import { MutationOrchestratorService } from "../../application/orchestrator/mutation-orchestrator.service";
 import { QueryOrchestratorService } from "../../application/orchestrator/query-orchestrator.service";
+import { TemporaryViewAdapter } from "../../application/view/temporary-view-adapter.service";
 
 @Module({
   imports: [],
-  controllers: [QueryController, MetaController, RuntimeWsHealthController],
+  controllers: [QueryController, ViewController, MetaController, RuntimeWsHealthController],
   providers: [
     AggregationService,
     CacheService,
@@ -40,6 +42,7 @@ import { QueryOrchestratorService } from "../../application/orchestrator/query-o
     AuditPersistenceService,
     QueryOrchestratorService,
     MutationOrchestratorService,
+    TemporaryViewAdapter,
     AuditLogService,
     {
       provide: RUNTIME_WS_INSTANCE_ID,

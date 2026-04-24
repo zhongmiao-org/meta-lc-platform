@@ -76,6 +76,9 @@ importers:
       '@zhongmiao/meta-lc-query':
         specifier: workspace:*
         version: link:../query
+      '@zhongmiao/meta-lc-runtime':
+        specifier: workspace:*
+        version: link:../runtime
       '@zhongmiao/meta-lc-shared':
         specifier: workspace:*
         version: link:../shared

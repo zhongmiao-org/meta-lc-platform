@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(gateway): 新增 `POST /view/:name`，并加入临时的 runtime-backed view adapter，让 BFF 的页面请求进入 runtime 执行链路。
 - refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。
 - docs(readme): 新增双语子包 README 与最小架构流程图。
 - feat(gateway): 新增 meta API、内存 cache、aggregation summary 与 WebSocket lifecycle 基线。
