@@ -20,7 +20,7 @@ test("executeRuntimeView compiles a view and executes through the runtime entryp
       firstOwner: "{{orders.row.owner}}"
     }
   };
-  const queryCalls: Array<{ sql: string; params: Array<string | number | boolean> }> = [];
+  const queryCalls: Array<{ kind: string; sql: string; params: unknown[] }> = [];
 
   const result = await executeRuntimeView(
     view,
@@ -31,9 +31,20 @@ test("executeRuntimeView compiles a view and executes through the runtime entryp
     },
     {
       queryDatasource: {
-        async query(sql, params = []) {
-          queryCalls.push({ sql, params });
-          return [{ id: "order-1", owner: "Ada" }];
+        async execute(request) {
+          queryCalls.push({
+            kind: request.kind,
+            sql: request.sql,
+            params: request.params ?? []
+          });
+          return {
+            rows: [{ id: "order-1", owner: "Ada" }],
+            rowCount: 1,
+            metadata: {
+              kind: request.kind,
+              durationMs: 1
+            }
+          };
         }
       },
       mutationDatasource: {
@@ -46,6 +57,7 @@ test("executeRuntimeView compiles a view and executes through the runtime entryp
 
   assert.deepEqual(queryCalls, [
     {
+      kind: "query",
       sql: 'SELECT "id", "owner" FROM "orders" WHERE "tenant_id" = $1 LIMIT 100',
       params: ["tenant-a"]
     }

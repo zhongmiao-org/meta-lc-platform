@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(datasource): execute query nodes through the shared datasource adapter contract.
 - feat(runtime): add a high-level runtime view executor facade that compiles and executes ViewDefinition through RuntimeExecutor.
 - refactor(contracts): re-export V2 view and execution plan contracts from the shared contracts package.
 - fix(package): align the runtime package main/types entrypoint with the refactored dist/runtime/src layout so downstream packages can resolve it at runtime.

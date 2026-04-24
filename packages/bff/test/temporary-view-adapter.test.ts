@@ -5,7 +5,7 @@ import { TemporaryViewAdapter } from "../src/application/services/temporary-view
 import { MetaRegistryService } from "../src/application/services/meta-registry.service";
 
 test("temporary view adapter executes runtime view and propagates context into the query node", async () => {
-  const queryCalls: Array<{ sql: string; params: Array<string | number | boolean> }> = [];
+  const queryCalls: Array<{ kind: string; sql: string; params: unknown[] }> = [];
   const registry = new MetaRegistryService();
   const adapter = new TemporaryViewAdapter(
     registry,
@@ -30,17 +30,28 @@ test("temporary view adapter executes runtime view and propagates context into t
       create() {
         return {
           queryDatasource: {
-            async query(sql: string, params: Array<string | number | boolean>) {
-              queryCalls.push({ sql, params });
-              return [
-                {
-                  id: "order-1",
-                  owner: "Ada",
-                  channel: "web",
-                  priority: "medium",
-                  status: "active"
+            async execute(request: { kind: "query"; sql: string; params?: unknown[] }) {
+              queryCalls.push({
+                kind: request.kind,
+                sql: request.sql,
+                params: request.params ?? []
+              });
+              return {
+                rows: [
+                  {
+                    id: "order-1",
+                    owner: "Ada",
+                    channel: "web",
+                    priority: "medium",
+                    status: "active"
+                  }
+                ],
+                rowCount: 1,
+                metadata: {
+                  kind: request.kind,
+                  durationMs: 1
                 }
-              ];
+              };
             }
           },
           mutationDatasource: {
@@ -74,6 +85,7 @@ test("temporary view adapter executes runtime view and propagates context into t
   assert.equal(result.viewName, "orders-workbench");
   assert.deepEqual(queryCalls, [
     {
+      kind: "query",
       sql: 'SELECT "id", "owner", "channel", "priority", "status" FROM "orders" WHERE "tenant_id" = $1 AND "owner" = $2 AND "created_by" = $3 LIMIT 2',
       params: ["tenant-a", "Ada", "user-a"]
     }

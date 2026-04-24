@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(adapter): add a stable datasource execution contract and Postgres adapter result normalization.
 - refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - docs(readme): add bilingual package README and minimal architecture flow.
 - chore(package): adopt the `@zhongmiao/meta-lc-datasource` scoped package identity for release governance.

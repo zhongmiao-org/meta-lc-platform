@@ -14,8 +14,8 @@ export class RuntimeViewDependenciesService {
     const queryExecutor = this.queryExecutor;
     return {
       queryDatasource: {
-        async query(sql, params = []) {
-          return queryExecutor.query(sql, params);
+        async execute(request) {
+          return queryExecutor.execute(request);
         }
       },
       mutationDatasource: {

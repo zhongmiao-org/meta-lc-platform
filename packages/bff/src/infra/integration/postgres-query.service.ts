@@ -1,4 +1,10 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import {
+  PostgresDatasourceAdapter,
+  type DatasourceExecutionRequest,
+  type DatasourceExecutionResult,
+  type DatasourceParamValue
+} from "@zhongmiao/meta-lc-datasource";
 import { Pool, type PoolClient } from "pg";
 import { loadDbConfig } from "../../config/config";
 import type {
@@ -9,9 +15,11 @@ import type {
 @Injectable()
 export class PostgresQueryExecutorService implements OnModuleDestroy {
   private readonly pool: Pool;
+  private readonly datasource: PostgresDatasourceAdapter;
 
   constructor() {
     const config = loadDbConfig();
+    this.datasource = new PostgresDatasourceAdapter(config);
     this.pool = new Pool({
       host: config.host,
       port: config.port,
@@ -22,14 +30,16 @@ export class PostgresQueryExecutorService implements OnModuleDestroy {
     });
   }
 
-  async query(sql: string, params: Array<string | number | boolean | string[]>): Promise<Record<string, unknown>[]> {
-    const result = await this.pool.query(sql, params);
-    return result.rows;
+  async execute(request: DatasourceExecutionRequest): Promise<DatasourceExecutionResult> {
+    return this.datasource.execute(request);
+  }
+
+  async query(sql: string, params: DatasourceParamValue[]): Promise<Record<string, unknown>[]> {
+    return this.datasource.query(sql, params);
   }
 
   async health(): Promise<boolean> {
-    const result = await this.pool.query("SELECT 1 AS ok");
-    return result.rows[0]?.ok === 1;
+    return this.datasource.healthCheck();
   }
 
   async mutateOrder(command: OrderMutationCommand): Promise<MutationExecutionRecord> {
@@ -119,7 +129,7 @@ export class PostgresQueryExecutorService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
+    await Promise.all([this.pool.end(), this.datasource.close()]);
   }
 
   private async selectCurrentOrder(

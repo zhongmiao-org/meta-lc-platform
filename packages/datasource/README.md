@@ -4,17 +4,18 @@ English | [中文文档](./README_zh.md)
 
 ## Package Role
 
-`datasource` owns database adapter concerns. The current implementation focuses on Postgres configuration and a Postgres datasource adapter.
+`datasource` owns physical data execution adapters. The current implementation focuses on a stable datasource execution contract and a Postgres adapter.
 
 ## Responsibilities
 
 - Define datasource and DB configuration types.
 - Create Postgres clients from environment-backed configuration.
-- Execute SQL through the adapter boundary.
+- Execute compiled SQL through the adapter boundary and normalize rows, row counts, metadata, and errors.
 
 ## Relationship With Other Packages
 
-- `bff` uses datasource-style execution for query and mutation integration.
+- `runtime` consumes datasource adapters through a stable execution contract.
+- `bff` wires the concrete Postgres adapter into runtime view execution.
 - `query` produces SQL that a datasource adapter can execute.
 - `permission` affects the constraints included before execution.
 - `kernel` remains separate; metadata versioning is not owned by this package.
@@ -24,9 +25,9 @@ English | [中文文档](./README_zh.md)
 ```mermaid
 flowchart LR
   Config["DbConfig"] --> Adapter["PostgresDatasourceAdapter"]
-  Sql["SQL + params"] --> Adapter
+  Request["DatasourceExecutionRequest<br/>SQL + params"] --> Adapter
   Adapter --> BusinessDb[("business_db")]
-  BusinessDb --> Rows["rows / rowCount"]
+  BusinessDb --> Result["rows / rowCount / metadata"]
 ```
 
 ## Commands
@@ -40,3 +41,4 @@ pnpm --filter @zhongmiao/meta-lc-datasource test
 
 - Keep adapter code focused on database execution and lifecycle.
 - Do not add HTTP controller or runtime orchestration here.
+- Do not read BFF-specific request objects here.
