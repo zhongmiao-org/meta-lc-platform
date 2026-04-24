@@ -28,6 +28,10 @@ import type {
   RuntimeTemplateDependency
 } from "@zhongmiao/meta-lc-contracts";
 import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
+export type {
+  RuntimeAuditEvent,
+  RuntimeAuditObserver
+} from "@zhongmiao/meta-lc-audit";
 
 export type {
   ExecutionNode,

@@ -4,6 +4,7 @@ export * from "./executor/merge-executor";
 export * from "./executor/mutation-executor";
 export * from "./executor/node-executor";
 export * from "./executor/query-executor";
+export * from "./executor/runtime-audit";
 export * from "./executor/runtime-view-executor";
 export * from "./executor/submit-executor";
 export * from "./executor/runtime-executor";

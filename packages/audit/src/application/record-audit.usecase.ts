@@ -3,7 +3,8 @@ import type {
   AccessAuditLog,
   AuditSink,
   MigrationAuditLog,
-  MutationAuditLog
+  MutationAuditLog,
+  RuntimeAuditEvent
 } from "../domain/audit.entity";
 
 export interface AuditDbConfig {
@@ -16,6 +17,7 @@ function createNoopAuditSink(): AuditSink {
     async logMutation(): Promise<void> {},
     async logMigration(): Promise<void> {},
     async logAccess(): Promise<void> {},
+    async recordRuntimeEvent(): Promise<void> {},
     async close(): Promise<void> {}
   };
 }
@@ -41,6 +43,14 @@ export class AuditService {
 
   async logAccess(log: AccessAuditLog): Promise<void> {
     await this.sink.logAccess(log);
+  }
+
+  async recordRuntimeEvent(event: RuntimeAuditEvent): Promise<void> {
+    try {
+      await this.sink.recordRuntimeEvent?.(event);
+    } catch {
+      // Audit must never become a runtime dependency.
+    }
   }
 
   async close(): Promise<void> {

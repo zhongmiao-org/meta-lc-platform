@@ -6,6 +6,7 @@ import {
 import { executeMutationNode } from "./mutation-executor";
 import { executeQueryNode } from "./query-executor";
 import type { RuntimeExecutorDependencies } from "./runtime-executor";
+import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import { executeSubmitPlan, type SubmitExecutionResult } from "./submit-executor";
 import type {
   RuntimeContext,
@@ -27,6 +28,7 @@ export interface RuntimeViewExecutorDependencies {
   queryDatasource: QueryDatasourceAdapter;
   mutationDatasource: MutationDatasourceAdapter;
   merge?: MergeExecutorDependencies;
+  auditObserver?: RuntimeAuditObserver;
 }
 
 export async function executeRuntimeView(
@@ -36,7 +38,8 @@ export async function executeRuntimeView(
 ): Promise<SubmitExecutionResult> {
   const plan = compileViewDefinition(view);
   return executeSubmitPlan(plan, context, {
-    executors: createRuntimeViewExecutors(dependencies)
+    executors: createRuntimeViewExecutors(dependencies),
+    ...(dependencies.auditObserver ? { auditObserver: dependencies.auditObserver } : {})
   });
 }
 
@@ -44,11 +47,20 @@ function createRuntimeViewExecutors(
   dependencies: RuntimeViewExecutorDependencies
 ): RuntimeExecutorDependencies["executors"] {
   return {
-    query: (node, state, context) =>
+    query: (node, state, context, metadata) =>
       executeQueryNode(node, state, context, {
         ...(dependencies.queryCompiler ? { compiler: dependencies.queryCompiler } : {}),
         ...(dependencies.queryPermission ? { permission: dependencies.queryPermission } : {}),
-        datasource: dependencies.queryDatasource
+        datasource: dependencies.queryDatasource,
+        ...(dependencies.auditObserver
+          ? {
+              audit: {
+                observer: dependencies.auditObserver,
+                nodeId: metadata?.nodeId,
+                nodeType: metadata?.nodeType
+              }
+            }
+          : {})
       }),
     mutation: (node, state, context) =>
       executeMutationNode(node, state, context, {

@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(observability): emit optional non-blocking runtime audit events for plan, node, permission, and datasource boundaries.
 - feat(permission): route query nodes through Permission AST Transform before SQL compilation.
 - refactor(datasource): execute query nodes through the shared datasource adapter contract.
 - feat(runtime): add a high-level runtime view executor facade that compiles and executes ViewDefinition through RuntimeExecutor.

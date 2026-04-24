@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(audit): add non-blocking runtime observability events and BFF persistence wiring for plan, node, permission, and datasource execution.
 - feat(kernel): add a versioned meta definition registry for view, datasource, and permission policy definitions.
 - feat(permission): add Query AST permission transforms and route runtime query compilation through them.
 - feat(datasource): converge runtime query execution onto the shared datasource adapter contract.

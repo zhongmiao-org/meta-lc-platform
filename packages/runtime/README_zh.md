@@ -21,6 +21,7 @@
 - 前端 runtime adapter 消费本包 contract，但不直连数据库或业务 API。
 - Query node 通过 `query` 构建 AST，经过 `permission` AST transform 后编译 SQL，并通过共享 `datasource` adapter 契约执行。
 - BFF 负责装配具体 datasource adapter；runtime 不读取 DB config，也不直接访问物理数据。
+- Runtime 可以在 plan、node、permission、datasource 边界发出可选 audit observability event，但不改变执行语义。
 
 ## 最小闭环
 
@@ -45,3 +46,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - Runtime orchestration 不能内嵌业务专用后端逻辑。
 - Runtime consumer 的数据访问仍必须经过 BFF contract。
 - Runtime query execution 不能注入 SQL permission clause；必须在 SQL 编译前调用 permission AST transform。
+- Runtime audit observer 必须保持可选、非阻塞；observer 失败不得影响 plan execution。

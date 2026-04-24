@@ -5,14 +5,19 @@ import type {
   RuntimeViewExecutorDependencies
 } from "@zhongmiao/meta-lc-runtime";
 import { PostgresQueryExecutorService } from "./postgres-query.service";
+import { RuntimeAuditObserverService } from "./runtime-audit-observer.service";
 
 @Injectable()
 export class RuntimeViewDependenciesService {
-  constructor(private readonly queryExecutor: PostgresQueryExecutorService) {}
+  constructor(
+    private readonly queryExecutor: PostgresQueryExecutorService,
+    private readonly auditObserver: RuntimeAuditObserverService
+  ) {}
 
   create(): RuntimeViewExecutorDependencies {
     const queryExecutor = this.queryExecutor;
     return {
+      auditObserver: this.auditObserver,
       queryDatasource: {
         async execute(request) {
           return queryExecutor.execute(request);

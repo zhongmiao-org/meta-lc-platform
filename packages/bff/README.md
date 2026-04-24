@@ -8,6 +8,8 @@ English | [中文文档](./README_zh.md)
 
 BFF reads view definitions from the Kernel-backed meta registry before invoking the Runtime facade; it does not publish metadata or execute registry migrations itself.
 
+BFF also wires a runtime audit observer into the Runtime facade and persists observability events as an infrastructure concern; audit failures are logged and degraded without blocking page execution.
+
 ## Source Layout
 
 ```text
@@ -91,7 +93,9 @@ flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
   Entry --> App["application services"]
   App --> Kernel["Kernel meta registry"]
+  App --> Runtime["Runtime facade"]
   App --> Infra["infra integration"]
+  Runtime --> Audit["runtime audit observer"]
   App --> Response["HTTP response / WS event"]
 ```
 
@@ -108,5 +112,6 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - WebSocket is an entry protocol layer, not infra and not application orchestration.
 - Direct DB driver use must stay inside approved edge files and pass `pnpm test:boundaries`.
 - Runtime UI and kernel source-of-truth logic must not be moved into BFF.
+- Runtime audit persistence is an infra integration and must not become request orchestration.
 - Do not restore legacy `/query` or `/mutation` endpoints; page data requests must use `POST /view/:name`.
 - Do not add `application/orchestrator/**`; BFF is only a Gateway invoking Runtime.
