@@ -3,14 +3,7 @@ import { HttpException } from "@nestjs/common";
 import { resolveRequestId } from "../common/request-id";
 import { TemporaryViewAdapter } from "../../application/view/temporary-view-adapter.service";
 import type { ViewApiRequest, ViewApiResponse } from "../../application/view/view.contract";
-
-interface RequestLike {
-  headers: Record<string, string | string[] | undefined>;
-}
-
-interface ResponseLike {
-  setHeader(name: string, value: string): void;
-}
+import type { ViewRequestLike, ViewResponseLike } from "./view.http";
 
 @Controller()
 export class ViewController {
@@ -20,8 +13,8 @@ export class ViewController {
   async executeView(
     @Param("name") name: string,
     @Body() request: ViewApiRequest,
-    @Req() req: RequestLike,
-    @Res({ passthrough: true }) res: ResponseLike
+    @Req() req: ViewRequestLike,
+    @Res({ passthrough: true }) res: ViewResponseLike
   ): Promise<ViewApiResponse> {
     const requestId = resolveRequestId(req.headers["x-request-id"]);
     res.setHeader("x-request-id", requestId);
