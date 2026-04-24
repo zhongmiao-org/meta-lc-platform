@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AggregationService } from "../src/application/orchestrator/aggregation.orchestrator";
+import { AggregationService } from "../src/application/services/aggregation.service";
 import { MetaQueryService } from "../src/application/services/meta-query.service";
 import { MetaRegistryService } from "../src/application/services/meta-registry.service";
 import { CacheService } from "../src/infra/cache/cache.service";

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { MetaRegistryService } from "../services/meta-registry.service";
+import { MetaRegistryService } from "./meta-registry.service";
 import type { MetaSummary } from "../types/meta-summary.type";
 
 @Injectable()

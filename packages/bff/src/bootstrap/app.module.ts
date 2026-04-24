@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
-import { AggregationService } from "../application/orchestrator/aggregation.orchestrator";
+import { AggregationService } from "../application/services/aggregation.service";
+import { HealthService } from "../application/services/health.service";
 import { MetaQueryService } from "../application/services/meta-query.service";
 import { MetaRegistryService } from "../application/services/meta-registry.service";
 import { TemporaryViewAdapter } from "../application/services/temporary-view-adapter.service";
@@ -19,33 +20,32 @@ import {
   RUNTIME_WS_INSTANCE_ID,
   RUNTIME_WS_REPLAY_STORE
 } from "../constants/runtime-ws.constants";
+import { HealthController } from "../controller/http/health.controller";
 import { RuntimeWsHealthController } from "../controller/ws/runtime/health.controller";
 import { RuntimeWsOperationsState } from "../controller/ws/runtime/operations.state";
 import {
   createRuntimeWsReplayStoreFromEnv,
   parseRuntimeWsReplayStoreMode
 } from "../controller/ws/runtime/replay.store";
-import { QueryController } from "../controller/http/query.controller";
 import { RuntimeWsGateway } from "../controller/ws/runtime/ws.gateway";
 import { AuditPersistenceService } from "../infra/integration/audit.service";
 import { OrgScopeService } from "../infra/integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../infra/integration/postgres-query.service";
-import { MutationOrchestratorService } from "../application/orchestrator/mutation.orchestrator";
-import { QueryOrchestratorService } from "../application/orchestrator/query.orchestrator";
+import { RuntimeViewDependenciesService } from "../infra/integration/runtime-view-dependencies.service";
 
 @Module({
   imports: [],
-  controllers: [QueryController, ViewController, MetaController, RuntimeWsHealthController],
+  controllers: [HealthController, ViewController, MetaController, RuntimeWsHealthController],
   providers: [
     AggregationService,
     CacheService,
+    HealthService,
     MetaQueryService,
     MetaRegistryService,
     PostgresQueryExecutorService,
+    RuntimeViewDependenciesService,
     OrgScopeService,
     AuditPersistenceService,
-    QueryOrchestratorService,
-    MutationOrchestratorService,
     TemporaryViewAdapter,
     AuditLogService,
     {

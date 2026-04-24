@@ -1,34 +1,4 @@
-export interface QueryApiRequest {
-  table: string;
-  fields: string[];
-  filters?: Record<string, string | number | boolean>;
-  tenantId: string;
-  userId: string;
-  roles: string[];
-  limit?: number;
-}
-
-export interface QueryApiResponse {
-  rows: Record<string, unknown>[];
-}
-
 export type MutationOperation = "create" | "update" | "delete";
-
-export interface MutationApiRequest {
-  table: string;
-  operation: MutationOperation;
-  tenantId: string;
-  userId: string;
-  roles: string[];
-  orgId?: string;
-  key?: Record<string, string | number | boolean>;
-  data?: Record<string, string | number | boolean | null>;
-}
-
-export interface MutationApiResponse {
-  rowCount: number;
-  row: Record<string, unknown> | null;
-}
 
 export type DataScopeType =
   | "SELF"
@@ -99,6 +69,83 @@ export interface QueryAuditLog {
   resultCount: number;
   status: AuditStatus;
   errorMessage?: string | null;
+}
+
+export type ViewExpression =
+  | string
+  | number
+  | boolean
+  | null
+  | ViewExpression[]
+  | { [key: string]: ViewExpression };
+
+export type Expression = ViewExpression;
+
+export interface ViewDefinition {
+  name: string;
+  params?: Record<string, ViewExpression>;
+  nodes: Record<string, NodeDefinition>;
+  output: OutputDefinition;
+  submit?: SubmitDefinition;
+}
+
+export type NodeDefinition = QueryNodeDefinition | MutationNodeDefinition | TransformNodeDefinition | MergeNodeDefinition;
+
+export type MergeStrategy = "objectMerge" | "arrayConcat" | "custom";
+
+export interface BaseNodeDefinition {
+  type: "query" | "mutation" | "transform" | "merge";
+  [key: string]: unknown;
+}
+
+export interface QueryNodeDefinition extends BaseNodeDefinition {
+  type: "query";
+  request?: ViewExpression;
+  table?: ViewExpression;
+  fields?: ViewExpression[];
+  filters?: Record<string, ViewExpression>;
+  limit?: ViewExpression;
+}
+
+export interface MutationNodeDefinition extends BaseNodeDefinition {
+  type: "mutation";
+  model?: ViewExpression;
+  operation?: ViewExpression;
+  payload?: Record<string, ViewExpression>;
+  condition?: ViewExpression;
+}
+
+export interface TransformNodeDefinition extends BaseNodeDefinition {
+  type: "transform";
+}
+
+export interface MergeNodeDefinition extends BaseNodeDefinition {
+  type: "merge";
+  strategy?: MergeStrategy;
+  inputs?: Record<string, ViewExpression>;
+  hook?: string;
+}
+
+export interface OutputDefinition {
+  [key: string]: ViewExpression;
+}
+
+export interface SubmitDefinition {
+  nodes?: string[];
+  [key: string]: unknown;
+}
+
+export interface ExecutionNode {
+  id: string;
+  type: NodeDefinition["type"];
+  definition: NodeDefinition;
+}
+
+export interface ExecutionPlan {
+  nodes: ExecutionNode[];
+  edges: Record<string, string[]>;
+  output: OutputDefinition;
+  submit?: SubmitDefinition;
 }
 
 export type RuntimeTemplateSource = "state";

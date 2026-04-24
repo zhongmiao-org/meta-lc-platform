@@ -4,9 +4,8 @@ import {
   buildRuntimePageTopic,
   createRuntimeManagerExecutedEvent,
   RUNTIME_MANAGER_EXECUTED_EVENT,
-  type MutationApiResponse,
-  type QueryApiRequest,
-  type QueryApiResponse,
+  type ExecutionPlan,
+  type ViewDefinition,
   type RuntimeManagerExecutedEvent,
   type RuntimeFunctionCallDefinition,
   type RuntimePageDsl,
@@ -16,28 +15,41 @@ import {
   type RuntimeTemplateDependency
 } from "../src";
 
-test("contracts exports query request type", () => {
-  const req: QueryApiRequest = {
-    table: "orders",
-    fields: ["id"],
-    tenantId: "tenant-a",
-    userId: "u1",
-    roles: ["USER"]
+test("contracts exports V2 view and execution plan contracts", () => {
+  const view: ViewDefinition = {
+    name: "orders-workbench",
+    nodes: {
+      orders: {
+        type: "query",
+        table: "orders",
+        fields: ["id"],
+        filters: {
+          tenant_id: "{{input.tenantId}}"
+        }
+      }
+    },
+    output: {
+      rows: "{{orders.rows}}"
+    }
   };
-  assert.equal(req.table, "orders");
-});
+  const ordersNode = view.nodes.orders;
+  assert.ok(ordersNode);
+  const plan: ExecutionPlan = {
+    nodes: [
+      {
+        id: "orders",
+        type: "query",
+        definition: ordersNode
+      }
+    ],
+    edges: {
+      orders: []
+    },
+    output: view.output
+  };
 
-test("contracts exports query and mutation response types", () => {
-  const queryResponse: QueryApiResponse = {
-    rows: [{ id: "order-1" }]
-  };
-  const mutationResponse: MutationApiResponse = {
-    rowCount: 1,
-    row: { id: "order-1" }
-  };
-
-  assert.equal(queryResponse.rows[0]?.id, "order-1");
-  assert.equal(mutationResponse.rowCount, 1);
+  assert.equal(view.nodes.orders?.type, "query");
+  assert.equal(plan.nodes[0]?.id, "orders");
 });
 
 test("contracts exports runtime dsl types", () => {

@@ -76,18 +76,9 @@ importers:
       '@zhongmiao/meta-lc-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@zhongmiao/meta-lc-permission':
-        specifier: workspace:*
-        version: link:../permission
-      '@zhongmiao/meta-lc-query':
-        specifier: workspace:*
-        version: link:../query
       '@zhongmiao/meta-lc-runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@zhongmiao/meta-lc-shared':
-        specifier: workspace:*
-        version: link:../shared
       pg:
         specifier: ^8.13.1
         version: 8.20.0
