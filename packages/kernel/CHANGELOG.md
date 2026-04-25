@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(meta): own the demo meta registry seeds used by runtime gateway view lookup.
 - refactor(contracts): own ViewDefinition and node structure contracts directly while staying independent from runtime.
 - refactor(contracts): own datasource, permission policy, view, and node structure contracts directly.
 - feat(meta-registry): add versioned view, datasource, and permission policy definition registry APIs.
