@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(meta): 由 kernel 拥有 runtime gateway view lookup 使用的 demo meta registry seed。
 - refactor(contracts): 由 kernel 直接拥有 ViewDefinition 与 node 结构契约，并保持不依赖 runtime。
 - refactor(contracts): 由 kernel 直接拥有 datasource、permission policy、view 与 node 结构契约。
 - feat(meta-registry): 新增 view、datasource 与 permission policy definition 的版本化 registry API。
