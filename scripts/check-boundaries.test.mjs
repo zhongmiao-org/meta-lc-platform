@@ -59,14 +59,16 @@ test('keeps deep import and kernel reverse dependency checks', () => {
   const workspace = createWorkspace({
     'packages/kernel/src/index.ts': [
       'import { x } from "@zhongmiao/meta-lc-query/src/index";',
-      'import { y } from "@zhongmiao/meta-lc-bff";'
+      'import { y } from "@zhongmiao/meta-lc-bff";',
+      'import { z } from "@zhongmiao/meta-lc-permission";'
     ].join('\n')
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/kernel/src/index.ts: deep import from package internals is forbidden.',
     'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-bff.',
-    'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-query.'
+    'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-query.',
+    'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-permission.'
   ]);
 });
 
@@ -229,6 +231,7 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
         '@zhongmiao/meta-lc-datasource': 'workspace:*',
         '@zhongmiao/meta-lc-permission': 'workspace:*',
         '@zhongmiao/meta-lc-query': 'workspace:*',
+        '@zhongmiao/meta-lc-audit': 'workspace:*',
         pg: '^8.13.1'
       },
       devDependencies: {
@@ -240,7 +243,8 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
       'import { Pool } from "pg";',
       'import { x } from "@zhongmiao/meta-lc-datasource";',
       'import { y } from "@zhongmiao/meta-lc-permission";',
-      'import { z } from "@zhongmiao/meta-lc-query";'
+      'import { z } from "@zhongmiao/meta-lc-query";',
+      'import { a } from "@zhongmiao/meta-lc-audit";'
     ].join('\n')
   });
 
@@ -248,6 +252,7 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-datasource" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-query" is forbidden in dependencies.',
+    'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-audit" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "pg" is forbidden in dependencies.',
     'packages/bff/package.json: pg is forbidden in dependencies outside audit/datasource/kernel packages.',
     'packages/bff/package.json: BFF dependency "@types/pg" is forbidden in devDependencies.',
@@ -256,6 +261,7 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-datasource.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-permission.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-query.',
+    'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-audit.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on pg.'
   ]);
 });
@@ -291,37 +297,101 @@ test('keeps BFF meta registry as a kernel-only gateway', () => {
   ]);
 });
 
-test('rejects datasource and audit reverse runtime dependencies', () => {
+test('rejects final app and package dependency direction violations', () => {
+  const workspace = createWorkspace({
+    'apps/bff-server/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-bff': 'workspace:*',
+        '@zhongmiao/meta-lc-runtime': 'workspace:*'
+      }
+    }),
+    'apps/bff-server/src/main.ts': 'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";\n',
+    'packages/kernel/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-permission': 'workspace:*'
+      }
+    }),
+    'packages/query/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-runtime': 'workspace:*',
+        '@zhongmiao/meta-lc-permission': 'workspace:*'
+      }
+    }),
+    'packages/permission/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-query': 'workspace:*',
+        '@zhongmiao/meta-lc-runtime': 'workspace:*'
+      }
+    })
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/kernel/package.json: kernel dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
+    'packages/permission/package.json: permission dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
+    'packages/query/package.json: query dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
+    'packages/query/package.json: query dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
+    'apps/bff-server/package.json: app dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
+    'apps/bff-server/src/main.ts: bff-server app can only depend on @zhongmiao/meta-lc-bff.'
+  ]);
+});
+
+test('rejects datasource and audit reverse workspace dependencies', () => {
   const workspace = createWorkspace({
     'packages/datasource/package.json': packageJson({
       dependencies: {
         '@zhongmiao/meta-lc-runtime': 'workspace:*',
         '@zhongmiao/meta-lc-query': 'workspace:*',
-        '@zhongmiao/meta-lc-permission': 'workspace:*'
+        '@zhongmiao/meta-lc-permission': 'workspace:*',
+        '@zhongmiao/meta-lc-bff': 'workspace:*',
+        '@zhongmiao/meta-lc-audit': 'workspace:*'
       }
     }),
     'packages/datasource/src/bad.ts': [
       'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";',
       'import { compileSelectAst } from "@zhongmiao/meta-lc-query";',
-      'import { transformSelectQueryAstWithPermission } from "@zhongmiao/meta-lc-permission";'
+      'import { transformSelectQueryAstWithPermission } from "@zhongmiao/meta-lc-permission";',
+      'import { startBffServer } from "@zhongmiao/meta-lc-bff";',
+      'import { AuditService } from "@zhongmiao/meta-lc-audit";'
     ].join('\n'),
     'packages/audit/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-runtime': 'workspace:*'
+        '@zhongmiao/meta-lc-runtime': 'workspace:*',
+        '@zhongmiao/meta-lc-bff': 'workspace:*',
+        '@zhongmiao/meta-lc-query': 'workspace:*',
+        '@zhongmiao/meta-lc-permission': 'workspace:*',
+        '@zhongmiao/meta-lc-datasource': 'workspace:*'
       }
     }),
-    'packages/audit/src/bad.ts': 'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";\n'
+    'packages/audit/src/bad.ts': [
+      'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";',
+      'import { startBffServer } from "@zhongmiao/meta-lc-bff";',
+      'import { compileSelectAst } from "@zhongmiao/meta-lc-query";',
+      'import { transformSelectQueryAstWithPermission } from "@zhongmiao/meta-lc-permission";',
+      'import { PostgresDatasourceAdapter } from "@zhongmiao/meta-lc-datasource";'
+    ].join('\n')
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
+    'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-bff" is forbidden in dependencies.',
+    'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-query" is forbidden in dependencies.',
+    'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
+    'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-datasource" is forbidden in dependencies.',
     'packages/audit/src/bad.ts: audit cannot depend on @zhongmiao/meta-lc-runtime.',
+    'packages/audit/src/bad.ts: audit cannot depend on @zhongmiao/meta-lc-bff.',
+    'packages/audit/src/bad.ts: audit cannot depend on @zhongmiao/meta-lc-query.',
+    'packages/audit/src/bad.ts: audit cannot depend on @zhongmiao/meta-lc-permission.',
+    'packages/audit/src/bad.ts: audit cannot depend on @zhongmiao/meta-lc-datasource.',
     'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
     'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-query" is forbidden in dependencies.',
     'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
+    'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-bff" is forbidden in dependencies.',
+    'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-audit" is forbidden in dependencies.',
     'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-runtime.',
     'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-query.',
-    'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-permission.'
+    'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-permission.',
+    'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-bff.',
+    'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-audit.'
   ]);
 });
 

@@ -17,5 +17,8 @@
     "pg": "^8.13.1"
   },
   "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts"
+  "types": "dist/src/index.d.ts",
+  "nx": {
+    "tags": ["layer:audit"]
+  }
 }

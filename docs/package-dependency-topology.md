@@ -29,7 +29,6 @@ flowchart TD
   runtime --> kernel
   runtime --> permission
   runtime --> query
-  kernel --> permission
   permission --> query
 ```
 
@@ -52,5 +51,6 @@ flowchart TD
 - `bff` 是 IO Gateway，只持有 HTTP/WS DTO、controller、bootstrap wiring、gateway config、gateway cache 与 thin Kernel integration。
 - `bff` 只能依赖 `runtime` 与 `kernel`；不得直接依赖 `query`、`permission`、`datasource` 或 `pg`。
 - `datasource` 与 `audit` 不得反向依赖 `runtime`；`query` 不得依赖 `datasource`。
-- `kernel` 可持有 meta DB persistence，但不得依赖 `runtime`、`query`、`datasource` 或 `bff`。
+- `kernel`、`query`、`datasource`、`audit` 禁止依赖任何 workspace package；`kernel` 可持有 meta DB persistence，但不得依赖 `runtime`、`query`、`permission`、`datasource`、`audit` 或 `bff`。
+- `permission` 只能依赖 `query`；kernel 的 `PermissionPolicy.scope` 与 permission runtime data-scope 类型只共享字符串语义，不共享包依赖。
 - `infra/` 承载 bootstrap SQL、docker、query-gate 等运维脚本，不作为 workspace package。

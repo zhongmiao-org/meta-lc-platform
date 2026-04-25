@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(boundaries): lock final dependency gates with Nx module-boundary tags, full-workspace ESLint, and hard checks that prevent kernel/query/datasource/audit workspace dependencies.
 - chore(boundaries): seal the final seven-package topology with stricter BFF gateway layout, runtime entry naming, datasource demo adapter names, and dependency gates.
 - refactor(boundaries): lock the final runtime gateway topology by removing BFF data wiring, moving execution dependencies into runtime, and forbidding kernel-to-runtime dependency drift.
 - refactor(architecture): finalize runtime, kernel, BFF, and migration boundaries by removing BFF application orchestration, runtime orchestrator remnants, and the migration package.

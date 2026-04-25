@@ -1,5 +1,3 @@
-import type { DataScopeType } from "@zhongmiao/meta-lc-permission";
-
 export type ViewExpression =
   | string
   | number
@@ -68,6 +66,13 @@ export interface DatasourceDefinition {
   config?: Record<string, unknown>;
   description?: string;
 }
+
+export type DataScopeType =
+  | "SELF"
+  | "DEPT"
+  | "DEPT_AND_CHILDREN"
+  | "CUSTOM_ORG_SET"
+  | "TENANT_ALL";
 
 export interface PermissionPolicy {
   id: string;

@@ -12,5 +12,31 @@
     "test": {
       "inputs": ["default", "^production"]
     }
+  },
+  "projects": {
+    "@zhongmiao/meta-lc-bff-server": {
+      "tags": ["layer:app"]
+    },
+    "@zhongmiao/meta-lc-bff": {
+      "tags": ["layer:bff"]
+    },
+    "@zhongmiao/meta-lc-runtime": {
+      "tags": ["layer:runtime"]
+    },
+    "@zhongmiao/meta-lc-kernel": {
+      "tags": ["layer:kernel"]
+    },
+    "@zhongmiao/meta-lc-query": {
+      "tags": ["layer:query"]
+    },
+    "@zhongmiao/meta-lc-permission": {
+      "tags": ["layer:permission"]
+    },
+    "@zhongmiao/meta-lc-datasource": {
+      "tags": ["layer:datasource"]
+    },
+    "@zhongmiao/meta-lc-audit": {
+      "tags": ["layer:audit"]
+    }
   }
 }

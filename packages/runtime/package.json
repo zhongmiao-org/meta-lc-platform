@@ -20,5 +20,8 @@
     "typescript": "^5.7.2"
   },
   "main": "dist/runtime/src/index.js",
-  "types": "dist/runtime/src/index.d.ts"
+  "types": "dist/runtime/src/index.d.ts",
+  "nx": {
+    "tags": ["layer:runtime"]
+  }
 }

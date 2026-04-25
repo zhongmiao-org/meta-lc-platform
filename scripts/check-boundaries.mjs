@@ -27,26 +27,48 @@ const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-query',
-  '@zhongmiao/meta-lc-datasource'
+  '@zhongmiao/meta-lc-permission',
+  '@zhongmiao/meta-lc-datasource',
+  '@zhongmiao/meta-lc-audit'
 ];
 const FORBIDDEN_QUERY_DEPS = [
-  '@zhongmiao/meta-lc-datasource'
+  '@zhongmiao/meta-lc-runtime',
+  '@zhongmiao/meta-lc-datasource',
+  '@zhongmiao/meta-lc-permission',
+  '@zhongmiao/meta-lc-bff',
+  '@zhongmiao/meta-lc-audit'
+];
+const FORBIDDEN_PERMISSION_DEPS = [
+  '@zhongmiao/meta-lc-runtime',
+  '@zhongmiao/meta-lc-datasource',
+  '@zhongmiao/meta-lc-bff',
+  '@zhongmiao/meta-lc-audit'
 ];
 const FORBIDDEN_DATASOURCE_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-query',
-  '@zhongmiao/meta-lc-permission'
+  '@zhongmiao/meta-lc-permission',
+  '@zhongmiao/meta-lc-bff',
+  '@zhongmiao/meta-lc-audit'
 ];
 const FORBIDDEN_AUDIT_DEPS = [
-  '@zhongmiao/meta-lc-runtime'
+  '@zhongmiao/meta-lc-runtime',
+  '@zhongmiao/meta-lc-bff',
+  '@zhongmiao/meta-lc-query',
+  '@zhongmiao/meta-lc-permission',
+  '@zhongmiao/meta-lc-datasource'
 ];
 const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-query',
+  '@zhongmiao/meta-lc-audit',
   'pg',
   '@types/pg'
 ];
+const ALLOWED_APP_DEPS = {
+  'bff-server': new Set(['@zhongmiao/meta-lc-bff'])
+};
 const BFF_TOP_LEVEL_DIRS = new Set([
   'bootstrap',
   'common',
@@ -118,11 +140,13 @@ const RUNTIME_EXECUTION_CONTRACT_DECLARATIONS = [
 
 export function checkWorkspace(root = process.cwd()) {
   const packagesDir = path.join(root, 'packages');
+  const appsDir = path.join(root, 'apps');
   const violations = [];
   checkForbiddenPackageDirs(root, violations);
   checkBffLayout(root, violations);
   checkRuntimeLayout(root, violations);
   walk(packagesDir, root, violations);
+  walk(appsDir, root, violations);
   return violations;
 }
 
@@ -234,6 +258,13 @@ function checkSourceFile(file, root, violations) {
       }
     }
   }
+  if (rel.startsWith('packages/permission/')) {
+    for (const dep of FORBIDDEN_PERMISSION_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: permission cannot depend on ${dep}.`);
+      }
+    }
+  }
   if (rel.startsWith('packages/datasource/')) {
     for (const dep of FORBIDDEN_DATASOURCE_DEPS) {
       if (content.includes(dep)) {
@@ -263,6 +294,20 @@ function checkSourceFile(file, root, violations) {
   }
   if (rel === 'packages/runtime/test/runtime-manager-event.test.ts') {
     violations.push(`${rel}: runtime manager event test naming is forbidden; use runtime-interaction-event.test.ts.`);
+  }
+  if (rel.startsWith('apps/bff-server/')) {
+    for (const dep of [
+      '@zhongmiao/meta-lc-runtime',
+      '@zhongmiao/meta-lc-kernel',
+      '@zhongmiao/meta-lc-query',
+      '@zhongmiao/meta-lc-permission',
+      '@zhongmiao/meta-lc-datasource',
+      '@zhongmiao/meta-lc-audit'
+    ]) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: bff-server app can only depend on @zhongmiao/meta-lc-bff.`);
+      }
+    }
   }
 }
 
@@ -326,7 +371,7 @@ function checkBffGatewayConfig(rel, content, violations) {
 function checkBffMetaRegistryGateway(rel, content, violations) {
   if (rel !== 'packages/bff/src/infra/integration/meta-registry.service.ts') return;
 
-  for (const dep of ['@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-query', '@zhongmiao/meta-lc-datasource', '@zhongmiao/meta-lc-permission', 'pg']) {
+  for (const dep of ['@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-query', '@zhongmiao/meta-lc-datasource', '@zhongmiao/meta-lc-permission', '@zhongmiao/meta-lc-audit', 'pg']) {
     if (content.includes(dep)) {
       violations.push(`${rel}: BFF meta registry gateway may only depend on kernel.`);
     }
@@ -448,7 +493,7 @@ function checkPackageManifest(file, root, violations) {
   const rel = normalizePath(path.relative(root, file));
   const packageName = getPackageName(rel);
   const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
-  const dependencyBlocks = ['dependencies', 'devDependencies'];
+  const dependencyBlocks = ['dependencies', 'devDependencies', 'peerDependencies'];
 
   for (const blockName of dependencyBlocks) {
     const block = manifest[blockName] ?? {};
@@ -462,6 +507,9 @@ function checkPackageManifest(file, root, violations) {
       if (packageName === 'query' && FORBIDDEN_QUERY_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: query dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
+      if (packageName === 'permission' && FORBIDDEN_PERMISSION_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: permission dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
       if (packageName === 'kernel' && FORBIDDEN_KERNEL_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: kernel dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
@@ -470,6 +518,9 @@ function checkPackageManifest(file, root, violations) {
       }
       if (packageName === 'audit' && FORBIDDEN_AUDIT_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: audit dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
+      if (ALLOWED_APP_DEPS[packageName] && dependencyName.startsWith('@zhongmiao/meta-lc-') && !ALLOWED_APP_DEPS[packageName].has(dependencyName)) {
+        violations.push(`${rel}: app dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
       if (!DB_DRIVER_DEPENDENCIES.has(dependencyName)) continue;
       if (!DB_DRIVER_PACKAGES.has(packageName)) {
@@ -486,7 +537,7 @@ function importsPg(content) {
 }
 
 function getPackageName(rel) {
-  const match = rel.match(/^packages\/([^/]+)\//);
+  const match = rel.match(/^(?:packages|apps)\/([^/]+)\//);
   return match?.[1] ?? '';
 }
 

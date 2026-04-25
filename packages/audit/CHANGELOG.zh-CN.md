@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 新增最终 Nx layer tags，并将 audit 锁定为无 workspace 依赖的被动观测包。
 - feat(sink): 新增可选 Postgres runtime audit sink，落盘失败不会阻断 runtime execution。
 - refactor(contracts): 由 audit 直接拥有 QueryAuditLog 与 audit status contract。
 - feat(observability): 新增面向 plan、node、permission、datasource execution 的非阻塞 runtime audit event contract。

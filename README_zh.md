@@ -41,9 +41,11 @@ flowchart LR
 - `runtime`、`kernel`、`query`、`permission`、`datasource`、`bff`、`audit` 是最终 7 个架构层包。
 - migration lifecycle scripts 下沉到 `infra/`；`packages/migration` 已被删除。
 - contract 由所属包拥有；`contracts`、`shared`、`platform`、`migration` 包已被删除。
-- 允许 `runtime -> kernel` 读取结构定义；禁止 `kernel -> runtime`。
-- `query` 只负责 AST 到 SQL 编译，禁止依赖 `datasource`。
-- `bff` 只作为 gateway，不拥有 runtime orchestration、datasource wiring、permission decision 或 DB access。
+- 最终 workspace 依赖锁定为：app -> bff；bff -> runtime/kernel；runtime -> kernel/query/permission/datasource/audit；permission -> query。
+- `kernel`、`query`、`datasource`、`audit` 禁止依赖任何 workspace package。
+- 允许 `runtime -> kernel` 读取结构定义；禁止 `kernel -> runtime` 与 `kernel -> permission`。
+- `query` 只负责 AST 到 SQL 编译，禁止依赖 `datasource`、`runtime` 或 `permission`。
+- `bff` 只作为 gateway，不拥有 runtime orchestration、datasource wiring、permission decision、audit wiring 或 DB access。
 - 禁止 deep import，跨包引用必须通过 package entrypoint。
 
 ## 运行入口

@@ -16,5 +16,8 @@
     "typescript": "^5.7.2"
   },
   "main": "dist/permission/src/index.js",
-  "types": "dist/permission/src/index.d.ts"
+  "types": "dist/permission/src/index.d.ts",
+  "nx": {
+    "tags": ["layer:permission"]
+  }
 }

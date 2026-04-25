@@ -41,9 +41,11 @@ flowchart LR
 - `runtime`, `kernel`, `query`, `permission`, `datasource`, `bff`, and `audit` are the seven final architecture packages.
 - Migration lifecycle scripts live under `infra/`; `packages/migration` is intentionally removed.
 - Contracts live in the owning package; `contracts`, `shared`, `platform`, and `migration` packages are intentionally removed.
-- `runtime -> kernel` is allowed so runtime can read structure definitions; `kernel -> runtime` is forbidden.
-- `query` compiles AST to SQL and must not depend on `datasource`.
-- `bff` remains a gateway and must not own runtime orchestration, datasource wiring, permission decisions, or DB access.
+- Final workspace dependencies are locked as: app -> bff; bff -> runtime/kernel; runtime -> kernel/query/permission/datasource/audit; permission -> query.
+- `kernel`, `query`, `datasource`, and `audit` must not depend on any workspace package.
+- `runtime -> kernel` is allowed so runtime can read structure definitions; `kernel -> runtime` and `kernel -> permission` are forbidden.
+- `query` compiles AST to SQL and must not depend on `datasource`, `runtime`, or `permission`.
+- `bff` remains a gateway and must not own runtime orchestration, datasource wiring, permission decisions, audit wiring, or DB access.
 - Deep cross-package imports are forbidden; import through package entrypoints.
 
 ## Runtime Entries
