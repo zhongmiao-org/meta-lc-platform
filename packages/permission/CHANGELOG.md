@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(readme): clarify permission upstream/downstream relationships and type-only query AST boundary.
 - fix(ci): build query before permission package-local tests on clean runners.
 - chore(boundaries): add final Nx layer tags and lock permission so it can depend on query only.
 - refactor(contracts): own org and data-scope DTO contracts directly.

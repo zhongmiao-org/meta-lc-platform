@@ -15,6 +15,8 @@ English | [中文文档](./README_zh.md)
 
 ## Relationship With Other Packages
 
+- Upstream: `runtime` and `permission`.
+- Downstream: none as a package dependency; runtime hands compiled SQL or compiled query requests to `datasource` during execution.
 - `runtime` calls query compilation through its query compiler adapter before datasource execution.
 - `permission` transforms query AST before final SQL compilation.
 - `datasource` executes compiled SQL; `query` does not depend on `datasource`.
@@ -42,5 +44,7 @@ pnpm --filter @zhongmiao/meta-lc-query test
 ## Boundary Notes
 
 - Do not open DB connections here.
+- Must not execute SQL.
+- Must not depend on datasource.
 - Do not add runtime orchestration or BFF page request semantics here.
 - Keep permission policy resolution outside this package; consume permission-transformed AST predicates.

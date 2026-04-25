@@ -16,6 +16,8 @@
 
 ## 与其他包关系
 
+- 上游：`runtime`。
+- 下游：`audit_db` 或外部 sink；audit 不依赖任何 workspace package。
 - 直接拥有 audit contract，不再依赖过渡 `contracts` 包。
 - Runtime 可通过可选 `RuntimeAuditObserver` 发出 observability event；observer 失败不得影响执行语义。
 - Migration orchestration 可通过此 contract 上报 migration audit record。

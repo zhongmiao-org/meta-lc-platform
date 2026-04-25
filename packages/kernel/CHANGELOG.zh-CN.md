@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 补充 kernel 元数据归属与 meta_db 持久化的上下游关系说明。
 - fix(package): 将 kernel package main/types 入口对齐到无 workspace 依赖后的 clean build 输出路径。
 - chore(boundaries): 将 `DataScopeType` 作为本地结构字面量持有，移除 permission 包依赖，确保 kernel 不依赖任何 workspace package。
 - refactor(meta): 由 kernel 拥有 runtime gateway view lookup 使用的 demo meta registry seed。

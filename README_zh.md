@@ -6,22 +6,44 @@
 
 [English](./README.md) | 中文文档
 
-## 总体架构
+## 架构协作流
 
 平台约束是所有前端与 runtime 数据访问必须经过 BFF。元数据通过 Meta Kernel 进入 `meta_db`；业务查询与变更通过 runtime、query、permission、datasource 访问 `business_db`；审计记录进入 `audit_db`。
 
+下图表达 runtime 执行交接关系，不是 package import 依赖图。`Permission --> Query` 表示 permission transform 作用于 query AST / query type contract，且 permission 不执行 SQL。`Query --> Datasource` 表示 runtime 将 query 编译后的 SQL/request 产物交给 datasource 执行；`query` 仍然禁止依赖 `datasource`。
+
 ```mermaid
 flowchart LR
-  Client["Runtime / Client"] --> BFF["packages/bff<br/>Gateway only"]
-  BFF --> Runtime["packages/runtime<br/>执行引擎"]
-  BFF --> Kernel["packages/kernel<br/>结构真源"]
-  Runtime --> Query["packages/query<br/>AST -> SQL"]
-  Runtime --> Permission["packages/permission<br/>AST transform + 数据域"]
-  Runtime --> Datasource["packages/datasource<br/>Datasource adapter"]
-  Runtime --> Audit["packages/audit<br/>观测事件"]
-  Kernel --> MetaDb[("meta_db")]
-  Datasource --> BusinessDb[("business_db")]
-  Audit --> AuditDb[("audit_db")]
+  Client["Runtime / Client<br/>Renderer / Designer / Consumer"]
+  BFFServer["apps/bff-server<br/>NestJS bootstrap"]
+  BFF["packages/bff<br/>Gateway only<br/>HTTP / WS / request-id / error mapping"]
+  Runtime["packages/runtime<br/>Execution engine<br/>View facade / RuntimeExecutor / DAG / State"]
+  Kernel["packages/kernel<br/>Structure source of truth<br/>Meta registry / ViewDefinition / Schema / Version"]
+  Query["packages/query<br/>Query compiler<br/>AST to SQL"]
+  Permission["packages/permission<br/>Permission engine<br/>AST transform + data scope"]
+  Datasource["packages/datasource<br/>Datasource adapter<br/>Postgres / mutation / org-scope adapters"]
+  Audit["packages/audit<br/>Observability events<br/>Runtime audit sink"]
+  InfraScripts["infra/scripts<br/>migrate.ts / seed.ts"]
+  MetaDb[("meta_db")]
+  BusinessDb[("business_db")]
+  AuditDb[("audit_db")]
+  Client --> BFFServer
+  BFFServer --> BFF
+  BFF --> Runtime
+  BFF --> Kernel
+  Runtime --> Kernel
+  Runtime --> Permission
+  Runtime --> Query
+  Runtime --> Datasource
+  Runtime --> Audit
+  Permission -->|"AST transform / query types"| Query
+  Query -->|"compiled request"| Datasource
+  Kernel --> MetaDb
+  Datasource --> BusinessDb
+  Audit --> AuditDb
+  InfraScripts --> MetaDb
+  InfraScripts --> BusinessDb
+  InfraScripts --> AuditDb
 ```
 
 ## 子包索引
@@ -30,7 +52,7 @@ flowchart LR
 | --- | --- | --- |
 | `packages/runtime` | RuntimeExecutor 执行引擎、DAG/state 执行契约、runtime gateway facade 与 WS event contract。 | [English](./packages/runtime/README.md) \| [中文文档](./packages/runtime/README_zh.md) |
 | `packages/kernel` | 结构元数据契约、MetaSchema 校验、definition registry、diff 与 migration SQL helper。 | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
-| `packages/query` | Query DSL 到 SQL 编译。 | [English](./packages/query/README.md) \| [中文文档](./packages/query/README_zh.md) |
+| `packages/query` | Query AST / DSL 到 SQL 编译。 | [English](./packages/query/README.md) \| [中文文档](./packages/query/README_zh.md) |
 | `packages/permission` | RBAC 与组织数据域决策。 | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
 | `packages/datasource` | Postgres datasource 配置与执行 adapter。 | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
 | `packages/audit` | 审计契约与可选、非阻塞 runtime observability sink。 | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
@@ -47,6 +69,12 @@ flowchart LR
 - `query` 只负责 AST 到 SQL 编译，禁止依赖 `datasource`、`runtime` 或 `permission`。
 - `bff` 只作为 gateway，不拥有 runtime orchestration、datasource wiring、permission decision、audit wiring 或 DB access。
 - 禁止 deep import，跨包引用必须通过 package entrypoint。
+
+### 编译 / 执行边界
+
+- `packages/query` 拥有 Query AST -> SQL 编译职责，禁止执行 SQL，禁止依赖 `datasource`。
+- `packages/datasource` 拥有物理执行职责，接收 compiled request 或 SQL command，禁止编译 Query AST，禁止依赖 `query`、`permission` 或 `runtime`。
+- `packages/permission` 只拥有 AST transform，仅允许 type-only 依赖 query 的 AST/types，禁止 value import query compiler，禁止编译 SQL，禁止执行 datasource 请求。
 
 ## 运行入口
 

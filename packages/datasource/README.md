@@ -14,6 +14,8 @@ English | [中文文档](./README_zh.md)
 
 ## Relationship With Other Packages
 
+- Upstream: `runtime`.
+- Downstream: `business_db`; datasource has no workspace package dependencies.
 - `runtime` consumes datasource adapters through a stable execution contract.
 - Runtime wires concrete Postgres adapters for page execution; BFF does not depend on this package.
 - `query` produces SQL that a datasource adapter can execute.
@@ -41,6 +43,9 @@ pnpm --filter @zhongmiao/meta-lc-datasource test
 ## Boundary Notes
 
 - Keep adapter code focused on database execution and lifecycle.
+- Receives compiled request / SQL command.
+- Must not compile Query AST.
+- Must not depend on query / permission / runtime.
 - Demo business mutations and org-scope reads belong here as Postgres adapter edges, not in BFF.
 - Keep demo adapters explicitly named with `postgres-demo-*` or `postgres-org-scope*` so business adapter semantics do not become implicit datasource orchestration.
 - Do not add HTTP controller or runtime orchestration here.

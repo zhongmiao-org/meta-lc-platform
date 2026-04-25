@@ -14,6 +14,8 @@
 
 ## 与其他包关系
 
+- 上游：`runtime`。
+- 下游：`business_db`；datasource 不依赖任何 workspace package。
 - `runtime` 通过稳定 execution contract 消费 datasource adapter。
 - Runtime 为页面执行装配具体 Postgres adapter；BFF 不依赖本包。
 - `query` 生成 datasource adapter 可执行的 SQL。
@@ -41,6 +43,8 @@ pnpm --filter @zhongmiao/meta-lc-datasource test
 ## 边界约束
 
 - adapter 代码只关注数据库执行与生命周期。
+- 接收 compiled request 或 SQL command；不在此包编译 Query AST。
+- 不依赖 `query`、`permission` 或 `runtime`。
 - demo business mutation 与 org-scope 读取属于这里的 Postgres adapter 边界，不属于 BFF。
 - demo adapter 必须显式使用 `postgres-demo-*` 或 `postgres-org-scope*` 命名，避免业务 adapter 语义隐式滑向 datasource 编排。
 - 不在这里加入 HTTP controller 或 runtime orchestration。

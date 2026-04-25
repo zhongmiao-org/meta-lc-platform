@@ -55,6 +55,9 @@ bff/src/
 
 ## Dependency Direction
 
+- Upstream: `apps/bff-server` and client protocol entrypoints.
+- Downstream: `runtime` for page execution and `kernel` for thin metadata reads.
+
 ```text
 controller/http -> runtime facade
 controller/http -> kernel registry

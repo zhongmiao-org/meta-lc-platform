@@ -15,6 +15,8 @@
 
 ## 与其他包关系
 
+- 上游：`runtime` 与 `permission`。
+- 下游：无 package dependency；runtime 在执行期把编译后的 SQL 或 compiled query request 交给 `datasource`。
 - `runtime` 通过 query compiler adapter 在 datasource 执行前调用 query compiler。
 - `permission` 在最终 SQL 编译前 transform query AST。
 - `datasource` 执行编译后的 SQL；`query` 不依赖 `datasource`。
@@ -42,5 +44,7 @@ pnpm --filter @zhongmiao/meta-lc-query test
 ## 边界约束
 
 - 不在这里打开数据库连接。
+- 不在这里执行 SQL。
+- 不依赖 `datasource`。
 - 不在这里新增 runtime orchestration 或 BFF 页面请求语义。
 - 权限策略解析留在包外；本包消费 permission-transformed AST predicates。

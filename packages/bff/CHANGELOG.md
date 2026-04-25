@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(readme): document BFF upstream/downstream relationships in the final gateway-only topology.
 - fix(ci): build BFF workspace dependencies before package-local tests on clean runners.
 - chore(boundaries): add final Nx layer tags and lock BFF dependency gates to runtime/kernel only.
 - chore(boundaries): seal the gateway-only layout by removing mapper/repository/interface remnants, adding gateway-only config, and tightening dependency guards.

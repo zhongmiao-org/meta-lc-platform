@@ -19,6 +19,8 @@
 
 ## 与其他包关系
 
+- 上游：`bff`。
+- 下游：`kernel`、`permission`、`query`、`datasource`、`audit`。
 - 直接拥有 `ExecutionPlan`、`ExecutionNode`、`Expression`、`RuntimeContext`、runtime event 与 page topic 等执行契约。
 - 从 `kernel` 消费 `ViewDefinition` 与 node definition 等结构契约。
 - BFF websocket code 可以发布与这些 contract 兼容的 runtime event。
