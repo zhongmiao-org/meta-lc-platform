@@ -16,7 +16,7 @@ import {
 import type {
   MetaRegistryItem,
   MetaResourceKind
-} from "../types/meta-registry.type";
+} from "./meta-registry.type";
 
 const STATIC_FIXTURES: Pick<Record<MetaResourceKind, MetaRegistryItem[]>, "tables" | "rules"> = {
   tables: [

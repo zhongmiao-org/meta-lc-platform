@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 将 runtime manager-event 测试命名改为 interaction-event，并明确 RuntimeExecutor 是唯一底层执行入口，view/interaction 位于 facade 层。
 - refactor(boundaries): 移除 manager-adapter 导出，并让 runtime gateway facade 接管 view lookup 与执行依赖装配。
 - refactor(executor): 将 manager event planning 收敛到 RuntimeExecutor，并移除 runtime orchestrator module。
 - refactor(contracts): 由 runtime 直接拥有执行契约，并消费 kernel 拥有的 ViewDefinition 与 node 结构契约。

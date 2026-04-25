@@ -1,30 +1,30 @@
 import { Pool, type PoolClient } from "pg";
 import type { DbConfig } from "../../types/shared.types";
 
-export type PostgresOrdersMutationOperation = "create" | "update" | "delete";
+export type PostgresDemoOrdersMutationOperation = "create" | "update" | "delete";
 
-export interface PostgresOrdersMutationCommand {
+export interface PostgresDemoOrdersMutationCommand {
   model: string;
-  operation: PostgresOrdersMutationOperation;
+  operation: PostgresDemoOrdersMutationOperation;
   payload: Record<string, unknown>;
   context: Record<string, unknown>;
 }
 
-export interface PostgresOrdersMutationResult {
+export interface PostgresDemoOrdersMutationResult {
   rowCount: number;
   row: Record<string, unknown> | null;
   beforeData: Record<string, unknown> | null;
   afterData: Record<string, unknown> | null;
 }
 
-export class PostgresOrdersMutationAdapter {
+export class PostgresDemoOrdersMutationAdapter {
   private readonly pool: Pool;
 
   constructor(config: DbConfig, pool?: Pool) {
     this.pool = pool ?? createPool(config);
   }
 
-  async execute(command: PostgresOrdersMutationCommand): Promise<PostgresOrdersMutationResult> {
+  async execute(command: PostgresDemoOrdersMutationCommand): Promise<PostgresDemoOrdersMutationResult> {
     if (command.model !== "orders") {
       throw new Error(`unsupported mutation model "${command.model}"`);
     }
@@ -77,7 +77,7 @@ export class PostgresOrdersMutationAdapter {
 async function executeOrderMutation(
   client: PoolClient,
   command: {
-    operation: PostgresOrdersMutationOperation;
+    operation: PostgresDemoOrdersMutationOperation;
     tenantId: string;
     userId: string;
     orgId: string | null;
@@ -90,7 +90,7 @@ async function executeOrderMutation(
       status?: string;
     };
   }
-): Promise<PostgresOrdersMutationResult> {
+): Promise<PostgresDemoOrdersMutationResult> {
   if (command.operation === "create") {
     const created = await client.query<Record<string, unknown>>(
       `INSERT INTO orders (id, owner, channel, priority, status, tenant_id, created_by, org_id)

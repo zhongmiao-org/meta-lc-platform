@@ -19,6 +19,7 @@ English | [中文文档](./README_zh.md)
 - `query` produces SQL that a datasource adapter can execute.
 - `permission` affects the constraints included before execution.
 - `kernel` remains separate; metadata versioning is not owned by this package.
+- `postgres-demo-orders-mutation.adapter.ts` and `postgres-org-scope.adapter.ts` are runtime-consumed Postgres demo adapters. They do not make datasource a business orchestration layer.
 
 ## Minimal Flow
 
@@ -40,6 +41,7 @@ pnpm --filter @zhongmiao/meta-lc-datasource test
 ## Boundary Notes
 
 - Keep adapter code focused on database execution and lifecycle.
-- Demo business mutations and org-scope reads belong here as Postgres adapters, not in BFF.
+- Demo business mutations and org-scope reads belong here as Postgres adapter edges, not in BFF.
+- Keep demo adapters explicitly named with `postgres-demo-*` or `postgres-org-scope*` so business adapter semantics do not become implicit datasource orchestration.
 - Do not add HTTP controller or runtime orchestration here.
 - Do not read BFF-specific request objects here.

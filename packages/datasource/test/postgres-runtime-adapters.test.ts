@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  PostgresOrdersMutationAdapter,
+  PostgresDemoOrdersMutationAdapter,
   PostgresOrgScopeAdapter
 } from "../src";
 
@@ -14,7 +14,7 @@ const dbConfig = {
   ssl: false
 };
 
-test("PostgresOrdersMutationAdapter executes orders create mutation through a transaction", async () => {
+test("PostgresDemoOrdersMutationAdapter executes demo orders create mutation through a transaction", async () => {
   const client = new FakeClient([
     { rows: [], rowCount: null },
     {
@@ -34,7 +34,7 @@ test("PostgresOrdersMutationAdapter executes orders create mutation through a tr
     },
     { rows: [], rowCount: null }
   ]);
-  const adapter = new PostgresOrdersMutationAdapter(
+  const adapter = new PostgresDemoOrdersMutationAdapter(
     dbConfig,
     new FakeTransactionPool(client) as never
   );
@@ -91,10 +91,10 @@ test("PostgresOrdersMutationAdapter executes orders create mutation through a tr
   });
 });
 
-test("PostgresOrdersMutationAdapter rolls back failed orders mutation", async () => {
+test("PostgresDemoOrdersMutationAdapter rolls back failed demo orders mutation", async () => {
   const failure = new Error("insert failed");
   const client = new FakeClient([{ rows: [], rowCount: null }, failure, { rows: [], rowCount: null }]);
-  const adapter = new PostgresOrdersMutationAdapter(
+  const adapter = new PostgresDemoOrdersMutationAdapter(
     dbConfig,
     new FakeTransactionPool(client) as never
   );

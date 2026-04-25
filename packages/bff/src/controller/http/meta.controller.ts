@@ -1,5 +1,6 @@
 import { Controller, Get, Req, Res } from "@nestjs/common";
 import { resolveRequestId } from "../../common/request-id";
+import { readGatewayRequestIdHeader } from "../../config/gateway.config";
 import { CacheService } from "../../infra/cache/cache.service";
 import { MetaRegistryService } from "../../infra/integration/meta-registry.service";
 import type { MetaRequestLike, MetaResponseLike } from "./meta.interface";
@@ -87,8 +88,9 @@ export class MetaController {
   }
 
   private bindRequestId(req: MetaRequestLike, res: MetaResponseLike): string {
-    const requestId = resolveRequestId(req.headers["x-request-id"]);
-    res.setHeader("x-request-id", requestId);
+    const requestIdHeader = readGatewayRequestIdHeader();
+    const requestId = resolveRequestId(req.headers[requestIdHeader]);
+    res.setHeader(requestIdHeader, requestId);
     return requestId;
   }
 

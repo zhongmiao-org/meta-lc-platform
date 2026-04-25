@@ -11,7 +11,9 @@ test('allows current explicit pg edge files', () => {
       dependencies: { pg: '^8.13.1' },
       devDependencies: { '@types/pg': '^8.11.10' }
     }),
-    'packages/datasource/src/infra/postgres/postgres.adapter.ts': 'import { Pool } from "pg";\n'
+    'packages/datasource/src/infra/postgres/postgres.adapter.ts': 'import { Pool } from "pg";\n',
+    'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts': 'import { Pool } from "pg";\n',
+    'packages/datasource/src/infra/postgres/postgres-org-scope.adapter.ts': 'import { Pool } from "pg";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), []);
@@ -99,16 +101,38 @@ test('rejects removed transitional packages and references', () => {
 test('rejects legacy BFF application/interface/types directories and unsupported top-level dirs', () => {
   const workspace = createWorkspace({
     'packages/bff/src/application/services/.gitkeep': '',
+    'packages/bff/src/domain/.gitkeep': '',
+    'packages/bff/src/mapper/.gitkeep': '',
     'packages/bff/src/interface/.gitkeep': '',
     'packages/bff/src/types/.gitkeep': '',
+    'packages/bff/src/infra/repository/.gitkeep': '',
+    'packages/bff/src/infra/interfaces/.gitkeep': '',
     'packages/bff/src/gateway/query.controller.ts': 'export class QueryController {}\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/bff/src/application: forbidden BFF source directory.',
+    'packages/bff/src/domain: forbidden BFF source directory.',
+    'packages/bff/src/mapper: forbidden BFF source directory.',
+    'packages/bff/src/infra/interfaces: forbidden BFF source directory.',
+    'packages/bff/src/infra/repository: forbidden BFF source directory.',
     'packages/bff/src/interface: forbidden BFF source directory.',
     'packages/bff/src/types: forbidden BFF source directory.',
-    'packages/bff/src/gateway: unsupported BFF top-level source directory.'
+    'packages/bff/src/gateway: unsupported BFF top-level source directory.',
+    'packages/bff/src/infra/interfaces: unsupported BFF infra directory.',
+    'packages/bff/src/infra/repository: unsupported BFF infra directory.'
+  ]);
+});
+
+test('rejects unsupported BFF infra directories', () => {
+  const workspace = createWorkspace({
+    'packages/bff/src/infra/cache/cache.service.ts': 'export class CacheService {}\n',
+    'packages/bff/src/infra/integration/meta-registry.service.ts': 'export class MetaRegistryService {}\n',
+    'packages/bff/src/infra/datasource/bad.ts': 'export const bad = true;\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/infra/datasource: unsupported BFF infra directory.'
   ]);
 });
 
@@ -176,6 +200,7 @@ test('rejects BFF type/interface mixing and implementation-local declarations', 
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/dto: unsupported BFF top-level source directory.',
     'packages/bff/src/controller/http/bad.interface.ts: *.interface.ts files may not export type declarations.',
     'packages/bff/src/controller/http/bad.service.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
     'packages/bff/src/controller/http/bad.type.ts: *.type.ts files may not export interface declarations.',
@@ -203,6 +228,7 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
       dependencies: {
         '@zhongmiao/meta-lc-datasource': 'workspace:*',
         '@zhongmiao/meta-lc-permission': 'workspace:*',
+        '@zhongmiao/meta-lc-query': 'workspace:*',
         pg: '^8.13.1'
       },
       devDependencies: {
@@ -213,13 +239,15 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
     'packages/bff/src/controller/http/bad.ts': [
       'import { Pool } from "pg";',
       'import { x } from "@zhongmiao/meta-lc-datasource";',
-      'import { y } from "@zhongmiao/meta-lc-permission";'
+      'import { y } from "@zhongmiao/meta-lc-permission";',
+      'import { z } from "@zhongmiao/meta-lc-query";'
     ].join('\n')
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-datasource" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
+    'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-query" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "pg" is forbidden in dependencies.',
     'packages/bff/package.json: pg is forbidden in dependencies outside audit/datasource/kernel packages.',
     'packages/bff/package.json: BFF dependency "@types/pg" is forbidden in devDependencies.',
@@ -227,7 +255,85 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
     'packages/bff/src/controller/http/bad.ts: direct pg import is forbidden outside audit/datasource/kernel packages.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-datasource.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-permission.',
+    'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-query.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on pg.'
+  ]);
+});
+
+test('allows gateway-only BFF config and rejects data config keywords', () => {
+  const allowed = createWorkspace({
+    'packages/bff/src/config/gateway.config.ts': [
+      'export function readGatewayPort() { return process.env.PORT ?? "6001"; }',
+      'export function readGatewayRequestIdHeader() { return process.env.LC_BFF_REQUEST_ID_HEADER ?? "x-request-id"; }',
+      'export function readGatewayRuntimeWsPath() { return process.env.LC_RUNTIME_WS_PATH ?? "/runtime"; }'
+    ].join('\n')
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/bff/src/config/gateway.config.ts': 'export const bad = process.env.LC_DB_HOST ?? "localhost";\n'
+  });
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/bff/src/config/gateway.config.ts: BFF gateway config may not read DB/data/runtime execution settings.'
+  ]);
+});
+
+test('keeps BFF meta registry as a kernel-only gateway', () => {
+  const workspace = createWorkspace({
+    'packages/bff/src/infra/integration/meta-registry.service.ts': [
+      'import { executeRuntimeGatewayView } from "@zhongmiao/meta-lc-runtime";',
+      'export class MetaRegistryService {}'
+    ].join('\n')
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/infra/integration/meta-registry.service.ts: BFF meta registry gateway may only depend on kernel.'
+  ]);
+});
+
+test('rejects datasource and audit reverse runtime dependencies', () => {
+  const workspace = createWorkspace({
+    'packages/datasource/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-runtime': 'workspace:*',
+        '@zhongmiao/meta-lc-query': 'workspace:*',
+        '@zhongmiao/meta-lc-permission': 'workspace:*'
+      }
+    }),
+    'packages/datasource/src/bad.ts': [
+      'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";',
+      'import { compileSelectAst } from "@zhongmiao/meta-lc-query";',
+      'import { transformSelectQueryAstWithPermission } from "@zhongmiao/meta-lc-permission";'
+    ].join('\n'),
+    'packages/audit/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-runtime': 'workspace:*'
+      }
+    }),
+    'packages/audit/src/bad.ts': 'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
+    'packages/audit/src/bad.ts: audit cannot depend on @zhongmiao/meta-lc-runtime.',
+    'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
+    'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-query" is forbidden in dependencies.',
+    'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
+    'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-runtime.',
+    'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-query.',
+    'packages/datasource/src/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-permission.'
+  ]);
+});
+
+test('rejects runtime manager adapter and manager event test naming', () => {
+  const workspace = createWorkspace({
+    'packages/runtime/src/application/manager-adapter.ts': 'export const bad = true;\n',
+    'packages/runtime/test/runtime-manager-event.test.ts': 'import test from "node:test";\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/runtime/src/application/manager-adapter.ts: runtime manager-adapter references are forbidden.',
+    'packages/runtime/test/runtime-manager-event.test.ts: runtime manager event test naming is forbidden; use runtime-interaction-event.test.ts.'
   ]);
 });
 

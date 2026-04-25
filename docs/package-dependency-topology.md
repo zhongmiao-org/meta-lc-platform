@@ -22,10 +22,7 @@ flowchart TD
   audit["@zhongmiao/meta-lc-audit<br/>packages/audit"]
 
   bff_server --> bff
-  bff --> audit
-  bff --> datasource
   bff --> kernel
-  bff --> permission
   bff --> runtime
   runtime --> audit
   runtime --> datasource
@@ -42,10 +39,9 @@ flowchart TD
 
 1. `@zhongmiao/meta-lc-bff-server`
 2. `@zhongmiao/meta-lc-bff`
-3. `@zhongmiao/meta-lc-runtime`
-4. `@zhongmiao/meta-lc-kernel`
-5. `@zhongmiao/meta-lc-permission`
-6. `@zhongmiao/meta-lc-query`, `@zhongmiao/meta-lc-datasource`, `@zhongmiao/meta-lc-audit`
+3. `@zhongmiao/meta-lc-runtime`, `@zhongmiao/meta-lc-kernel`
+4. `@zhongmiao/meta-lc-permission`, `@zhongmiao/meta-lc-datasource`, `@zhongmiao/meta-lc-audit`
+5. `@zhongmiao/meta-lc-query`
 
 当前生产代码包依赖图没有发现环。
 
@@ -53,5 +49,8 @@ flowchart TD
 
 - `runtime` 是唯一执行核心，持有 `ExecutionPlan`、`ExecutionNode`、`Expression`、`RuntimeContext` 等执行契约。
 - `kernel` 是结构真源，持有 `MetaSchema`、`ViewDefinition`、`NodeDefinition`、`DatasourceDefinition`、`PermissionPolicy`。
-- `bff` 是 IO Gateway，只持有 HTTP/WS DTO、controller、bootstrap wiring 与 infra adapter。
+- `bff` 是 IO Gateway，只持有 HTTP/WS DTO、controller、bootstrap wiring、gateway config、gateway cache 与 thin Kernel integration。
+- `bff` 只能依赖 `runtime` 与 `kernel`；不得直接依赖 `query`、`permission`、`datasource` 或 `pg`。
+- `datasource` 与 `audit` 不得反向依赖 `runtime`；`query` 不得依赖 `datasource`。
+- `kernel` 可持有 meta DB persistence，但不得依赖 `runtime`、`query`、`datasource` 或 `bff`。
 - `infra/` 承载 bootstrap SQL、docker、query-gate 等运维脚本，不作为 workspace package。

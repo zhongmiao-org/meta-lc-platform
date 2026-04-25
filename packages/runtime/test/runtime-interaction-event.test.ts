@@ -112,7 +112,7 @@ function createRuntimeDsl(): RuntimePageDsl {
   };
 }
 
-test("planRuntimeManagerEvent parses raw DSL and creates a stable manager plan", async () => {
+test("planRuntimeManagerEvent parses raw DSL and creates a stable interaction plan", async () => {
   const dsl = createRuntimeDsl();
   const plan = await planRuntimeManagerEvent({
     dsl,
@@ -197,7 +197,7 @@ test("planRuntimeManagerEvent accepts parsed DSL and preserves mutation refresh 
   assert.deepEqual(plan.wsTopics, []);
 });
 
-test("runtime manager event planning keeps graph and rule errors observable", async () => {
+test("runtime interaction event planning keeps graph and rule errors observable", async () => {
   const dsl = createRuntimeDsl();
   await assert.rejects(
     () =>

@@ -16,6 +16,7 @@ import {
   executeRuntimeGatewayView
 } from "@zhongmiao/meta-lc-runtime";
 import { resolveRequestId } from "../../common/request-id";
+import { readGatewayRequestIdHeader } from "../../config/gateway.config";
 import type { ViewRequestLike, ViewResponseLike } from "./view.interface";
 import type { RuntimeGatewayRunner, ViewApiRequest, ViewApiResponse } from "./view.type";
 
@@ -30,8 +31,9 @@ export class ViewController {
     @Req() req: ViewRequestLike,
     @Res({ passthrough: true }) res: ViewResponseLike
   ): Promise<ViewApiResponse> {
-    const requestId = resolveRequestId(req.headers["x-request-id"]);
-    res.setHeader("x-request-id", requestId);
+    const requestIdHeader = readGatewayRequestIdHeader();
+    const requestId = resolveRequestId(req.headers[requestIdHeader]);
+    res.setHeader(requestIdHeader, requestId);
 
     try {
       const runtime = await this.runtimeRunner(name, {

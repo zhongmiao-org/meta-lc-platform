@@ -6,6 +6,8 @@ English | [中文文档](./README_zh.md)
 
 `runtime` is the single execution core. It owns `RuntimeExecutor`, execution contracts, runtime context, DAG/state execution, runtime gateway execution wiring, interaction execution helpers, expression evaluation, and websocket event helpers.
 
+`RuntimeExecutor.execute()` is the only bottom execution entry. `RuntimeViewExecutor` is a high-level page/view facade, and `RuntimeInteractionExecutor` is a high-level interaction/WebSocket facade; both facades eventually route execution semantics through the runtime-owned executor layer.
+
 ## Responsibilities
 
 - Parse runtime DSL and collect dependencies.
@@ -24,6 +26,7 @@ English | [中文文档](./README_zh.md)
 - Query nodes build AST through `query`, apply `permission` AST transforms, compile SQL, and execute through the shared `datasource` adapter contract.
 - Runtime wires concrete execution dependencies for page execution; BFF does not construct datasource, permission, org-scope, or audit dependencies.
 - Runtime can emit optional audit observability events for plan, node, permission, and datasource boundaries without changing execution semantics.
+- `src/infra/adapter/**` contains runtime-consumed adapter contracts/ports, not package-owned infrastructure implementations.
 
 ## Minimal Flow
 
@@ -47,5 +50,6 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 
 - RuntimeExecutor is the only execution engine; do not add runtime orchestrator modules.
 - Page execution must enter through the runtime gateway facade and then `RuntimeExecutor`; do not add orchestrator or manager-adapter modules.
+- Keep `runtime-executor.ts`, `runtime-view-executor.ts`, and `runtime-interaction-executor.ts` names distinct: executor is the engine, view/interaction are facades.
 - Runtime query execution must not inject SQL permission clauses; it calls the permission AST transform before SQL compilation.
 - Runtime audit observers are optional and non-blocking; observer failures must not affect plan execution.

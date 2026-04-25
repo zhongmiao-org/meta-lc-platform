@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 重命名 Postgres demo runtime adapters，显式标记 demo-orders 与 org-scope 边界。
 - feat(adapter): 新增 Postgres demo orders mutation 与 org-scope loader，让 runtime 拥有执行装配且 BFF 不再访问 DB。
 - feat(adapter): 新增稳定 datasource execution 契约与 Postgres adapter 结果归一化。
 - refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。

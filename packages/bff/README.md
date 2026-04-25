@@ -14,6 +14,10 @@ BFF invokes the Runtime gateway facade for page execution. Runtime performs view
 
 ```text
 bff/src/
+├── bootstrap/
+├── common/
+│   └── constants/
+├── config/
 ├── controller/
 │   ├── http/
 │   ├── ws/
@@ -24,16 +28,8 @@ bff/src/
 │   │       ├── operations.state.ts
 │   │       └── replay.store.ts
 ├── infra/
-│   ├── repository/
-│   ├── integration/
 │   ├── cache/
-│   ├── types/
-│   └── interfaces/
-├── mapper/
-├── constants/
-├── common/
-├── bootstrap/
-├── utils/
+│   └── integration/
 └── index.ts
 ```
 
@@ -41,12 +37,12 @@ bff/src/
 
 - `controller/http/**` is the HTTP API entry layer.
 - `controller/ws/**` is the WebSocket entry layer. Runtime WebSocket files must stay under `controller/ws/runtime/**`.
-- `infra/**` owns cache, kernel-backed registry integration, and WebSocket infrastructure helpers only.
-- `mapper/**` is reserved for protocol mapping and must not become an application orchestration layer.
-- `constants/**` owns package-level constants and provider tokens.
+- `infra/cache/**` owns gateway cache only.
+- `infra/integration/**` owns thin Kernel metadata registry integration only.
+- `config/**` owns gateway protocol configuration only: HTTP/CORS/request-id/timeout, WebSocket path/replay, gateway cache, provider token, and log-level knobs.
+- `common/constants/**` owns package-level constants and provider tokens.
 - `common/**` owns small framework-level helpers and exception utilities only.
 - `bootstrap/**` owns Nest module wiring and process startup.
-- `utils/**` is reserved for pure helpers and should stay small.
 
 ## Type And Interface Rules
 
@@ -65,7 +61,7 @@ controller/http -> kernel registry
 controller/ws -> runtime WS contracts
 ```
 
-`bootstrap` wires the module. `common` and `constants` may be shared support layers, but they must not import implementation layers back upward.
+`bootstrap` wires the module. `common` and `config` may be shared support layers, but they must not import implementation layers back upward.
 
 ## Minimal Flow
 
@@ -89,7 +85,8 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 
 - WebSocket is an entry protocol layer, not infra and not application orchestration.
 - Direct DB driver use is forbidden in BFF source and package manifests.
+- BFF gateway config must not read DB, datasource, query compiler, permission policy, runtime node execution, or audit persistence settings.
 - Runtime UI and kernel source-of-truth logic must not be moved into BFF.
 - Runtime datasource, permission, audit, and org-scope wiring must stay inside runtime or the owning packages.
 - Do not restore legacy `/query` or `/mutation` endpoints; page data requests must use `POST /view/:name`.
-- Do not add `application/**`, `contracts/**`, or `config/**`; BFF is only a Gateway invoking Runtime and exposing thin Kernel metadata reads.
+- Do not add `application/**`, `contracts/**`, `domain/**`, `mapper/**`, `infra/repository/**`, or `infra/interfaces/**`; BFF is only a Gateway invoking Runtime and exposing thin Kernel metadata reads.
