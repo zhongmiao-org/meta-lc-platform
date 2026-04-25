@@ -18,7 +18,7 @@ English | [中文文档](./README_zh.md)
 - `runtime` calls query compilation through its query compiler adapter before datasource execution.
 - `permission` transforms query AST before final SQL compilation.
 - `datasource` executes compiled SQL; `query` does not depend on `datasource`.
-- `contracts` provides V2 query node shapes that runtime adapts into query compiler input.
+- `runtime` owns V2 query node shapes and adapts them into query compiler input.
 
 ## Minimal Flow
 

@@ -18,7 +18,7 @@ English | [中文文档](./README_zh.md)
 - `bff` loads user/org/policy context and passes it into runtime execution.
 - `runtime` calls the permission transform before invoking the query compiler.
 - `query` compiles permission-transformed AST into SQL and params.
-- `contracts` contains shared data-scope DTOs used at API boundaries.
+- `permission` owns shared data-scope DTOs used at API boundaries.
 - `audit` can record allow/deny outcomes through BFF integration.
 
 ## Minimal Flow

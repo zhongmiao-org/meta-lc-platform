@@ -44,10 +44,6 @@ importers:
         version: 5.9.3
 
   packages/audit:
-    dependencies:
-      '@zhongmiao/meta-lc-contracts':
-        specifier: workspace:*
-        version: link:../contracts
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -76,15 +72,15 @@ importers:
       '@zhongmiao/meta-lc-audit':
         specifier: workspace:*
         version: link:../audit
-      '@zhongmiao/meta-lc-contracts':
-        specifier: workspace:*
-        version: link:../contracts
       '@zhongmiao/meta-lc-datasource':
         specifier: workspace:*
         version: link:../datasource
       '@zhongmiao/meta-lc-kernel':
         specifier: workspace:*
         version: link:../kernel
+      '@zhongmiao/meta-lc-permission':
+        specifier: workspace:*
+        version: link:../permission
       '@zhongmiao/meta-lc-runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -111,15 +107,6 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/contracts:
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.19.17
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
   packages/datasource:
     dependencies:
       pg:
@@ -138,9 +125,12 @@ importers:
 
   packages/kernel:
     dependencies:
-      '@zhongmiao/meta-lc-contracts':
+      '@zhongmiao/meta-lc-permission':
         specifier: workspace:*
-        version: link:../contracts
+        version: link:../permission
+      '@zhongmiao/meta-lc-runtime':
+        specifier: workspace:*
+        version: link:../runtime
       pg:
         specifier: ^8.13.1
         version: 8.20.0
@@ -170,9 +160,6 @@ importers:
 
   packages/permission:
     dependencies:
-      '@zhongmiao/meta-lc-contracts':
-        specifier: workspace:*
-        version: link:../contracts
       '@zhongmiao/meta-lc-query':
         specifier: workspace:*
         version: link:../query
@@ -183,24 +170,6 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
-
-  packages/platform:
-    dependencies:
-      '@zhongmiao/meta-lc-contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@zhongmiao/meta-lc-permission':
-        specifier: workspace:*
-        version: link:../permission
-      '@zhongmiao/meta-lc-query':
-        specifier: workspace:*
-        version: link:../query
-      '@zhongmiao/meta-lc-runtime':
-        specifier: workspace:*
-        version: link:../runtime
-      '@zhongmiao/meta-lc-shared':
-        specifier: workspace:*
-        version: link:../shared
 
   packages/query:
     devDependencies:
@@ -216,9 +185,6 @@ importers:
       '@zhongmiao/meta-lc-audit':
         specifier: workspace:*
         version: link:../audit
-      '@zhongmiao/meta-lc-contracts':
-        specifier: workspace:*
-        version: link:../contracts
       '@zhongmiao/meta-lc-datasource':
         specifier: workspace:*
         version: link:../datasource
@@ -228,15 +194,6 @@ importers:
       '@zhongmiao/meta-lc-query':
         specifier: workspace:*
         version: link:../query
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.19.17
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
-  packages/shared:
     devDependencies:
       '@types/node':
         specifier: ^22.10.2

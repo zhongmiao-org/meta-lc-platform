@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AuditService, type RuntimeAuditEvent } from "../src";
+import { AuditService, type QueryAuditLog, type RuntimeAuditEvent } from "../src";
 
 test("audit service class exists", () => {
   assert.equal(typeof AuditService, "function");
@@ -90,4 +90,19 @@ test("AuditService keeps legacy query and mutation APIs available", async () => 
   });
 
   assert.deepEqual(calls, ["query", "mutation"]);
+});
+
+test("audit owns query audit log contract", () => {
+  const log: QueryAuditLog = {
+    requestId: "req-5",
+    tenantId: "tenant-a",
+    userId: "user-a",
+    queryDsl: "{}",
+    finalSql: "select 1",
+    durationMs: 1,
+    resultCount: 1,
+    status: "success"
+  };
+
+  assert.equal(log.status, "success");
 });

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(contracts): 由 runtime 直接拥有 V2 runtime DSL、ViewDefinition、ExecutionPlan、node 与 runtime event contract。
 - feat(observability): 在 plan、node、permission、datasource 边界发出可选、非阻塞 runtime audit event。
 - feat(permission): query node 在 SQL 编译前接入 Permission AST Transform。
 - refactor(datasource): query node 改为通过共享 datasource adapter 契约执行。

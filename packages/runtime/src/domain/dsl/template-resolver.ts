@@ -1,4 +1,4 @@
-import type { RuntimeTemplateDependency } from "@zhongmiao/meta-lc-contracts";
+import type { RuntimeTemplateDependency } from "../../types";
 
 const STATE_TEMPLATE_PATTERN = /\{\{\s*state\.([a-zA-Z0-9_]+)\s*\}\}/g;
 

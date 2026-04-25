@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(contracts): consume runtime, kernel, and permission-owned contracts instead of a transitional contracts package.
 - feat(observability): persist runtime audit events through a BFF infra observer without blocking view execution.
 - refactor(meta): read demo view, datasource, and permission definitions from the Kernel-backed registry.
 - test(permission): assert BFF view gateway context flows into runtime Permission AST Transform.

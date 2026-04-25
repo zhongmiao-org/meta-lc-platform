@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
-import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-contracts";
+import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-permission";
 import { Pool } from "pg";
 import { loadDbConfig } from "../../config/config";
 import type { OrgNodeRow, RolePolicyRow } from "../types/org-scope.type";

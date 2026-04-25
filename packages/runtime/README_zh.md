@@ -16,7 +16,7 @@
 
 ## 与其他包关系
 
-- 依赖 `contracts` 获取共享 runtime event 与 page topic contract。
+- 直接拥有 V2 runtime DSL、`ViewDefinition`、`ExecutionPlan`、node、runtime event 与 page topic contract。
 - BFF websocket code 可以发布与这些 contract 兼容的 runtime event。
 - 前端 runtime adapter 消费本包 contract，但不直连数据库或业务 API。
 - Query node 通过 `query` 构建 AST，经过 `permission` AST transform 后编译 SQL，并通过共享 `datasource` adapter 契约执行。

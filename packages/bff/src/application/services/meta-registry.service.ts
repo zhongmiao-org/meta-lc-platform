@@ -3,7 +3,7 @@ import type {
   DatasourceDefinition,
   PermissionPolicy,
   ViewDefinition
-} from "@zhongmiao/meta-lc-contracts";
+} from "@zhongmiao/meta-lc-kernel";
 import {
   InMemoryMetaKernelRepository,
   MetaKernelService,

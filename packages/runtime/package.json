@@ -9,7 +9,6 @@
     "lint": "echo lint:runtime"
   },
   "dependencies": {
-    "@zhongmiao/meta-lc-contracts": "workspace:*",
     "@zhongmiao/meta-lc-audit": "workspace:*",
     "@zhongmiao/meta-lc-datasource": "workspace:*",
     "@zhongmiao/meta-lc-permission": "workspace:*",

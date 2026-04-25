@@ -20,7 +20,7 @@ English | [中文文档](./README_zh.md)
 - `migration` reuses kernel migration compile and safety helpers.
 - `bff` composes kernel registry services for meta definition lookup and can use kernel services for migration orchestration.
 - `query`, `permission`, and `datasource` must not become kernel dependencies.
-- `platform` may expose kernel-facing capabilities through package composition later, but the runnable BFF remains separate.
+- Kernel owns datasource and permission policy definition contracts; `runtime` owns view definitions consumed by the registry.
 
 ## Minimal Flow
 

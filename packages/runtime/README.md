@@ -16,7 +16,7 @@ English | [中文文档](./README_zh.md)
 
 ## Relationship With Other Packages
 
-- Depends on `contracts` for shared runtime event and page topic contracts.
+- Owns V2 runtime DSL, `ViewDefinition`, `ExecutionPlan`, node, runtime event, and page topic contracts directly.
 - BFF websocket code can publish runtime events compatible with these contracts.
 - Frontend runtime adapters consume the package contract without direct database or business API access.
 - Query nodes build AST through `query`, apply `permission` AST transforms, compile SQL, and execute through the shared `datasource` adapter contract.

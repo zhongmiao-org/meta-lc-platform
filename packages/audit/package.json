@@ -12,9 +12,7 @@
     "@types/node": "^22.10.2",
     "typescript": "^5.7.2"
   },
-  "dependencies": {
-    "@zhongmiao/meta-lc-contracts": "workspace:*"
-  },
+  "dependencies": {},
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts"
 }

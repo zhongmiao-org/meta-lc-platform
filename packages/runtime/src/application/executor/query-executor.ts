@@ -1,6 +1,6 @@
 import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
 import type { CompiledQuery, QueryRequest, SelectQueryAst } from "@zhongmiao/meta-lc-query";
-import type { OrgScopeContext } from "@zhongmiao/meta-lc-contracts";
+import type { OrgScopeContext } from "@zhongmiao/meta-lc-permission";
 import type { PermissionAstTransformContext } from "@zhongmiao/meta-lc-permission";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import { resolveExpression } from "../../domain/dsl/expression";

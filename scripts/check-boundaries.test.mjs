@@ -67,6 +67,32 @@ test('keeps deep import and kernel reverse dependency checks', () => {
   ]);
 });
 
+test('rejects removed transitional packages and references', () => {
+  const workspace = createWorkspace({
+    'packages/contracts/package.json': packageJson({
+      dependencies: {}
+    }),
+    'packages/shared/src/index.ts': 'export const shared = true;\n',
+    'packages/runtime/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-contracts': 'workspace:*',
+        '@zhongmiao/meta-lc-shared': 'workspace:*',
+        '@zhongmiao/meta-lc-platform': 'workspace:*'
+      }
+    }),
+    'packages/runtime/src/bad.ts': 'import type { ViewDefinition } from "@zhongmiao/meta-lc-contracts";\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/contracts: forbidden transitional package directory.',
+    'packages/shared: forbidden transitional package directory.',
+    'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-contracts" in dependencies.',
+    'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-shared" in dependencies.',
+    'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-platform" in dependencies.',
+    'packages/runtime/src/bad.ts: forbidden transitional package reference "@zhongmiao/meta-lc-contracts".'
+  ]);
+});
+
 test('rejects legacy BFF interface/types directories and unsupported top-level dirs', () => {
   const workspace = createWorkspace({
     'packages/bff/src/application/orchestrator/.gitkeep': '',
@@ -106,21 +132,21 @@ test('rejects legacy BFF query/mutation orchestration surfaces', () => {
   ]);
 });
 
-test('rejects V2 core contract definitions outside contracts', () => {
+test('rejects V2 core contract definitions outside runtime', () => {
   const workspace = createWorkspace({
     'packages/runtime/src/types/shared.types.ts': [
       'export interface ViewDefinition {}',
       'export type ExecutionPlan = {}'
     ].join('\n'),
-    'packages/contracts/src/index.ts': [
+    'packages/kernel/src/types/shared.types.ts': [
       'export interface ViewDefinition {}',
       'export type ExecutionPlan = {}'
     ].join('\n')
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/runtime/src/types/shared.types.ts: V2 core contract "ViewDefinition" must be defined in packages/contracts only.',
-    'packages/runtime/src/types/shared.types.ts: V2 core contract "ExecutionPlan" must be defined in packages/contracts only.'
+    'packages/kernel/src/types/shared.types.ts: V2 core contract "ViewDefinition" must be defined in packages/runtime only.',
+    'packages/kernel/src/types/shared.types.ts: V2 core contract "ExecutionPlan" must be defined in packages/runtime only.'
   ]);
 });
 

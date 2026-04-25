@@ -1,4 +1,16 @@
-import type { QueryAuditLog } from "@zhongmiao/meta-lc-contracts";
+export type AuditStatus = "success" | "failure" | "blocked";
+
+export interface QueryAuditLog {
+  requestId: string;
+  tenantId: string;
+  userId: string;
+  queryDsl: string;
+  finalSql: string;
+  durationMs: number;
+  resultCount: number;
+  status: AuditStatus;
+  errorMessage?: string | null;
+}
 
 export type RuntimeAuditEventType =
   | "runtime.plan.started"
