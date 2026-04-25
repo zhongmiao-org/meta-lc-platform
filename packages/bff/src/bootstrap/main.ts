@@ -1,16 +1,19 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
+import {
+  readGatewayCorsOrigin,
+  readGatewayHost,
+  readGatewayPort
+} from "../config/gateway.config";
 
 export async function startBffServer(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: true,
+    origin: readGatewayCorsOrigin(),
     credentials: true
   });
-  const port = process.env.PORT ? Number(process.env.PORT) : 6001;
-  const host = process.env.HOST?.trim() || "0.0.0.0";
-  await app.listen(port, host);
+  await app.listen(readGatewayPort(), readGatewayHost());
 }
 
 if (require.main === module) {

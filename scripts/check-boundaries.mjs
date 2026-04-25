@@ -6,8 +6,8 @@ const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'kernel']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/infra/postgres/postgres.adapter.ts',
-  'packages/datasource/src/infra/postgres/orders-mutation.adapter.ts',
-  'packages/datasource/src/infra/postgres/org-scope.adapter.ts',
+  'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts',
+  'packages/datasource/src/infra/postgres/postgres-org-scope.adapter.ts',
   'packages/kernel/src/infra/persistence/postgres-meta-kernel-repository.ts',
   'packages/audit/src/infra/postgres-runtime-audit.sink.ts'
 ]);
@@ -32,29 +32,51 @@ const FORBIDDEN_KERNEL_DEPS = [
 const FORBIDDEN_QUERY_DEPS = [
   '@zhongmiao/meta-lc-datasource'
 ];
+const FORBIDDEN_DATASOURCE_DEPS = [
+  '@zhongmiao/meta-lc-runtime',
+  '@zhongmiao/meta-lc-query',
+  '@zhongmiao/meta-lc-permission'
+];
+const FORBIDDEN_AUDIT_DEPS = [
+  '@zhongmiao/meta-lc-runtime'
+];
 const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-permission',
+  '@zhongmiao/meta-lc-query',
   'pg',
   '@types/pg'
 ];
 const BFF_TOP_LEVEL_DIRS = new Set([
   'bootstrap',
   'common',
-  'constants',
+  'config',
   'controller',
-  'dto',
-  'infra',
-  'mapper',
-  'utils'
+  'infra'
 ]);
 const BFF_FORBIDDEN_SOURCE_DIRS = [
   'packages/bff/src/application',
   'packages/bff/src/application/orchestrator',
   'packages/bff/src/contracts',
-  'packages/bff/src/config',
+  'packages/bff/src/domain',
+  'packages/bff/src/mapper',
+  'packages/bff/src/infra/interfaces',
+  'packages/bff/src/infra/repository',
   'packages/bff/src/interface',
   'packages/bff/src/types'
+];
+const BFF_INFRA_ALLOWED_DIRS = new Set(['cache', 'integration']);
+const BFF_GATEWAY_CONFIG_FORBIDDEN_PATTERNS = [
+  /\bLC_DB_/,
+  /\bPOSTGRES\b/i,
+  /\bBUSINESS_DB\b/i,
+  /\bMETA_DB\b/i,
+  /\bAUDIT_DB\b/i,
+  /\bDATASOURCE\b/i,
+  /\bQUERY_COMPILER\b/i,
+  /\bPERMISSION_POLICY\b/i,
+  /\bNODE_EXECUTION\b/i,
+  /\bDATABASE_URL\b/i
 ];
 const FORBIDDEN_BFF_SYMBOLS = [
   'QueryOrchestrator',
@@ -133,6 +155,19 @@ function checkBffLayout(root, violations) {
       violations.push(`${rel}: unsupported BFF top-level source file.`);
     }
   }
+
+  const bffInfra = path.join(bffSrc, 'infra');
+  if (!fs.existsSync(bffInfra)) return;
+  for (const entry of sortedDirents(bffInfra)) {
+    if (entry.name.startsWith('.')) continue;
+    const rel = normalizePath(path.relative(root, path.join(bffInfra, entry.name)));
+    if (entry.isDirectory() && !BFF_INFRA_ALLOWED_DIRS.has(entry.name)) {
+      violations.push(`${rel}: unsupported BFF infra directory.`);
+    }
+    if (entry.isFile()) {
+      violations.push(`${rel}: unsupported BFF infra top-level file.`);
+    }
+  }
 }
 
 function checkRuntimeLayout(root, violations) {
@@ -199,6 +234,20 @@ function checkSourceFile(file, root, violations) {
       }
     }
   }
+  if (rel.startsWith('packages/datasource/')) {
+    for (const dep of FORBIDDEN_DATASOURCE_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: datasource cannot depend on ${dep}.`);
+      }
+    }
+  }
+  if (rel.startsWith('packages/audit/')) {
+    for (const dep of FORBIDDEN_AUDIT_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: audit cannot depend on ${dep}.`);
+      }
+    }
+  }
   if (rel.startsWith('packages/bff/')) {
     for (const dep of FORBIDDEN_BFF_DEPS) {
       if (content.includes(dep)) {
@@ -211,6 +260,9 @@ function checkSourceFile(file, root, violations) {
   }
   if (rel.startsWith('packages/runtime/') && rel.includes('manager-adapter')) {
     violations.push(`${rel}: runtime manager-adapter references are forbidden.`);
+  }
+  if (rel === 'packages/runtime/test/runtime-manager-event.test.ts') {
+    violations.push(`${rel}: runtime manager event test naming is forbidden; use runtime-interaction-event.test.ts.`);
   }
 }
 
@@ -228,6 +280,8 @@ function checkBffSourceFile(rel, content, file, root, violations) {
   }
 
   checkBffRuntimeImports(rel, content, violations);
+  checkBffGatewayConfig(rel, content, violations);
+  checkBffMetaRegistryGateway(rel, content, violations);
 
   if (/\/(?:types|interfaces)\/index\.ts$/.test(rel)) {
     violations.push(`${rel}: type/interface index aggregators are forbidden in BFF.`);
@@ -256,6 +310,27 @@ function checkBffSourceFile(rel, content, file, root, violations) {
   }
 
   checkBffDependencyDirection(rel, content, file, root, violations);
+}
+
+function checkBffGatewayConfig(rel, content, violations) {
+  if (!rel.startsWith('packages/bff/src/config/')) return;
+
+  for (const pattern of BFF_GATEWAY_CONFIG_FORBIDDEN_PATTERNS) {
+    if (pattern.test(content)) {
+      violations.push(`${rel}: BFF gateway config may not read DB/data/runtime execution settings.`);
+      return;
+    }
+  }
+}
+
+function checkBffMetaRegistryGateway(rel, content, violations) {
+  if (rel !== 'packages/bff/src/infra/integration/meta-registry.service.ts') return;
+
+  for (const dep of ['@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-query', '@zhongmiao/meta-lc-datasource', '@zhongmiao/meta-lc-permission', 'pg']) {
+    if (content.includes(dep)) {
+      violations.push(`${rel}: BFF meta registry gateway may only depend on kernel.`);
+    }
+  }
 }
 
 function checkBffRuntimeImports(rel, content, violations) {
@@ -387,8 +462,14 @@ function checkPackageManifest(file, root, violations) {
       if (packageName === 'query' && FORBIDDEN_QUERY_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: query dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
-      if (packageName === 'kernel' && dependencyName === '@zhongmiao/meta-lc-runtime') {
-        violations.push(`${rel}: kernel dependency "@zhongmiao/meta-lc-runtime" is forbidden in ${blockName}.`);
+      if (packageName === 'kernel' && FORBIDDEN_KERNEL_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: kernel dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
+      if (packageName === 'datasource' && FORBIDDEN_DATASOURCE_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: datasource dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
+      if (packageName === 'audit' && FORBIDDEN_AUDIT_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: audit dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
       if (!DB_DRIVER_DEPENDENCIES.has(dependencyName)) continue;
       if (!DB_DRIVER_PACKAGES.has(packageName)) {

@@ -15,7 +15,7 @@ import type { RuntimeExecutorDependencies } from "./runtime-executor";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import {
   PostgresDatasourceAdapter,
-  PostgresOrdersMutationAdapter,
+  PostgresDemoOrdersMutationAdapter,
   PostgresOrgScopeAdapter,
   type DbConfig,
   type PostgresOrgScopeData
@@ -104,7 +104,8 @@ export async function executeRuntimeGatewayView(
   const queryDatasource =
     options.queryDatasource ?? track(resources, new PostgresDatasourceAdapter(readBusinessConfig(businessConfig)));
   const mutationDatasource =
-    options.mutationDatasource ?? track(resources, new PostgresOrdersMutationAdapter(readBusinessConfig(businessConfig)));
+    options.mutationDatasource ??
+    track(resources, new PostgresDemoOrdersMutationAdapter(readBusinessConfig(businessConfig)));
   const orgScopeResolver =
     options.orgScopeResolver ?? track(resources, createDefaultOrgScopeResolver(readBusinessConfig(businessConfig)));
   const auditObserver = options.auditObserver ?? createNoopRuntimeAuditObserver();

@@ -21,7 +21,7 @@ import {
   RUNTIME_WS_BROADCAST_BUS,
   RUNTIME_WS_INSTANCE_ID,
   RUNTIME_WS_REPLAY_STORE
-} from "../../../constants/runtime-ws.constants";
+} from "../../../common/constants/runtime-ws.constant";
 import type {
   RuntimeWsBroadcastBus,
   RuntimeWsReplayStore,

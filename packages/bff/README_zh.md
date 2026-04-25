@@ -14,6 +14,10 @@ BFF 对页面执行只调用 Runtime gateway facade。Runtime 负责 view lookup
 
 ```text
 bff/src/
+├── bootstrap/
+├── common/
+│   └── constants/
+├── config/
 ├── controller/
 │   ├── http/
 │   ├── ws/
@@ -24,16 +28,8 @@ bff/src/
 │   │       ├── operations.state.ts
 │   │       └── replay.store.ts
 ├── infra/
-│   ├── repository/
-│   ├── integration/
 │   ├── cache/
-│   ├── types/
-│   └── interfaces/
-├── mapper/
-├── constants/
-├── common/
-├── bootstrap/
-├── utils/
+│   └── integration/
 └── index.ts
 ```
 
@@ -41,12 +37,12 @@ bff/src/
 
 - `controller/http/**` 是 HTTP API 入口层。
 - `controller/ws/**` 是 WebSocket 入口层。Runtime WebSocket 文件必须固定在 `controller/ws/runtime/**`。
-- `infra/**` 只放 cache、kernel-backed registry integration 与 WebSocket infra helper。
-- `mapper/**` 预留给 protocol mapping，不得演变成 application orchestration 层。
-- `constants/**` 放包级常量和 provider token。
+- `infra/cache/**` 只放 gateway cache。
+- `infra/integration/**` 只放 thin Kernel metadata registry integration。
+- `config/**` 只放 gateway 协议层配置：HTTP/CORS/request-id/timeout、WebSocket path/replay、gateway cache、provider token 与 log level。
+- `common/constants/**` 放包级常量和 provider token。
 - `common/**` 只放少量框架级 helper 和异常工具。
 - `bootstrap/**` 放 Nest module 装配与进程启动。
-- `utils/**` 只保留纯函数工具，必须尽量收敛。
 
 ## Type 与 Interface 规则
 
@@ -65,7 +61,7 @@ controller/http -> kernel registry
 controller/ws -> runtime WS contracts
 ```
 
-`bootstrap` 只负责装配模块。`common` 与 `constants` 是共享支撑层，但不能反向依赖 implementation layer。
+`bootstrap` 只负责装配模块。`common` 与 `config` 是共享支撑层，但不能反向依赖 implementation layer。
 
 ## 最小闭环
 
@@ -89,7 +85,8 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 
 - WebSocket 是入口协议层，不属于 infra，也不承载 application orchestration。
 - BFF source 和 package manifest 禁止 direct DB driver use。
+- BFF gateway config 禁止读取 DB、datasource、query compiler、permission policy、runtime node execution 或 audit persistence 配置。
 - 不把 runtime UI 或 kernel 的结构真源逻辑搬进 BFF。
 - Runtime datasource、permission、audit 与 org-scope wiring 必须留在 runtime 或所属包内。
 - 禁止恢复 `/query`、`/mutation` 旧入口；页面级数据请求必须走 `POST /view/:name`。
-- 禁止新增 `application/**`、`contracts/**` 或 `config/**`；BFF 只能作为 Gateway 调用 Runtime 并暴露 thin Kernel metadata reads。
+- 禁止新增 `application/**`、`contracts/**`、`domain/**`、`mapper/**`、`infra/repository/**` 或 `infra/interfaces/**`；BFF 只能作为 Gateway 调用 Runtime 并暴露 thin Kernel metadata reads。

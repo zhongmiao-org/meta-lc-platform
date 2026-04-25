@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(boundaries): seal the gateway-only layout by removing mapper/repository/interface remnants, adding gateway-only config, and tightening dependency guards.
 - refactor(boundaries): remove BFF contracts and data execution dependencies so view controllers only call the runtime gateway facade.
 - refactor(gateway): remove the BFF application layer so controllers act as thin runtime/kernel gateways with infra wiring only.
 - refactor(contracts): consume runtime, kernel, and permission-owned contracts instead of a transitional contracts package.

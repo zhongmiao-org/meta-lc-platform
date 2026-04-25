@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 通过更严格的 BFF gateway 目录、runtime 入口命名、datasource demo adapter 命名与依赖守护，封板最终七包拓扑。
 - refactor(boundaries): 锁定最终 runtime gateway topology，移除 BFF 数据装配，把执行依赖迁入 runtime，并禁止 kernel 反向依赖 runtime。
 - refactor(architecture): 通过移除 BFF application 编排、runtime orchestrator 残留与 migration package，完成 runtime、kernel、BFF、migration 边界最终收敛。
 - refactor(packages): 删除 contracts、shared、platform 过渡包，收敛到最终包拓扑。

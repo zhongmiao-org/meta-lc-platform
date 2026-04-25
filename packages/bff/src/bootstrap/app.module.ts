@@ -3,6 +3,10 @@ import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import { CacheService } from "../infra/cache/cache.service";
 import { HttpExceptionFilter } from "../common/http-exception.filter";
+import {
+  readGatewayRuntimeWsBroadcastBus,
+  readGatewayRuntimeWsReplayStore
+} from "../config/gateway.config";
 import { MetaController } from "../controller/http/meta.controller";
 import { ViewController } from "../controller/http/view.controller";
 import {
@@ -13,7 +17,7 @@ import {
   RUNTIME_WS_BROADCAST_BUS,
   RUNTIME_WS_INSTANCE_ID,
   RUNTIME_WS_REPLAY_STORE
-} from "../constants/runtime-ws.constants";
+} from "../common/constants/runtime-ws.constant";
 import { HealthController } from "../controller/http/health.controller";
 import { RuntimeWsHealthController } from "../controller/ws/runtime/health.controller";
 import { RuntimeWsOperationsState } from "../controller/ws/runtime/operations.state";
@@ -38,8 +42,8 @@ import { MetaRegistryService } from "../infra/integration/meta-registry.service"
       provide: RuntimeWsOperationsState,
       useFactory: (instanceId: string) =>
         new RuntimeWsOperationsState({
-          replayStoreMode: parseRuntimeWsReplayStoreMode(process.env.LC_RUNTIME_WS_REPLAY_STORE),
-          broadcastBusMode: parseRuntimeWsBroadcastBusMode(process.env.LC_RUNTIME_WS_BROADCAST_BUS),
+          replayStoreMode: parseRuntimeWsReplayStoreMode(readGatewayRuntimeWsReplayStore()),
+          broadcastBusMode: parseRuntimeWsBroadcastBusMode(readGatewayRuntimeWsBroadcastBus()),
           instanceId
         }),
       inject: [RUNTIME_WS_INSTANCE_ID]
