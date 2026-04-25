@@ -17,6 +17,8 @@ English | [中文文档](./README_zh.md)
 
 ## Relationship With Other Packages
 
+- Upstream: `bff`, `runtime`, and `infra/scripts`.
+- Downstream: `meta_db`; kernel has no workspace package dependencies.
 - Migration lifecycle scripts reuse kernel migration compile and safety helpers from infra.
 - `bff` reads kernel registry definitions as a thin gateway and must not orchestrate metadata.
 - `query`, `permission`, `datasource`, `runtime`, `audit`, and `bff` must not become kernel dependencies.

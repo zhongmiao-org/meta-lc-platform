@@ -15,11 +15,13 @@
 
 ## 与其他包关系
 
-- `bff` 加载 user/org/policy context 后传入 runtime execution。
+- 上游：`runtime`。
+- 下游：按需消费 `query` types 或 AST structures。
+- Runtime 在执行期为 permission transform 提供 user/org/policy context。
 - `runtime` 在调用 query compiler 前执行 permission transform。
 - `query` 将 permission-transformed AST 编译为 SQL 与 params。
 - `permission` 直接拥有 API 边界共享的数据域 DTO。
-- `audit` 可通过 BFF integration 记录 allow/deny 结果。
+- `audit` 可在 runtime 发出 observability event 时记录 allow/deny 结果。
 
 ## 最小闭环
 
@@ -42,5 +44,7 @@ pnpm --filter @zhongmiao/meta-lc-permission test
 ## 边界约束
 
 - 保持 policy evaluation 确定性。
-- 不在此包中直接读取 users、roles 或 organization data；上下文由 BFF integration 提供。
+- 不在此包中直接读取 users、roles 或 organization data；上下文由 runtime execution dependency 提供。
 - 不在此包拼接 SQL clause；权限必须通过 AST predicate 流转。
+- 不在此包编译 SQL。
+- 不在此包执行 datasource 请求。

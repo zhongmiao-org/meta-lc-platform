@@ -19,6 +19,8 @@ English | [中文文档](./README_zh.md)
 
 ## Relationship With Other Packages
 
+- Upstream: `bff`.
+- Downstream: `kernel`, `permission`, `query`, `datasource`, and `audit`.
 - Owns execution contracts such as `ExecutionPlan`, `ExecutionNode`, `Expression`, `RuntimeContext`, runtime event, and page topic contracts directly.
 - Consumes structure contracts such as `ViewDefinition` and node definitions from `kernel`.
 - BFF websocket code can publish runtime events compatible with these contracts.

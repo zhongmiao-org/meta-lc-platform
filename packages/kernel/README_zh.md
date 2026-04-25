@@ -17,6 +17,8 @@
 
 ## 与其他包关系
 
+- 上游：`bff`、`runtime` 与 `infra/scripts`。
+- 下游：`meta_db`；kernel 不依赖任何 workspace package。
 - Migration lifecycle scripts 在 infra 中复用 kernel 的 migration compile 与 safety helper。
 - `bff` 只能作为 thin gateway 读取 kernel registry definition，不承载 metadata orchestration。
 - `query`、`permission`、`datasource`、`runtime`、`audit`、`bff` 不能成为 kernel 依赖。

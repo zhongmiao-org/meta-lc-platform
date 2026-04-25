@@ -15,11 +15,13 @@ English | [中文文档](./README_zh.md)
 
 ## Relationship With Other Packages
 
-- `bff` loads user/org/policy context and passes it into runtime execution.
+- Upstream: `runtime`.
+- Downstream: `query` types or AST structures when needed.
+- Runtime supplies user/org/policy context for permission transforms during execution.
 - `runtime` calls the permission transform before invoking the query compiler.
 - `query` compiles permission-transformed AST into SQL and params.
 - `permission` owns shared data-scope DTOs used at API boundaries.
-- `audit` can record allow/deny outcomes through BFF integration.
+- `audit` can record allow/deny outcomes when runtime emits observability events.
 
 ## Minimal Flow
 
@@ -42,5 +44,7 @@ pnpm --filter @zhongmiao/meta-lc-permission test
 ## Boundary Notes
 
 - Keep policy evaluation deterministic.
-- Do not fetch users, roles, or organization data directly from this package; BFF integration supplies context.
+- Do not fetch users, roles, or organization data directly from this package; runtime supplies context through execution dependencies.
 - Do not concatenate SQL clauses here; permissions must flow through AST predicates.
+- Must not compile SQL.
+- Must not execute datasource.

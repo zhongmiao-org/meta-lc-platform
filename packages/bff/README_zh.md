@@ -55,6 +55,9 @@ bff/src/
 
 ## 依赖方向
 
+- 上游：`apps/bff-server` 与 client 协议入口。
+- 下游：`runtime` 负责页面执行，`kernel` 负责 thin metadata reads。
+
 ```text
 controller/http -> runtime facade
 controller/http -> kernel registry

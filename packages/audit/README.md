@@ -16,6 +16,8 @@ English | [中文文档](./README_zh.md)
 
 ## Relationship With Other Packages
 
+- Upstream: `runtime`.
+- Downstream: `audit_db` or an external sink; audit has no workspace package dependencies.
 - Owns audit contracts directly; it does not depend on a transitional contracts package.
 - Runtime can emit observability events through an optional `RuntimeAuditObserver`; observer failures must not affect execution semantics.
 - Migration orchestration can report migration audit records through this contract.
