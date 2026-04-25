@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- fix(package): align the kernel package main/types entrypoints with the dependency-free clean build output.
 - chore(boundaries): own `DataScopeType` as a local structural literal and remove the permission package dependency so kernel has no workspace dependencies.
 - refactor(meta): own the demo meta registry seeds used by runtime gateway view lookup.
 - refactor(contracts): own ViewDefinition and node structure contracts directly while staying independent from runtime.
