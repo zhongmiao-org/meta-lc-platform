@@ -1,8 +1,6 @@
 import { resolveExpression } from "../../domain/dsl/expression";
 import {
   InMemoryMetaKernelRepository,
-  META_KERNEL_APP_ID,
-  META_KERNEL_DEFINITION_SEEDS,
   MetaKernelService
 } from "@zhongmiao/meta-lc-kernel";
 import {
@@ -15,7 +13,6 @@ import type { RuntimeExecutorDependencies } from "./runtime-executor";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import {
   PostgresDatasourceAdapter,
-  PostgresDemoOrdersMutationAdapter,
   PostgresOrgScopeAdapter,
   type DbConfig,
   type PostgresOrgScopeData
@@ -53,6 +50,8 @@ export interface RuntimeGatewayViewOptions {
   businessDbConfig?: DbConfig;
 }
 
+const DEFAULT_RUNTIME_APP_ID = "default-app";
+
 export interface RuntimeOrgScopeResolver {
   resolve(input: { tenantId: string; userId: string; roles: string[] }): Promise<OrgScopeContext>;
 }
@@ -75,7 +74,7 @@ export interface RuntimeViewExecutorDependencies {
   queryCompiler?: QueryCompilerAdapter;
   queryPermission?: QueryPermissionAdapter;
   queryDatasource: QueryDatasourceAdapter;
-  mutationDatasource: MutationDatasourceAdapter;
+  mutationDatasource?: MutationDatasourceAdapter;
   merge?: MergeExecutorDependencies;
   auditObserver?: RuntimeAuditObserver;
 }
@@ -92,20 +91,18 @@ export async function executeRuntimeGatewayView(
   ensureRuntimeGatewayRequest(request);
   const resources: ClosableResource[] = [];
   const metaKernel = options.metaKernel ?? createDefaultMetaKernel();
-  const view = await metaKernel.getViewDefinition(options.appId ?? META_KERNEL_APP_ID, viewName);
+  const view = await metaKernel.getViewDefinition(options.appId ?? DEFAULT_RUNTIME_APP_ID, viewName);
   if (!view) {
     throw new RuntimeViewNotFoundError(viewName);
   }
 
   const businessConfig =
-    options.queryDatasource && options.mutationDatasource && options.orgScopeResolver
+    options.queryDatasource && options.orgScopeResolver
       ? undefined
       : options.businessDbConfig ?? loadRuntimeDbConfig("business");
   const queryDatasource =
     options.queryDatasource ?? track(resources, new PostgresDatasourceAdapter(readBusinessConfig(businessConfig)));
-  const mutationDatasource =
-    options.mutationDatasource ??
-    track(resources, new PostgresDemoOrdersMutationAdapter(readBusinessConfig(businessConfig)));
+  const mutationDatasource = options.mutationDatasource;
   const orgScopeResolver =
     options.orgScopeResolver ?? track(resources, createDefaultOrgScopeResolver(readBusinessConfig(businessConfig)));
   const auditObserver = options.auditObserver ?? createNoopRuntimeAuditObserver();
@@ -119,7 +116,7 @@ export async function executeRuntimeGatewayView(
     const runtimeContext = buildRuntimeGatewayContext(request, viewName, orgScope);
     return executeRuntimeView(view.definition, runtimeContext, {
       queryDatasource,
-      mutationDatasource,
+      ...(mutationDatasource ? { mutationDatasource } : {}),
       auditObserver
     });
   } finally {
@@ -160,7 +157,7 @@ function createRuntimeViewExecutors(
       }),
     mutation: (node, state, context) =>
       executeMutationNode(node, state, context, {
-        adapter: dependencies.mutationDatasource
+        adapter: dependencies.mutationDatasource ?? createUnavailableMutationDatasourceAdapter()
       }),
     merge: (node, state, context) => executeMergeNode(node, state, context, dependencies.merge),
     transform: (node, state, context) => executeTransformNode(node, state, context)
@@ -208,9 +205,19 @@ function isRecordLike(value: unknown): value is Record<string, unknown> {
 function createDefaultMetaKernel(): MetaKernelService {
   return new MetaKernelService(
     new InMemoryMetaKernelRepository({
-      definitions: META_KERNEL_DEFINITION_SEEDS
+      definitions: []
     })
   );
+}
+
+function createUnavailableMutationDatasourceAdapter(): MutationDatasourceAdapter {
+  return {
+    async execute(command) {
+      throw new Error(
+        `No mutation datasource adapter configured for model "${command.model}" and operation "${command.operation}".`
+      );
+    }
+  };
 }
 
 function createNoopRuntimeAuditObserver(): RuntimeAuditObserver {

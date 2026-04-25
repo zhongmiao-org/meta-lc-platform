@@ -81,6 +81,12 @@ flowchart LR
 - `packages/bff`: library form of the NestJS BFF module.
 - `apps/bff-server`: runnable middleware process entry.
 
+## Examples
+
+- Business demos live under `examples/*`, not inside core packages.
+- `examples/orders-demo` owns the orders workbench seed metadata, demo mutation adapter, and `001_orders_demo.sql`.
+- Deleting `examples/` must not affect `packages/*` build or test; examples may depend on packages, but packages must never depend on examples.
+
 ## Commands
 
 ```bash
@@ -91,6 +97,7 @@ pnpm lint
 pnpm --filter @zhongmiao/meta-lc-bff-server start
 pnpm infra:up
 pnpm infra:query-gate
+pnpm test:examples:orders-demo
 ```
 
 ## Architectural Constraints

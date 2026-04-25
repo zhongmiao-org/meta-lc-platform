@@ -2,8 +2,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Inject,
   InternalServerErrorException,
   NotFoundException,
+  Optional,
   Param,
   Post,
   Req,
@@ -15,6 +17,7 @@ import {
   RuntimeViewNotFoundError,
   executeRuntimeGatewayView
 } from "@zhongmiao/meta-lc-runtime";
+import { BFF_RUNTIME_GATEWAY_RUNNER } from "../../common/constants/gateway-provider.constant";
 import { resolveRequestId } from "../../common/request-id";
 import { readGatewayRequestIdHeader } from "../../config/gateway.config";
 import type { ViewRequestLike, ViewResponseLike } from "./view.interface";
@@ -22,7 +25,11 @@ import type { RuntimeGatewayRunner, ViewApiRequest, ViewApiResponse } from "./vi
 
 @Controller()
 export class ViewController {
-  runtimeRunner: RuntimeGatewayRunner = executeRuntimeGatewayView;
+  constructor(
+    @Optional()
+    @Inject(BFF_RUNTIME_GATEWAY_RUNNER)
+    public runtimeRunner: RuntimeGatewayRunner = executeRuntimeGatewayView
+  ) {}
 
   @Post("view/:name")
   async executeView(

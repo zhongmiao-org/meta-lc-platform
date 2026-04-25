@@ -81,6 +81,12 @@ flowchart LR
 - `packages/bff`：NestJS BFF module 的库形态。
 - `apps/bff-server`：middleware 进程入口。
 
+## Examples
+
+- 业务 demo 放在 `examples/*`，不放入核心 packages。
+- `examples/orders-demo` 拥有 orders workbench 的 seed metadata、demo mutation adapter 与 `001_orders_demo.sql`。
+- 删除 `examples/` 不应影响 `packages/*` build 或 test；examples 可以依赖 packages，但 packages 永远不能依赖 examples。
+
 ## 常用命令
 
 ```bash
@@ -91,6 +97,7 @@ pnpm lint
 pnpm --filter @zhongmiao/meta-lc-bff-server start
 pnpm infra:up
 pnpm infra:query-gate
+pnpm test:examples:orders-demo
 ```
 
 ## 架构约束

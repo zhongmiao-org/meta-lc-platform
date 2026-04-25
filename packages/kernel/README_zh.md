@@ -51,3 +51,4 @@ pnpm --filter @zhongmiao/meta-lc-kernel test
 - Kernel 不依赖任何 workspace package；Postgres access 只允许用于 meta DB persistence。
 - 不在这里加入 HTTP、NestJS controller、runtime UI 或业务执行逻辑。
 - meta registry API 不执行 runtime plan；只负责 definition versioning。
+- 不在这里保留业务 demo registry seed；examples 在 `examples/*` 下拥有自己的 seed metadata。

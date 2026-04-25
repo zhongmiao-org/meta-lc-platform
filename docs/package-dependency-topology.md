@@ -54,3 +54,4 @@ flowchart TD
 - `kernel`、`query`、`datasource`、`audit` 禁止依赖任何 workspace package；`kernel` 可持有 meta DB persistence，但不得依赖 `runtime`、`query`、`permission`、`datasource`、`audit` 或 `bff`。
 - `permission` 只能依赖 `query`；kernel 的 `PermissionPolicy.scope` 与 permission runtime data-scope 类型只共享字符串语义，不共享包依赖。
 - `infra/` 承载 bootstrap SQL、docker、query-gate 等运维脚本，不作为 workspace package。
+- `examples/` 承载业务 demo。`examples/orders-demo` 可以依赖核心 packages；核心 packages 与 apps 不得依赖 `examples/*`，删除 `examples/` 后 `packages/*` 仍必须能 build/test。

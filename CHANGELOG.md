@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(examples): extract the orders demo metadata, SQL seed, and mutation adapter out of core packages into `examples/orders-demo`.
 - docs(readme): sync the final architecture flow, package relationship notes, and compiler/execution boundary wording.
 - fix(ci): build workspace dependencies before package-local tests so clean CI runners can resolve package entrypoints.
 - chore(boundaries): lock final dependency gates with Nx module-boundary tags, full-workspace ESLint, and hard checks that prevent kernel/query/datasource/audit workspace dependencies.

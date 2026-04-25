@@ -1,35 +1,34 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { Pool } from "pg";
+import { startBffServer, type RuntimeGatewayRunner } from "../../packages/bff/dist/bff/src/index.js";
+import { executeRuntimeGatewayView } from "../../packages/runtime/dist/runtime/src/index.js";
+import type { DbConfig } from "@zhongmiao/meta-lc-datasource";
+import { OrdersDemoMutationAdapter } from "./datasource-adapters.ts";
+import {
+  ORDERS_DEMO_APP_ID,
+  createOrdersDemoMetaKernel,
+  createOrdersDemoMetaRegistryProvider
+} from "./meta-registry.ts";
 
-type DbConfig = {
-  url?: string;
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-  ssl: boolean;
+const metaKernel = createOrdersDemoMetaKernel();
+
+const runtimeRunner: RuntimeGatewayRunner = async (viewName, request) => {
+  const mutationDatasource = new OrdersDemoMutationAdapter(loadBusinessDbConfig());
+  try {
+    return await executeRuntimeGatewayView(viewName, request, {
+      appId: ORDERS_DEMO_APP_ID,
+      metaKernel,
+      mutationDatasource,
+      businessDbConfig: loadBusinessDbConfig()
+    });
+  } finally {
+    await mutationDatasource.close();
+  }
 };
 
 async function main(): Promise<void> {
-  const sqlFile = path.resolve(
-    import.meta.dirname,
-    "..",
-    "..",
-    "examples",
-    "orders-demo",
-    "infra",
-    "sql",
-    "001_orders_demo.sql"
-  );
-  const pool = createPool(loadBusinessDbConfig());
-  try {
-    await pool.query(readFileSync(sqlFile, "utf8"));
-    console.log("seed applied: orders demo");
-  } finally {
-    await pool.end();
-  }
+  await startBffServer({
+    runtimeRunner,
+    metaRegistry: createOrdersDemoMetaRegistryProvider()
+  });
 }
 
 function loadBusinessDbConfig(): DbConfig {
@@ -38,10 +37,10 @@ function loadBusinessDbConfig(): DbConfig {
     return parseDbUrl(url);
   }
   return {
-    host: readRequired("LC_DB_HOST"),
+    host: readRequiredEnv("LC_DB_HOST"),
     port: readPort(process.env.LC_DB_PORT, 5432),
-    user: readRequired("LC_DB_USER"),
-    password: readRequired("LC_DB_PASSWORD"),
+    user: readRequiredEnv("LC_DB_USER"),
+    password: readRequiredEnv("LC_DB_PASSWORD"),
     database: process.env.LC_DB_BUSINESS_NAME ?? process.env.LC_DB_NAME ?? "business_db",
     ssl: (process.env.LC_DB_SSL ?? "false").toLowerCase() === "true"
   };
@@ -63,24 +62,7 @@ function parseDbUrl(value: string): DbConfig {
   };
 }
 
-function createPool(config: DbConfig): Pool {
-  if (config.url) {
-    return new Pool({
-      connectionString: config.url,
-      ssl: config.ssl ? { rejectUnauthorized: false } : false
-    });
-  }
-  return new Pool({
-    host: config.host,
-    port: config.port,
-    user: config.user,
-    password: config.password,
-    database: config.database,
-    ssl: config.ssl ? { rejectUnauthorized: false } : false
-  });
-}
-
-function readRequired(name: string): string {
+function readRequiredEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
     throw new Error(`Missing required env: ${name}`);

@@ -10,6 +10,8 @@ BFF invokes the Runtime gateway facade for page execution. Runtime performs view
 
 `/meta/*` remains a thin read-only Kernel gateway. It returns HTTP envelopes only and does not publish metadata, execute registry migrations, or participate in page execution.
 
+The Nest module can accept injected runtime runners and meta registry providers for examples, but the default core BFF module stays demo-free.
+
 ## Source Layout
 
 ```text
@@ -91,5 +93,6 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - BFF gateway config must not read DB, datasource, query compiler, permission policy, runtime node execution, or audit persistence settings.
 - Runtime UI and kernel source-of-truth logic must not be moved into BFF.
 - Runtime datasource, permission, audit, and org-scope wiring must stay inside runtime or the owning packages.
+- Demo runtime runners and metadata providers belong in `examples/*`, not in BFF source.
 - Do not restore legacy `/query` or `/mutation` endpoints; page data requests must use `POST /view/:name`.
 - Do not add `application/**`, `contracts/**`, `domain/**`, `mapper/**`, `infra/repository/**`, or `infra/interfaces/**`; BFF is only a Gateway invoking Runtime and exposing thin Kernel metadata reads.

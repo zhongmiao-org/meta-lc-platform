@@ -3,7 +3,7 @@
 set -euo pipefail
 
 WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SEED_SQL="${WORKSPACE_DIR}/infra/sql/001_orders_demo.sql"
+SEED_SQL="${WORKSPACE_DIR}/examples/orders-demo/infra/sql/001_orders_demo.sql"
 TMP_DIR="$(mktemp -d)"
 ENV_FILE="${WORKSPACE_DIR}/.env"
 EXPLICIT_PORT="${PORT:-}"
@@ -244,8 +244,8 @@ if [[ ! -d "${WORKSPACE_DIR}/node_modules" ]]; then
   (cd "${WORKSPACE_DIR}" && pnpm install)
 fi
 
-log "building bff-server and dependencies"
-(cd "${WORKSPACE_DIR}" && pnpm --filter @zhongmiao/meta-lc-bff-server... build)
+log "building demo server dependencies"
+(cd "${WORKSPACE_DIR}" && pnpm --filter @zhongmiao/meta-lc-bff... build)
 
 log "bootstrapping databases through infra SQL"
 create_database "${LC_DB_META_NAME}"
@@ -255,7 +255,7 @@ run_sql_file "${LC_DB_META_NAME}" "${WORKSPACE_DIR}/infra/sql/bootstrap/100_meta
 run_sql_file "${LC_DB_BUSINESS_NAME}" "${WORKSPACE_DIR}/infra/sql/bootstrap/200_business_baseline.sql"
 run_sql_file "${LC_DB_AUDIT_NAME}" "${WORKSPACE_DIR}/infra/sql/bootstrap/300_audit_baseline.sql"
 
-log "starting bff"
+log "starting orders demo bff"
 (
   cd "${WORKSPACE_DIR}"
   NODE_ENV="${NODE_ENV}" \
@@ -269,7 +269,7 @@ log "starting bff"
   LC_DB_AUDIT_NAME="${LC_DB_AUDIT_NAME}" \
   LC_DB_SSL="${LC_DB_SSL}" \
   PORT="${PORT}" \
-  pnpm --filter @zhongmiao/meta-lc-bff-server run start > "${TMP_DIR}/bff.log" 2>&1
+  node --experimental-strip-types examples/orders-demo/server.ts > "${TMP_DIR}/bff.log" 2>&1
 ) &
 BFF_PID="$!"
 

@@ -17,7 +17,7 @@ test("meta controller returns stable envelope and request id", async () => {
   assert.equal(first.source, "memory");
   assert.equal(first.cached, false);
   assert.equal(second.cached, true);
-  assert.equal(first.items[0]?.id, "orders");
+  assert.deepEqual(first.items, []);
 });
 
 test("meta registry summary inputs expose resource counts and updated timestamps", async () => {
@@ -27,12 +27,12 @@ test("meta registry summary inputs expose resource counts and updated timestamps
     response({})
   );
 
-  assert.equal(summary.summary.tables.count, 1);
-  assert.equal(summary.summary.pages.count, 1);
-  assert.equal(summary.summary.datasources.count, 1);
-  assert.equal(summary.summary.rules.count, 1);
-  assert.equal(summary.summary.permissions.count, 1);
-  assert.equal(summary.summary.tables.updatedAt, "2026-04-20T00:00:00.000Z");
+  assert.equal(summary.summary.tables.count, 0);
+  assert.equal(summary.summary.pages.count, 0);
+  assert.equal(summary.summary.datasources.count, 0);
+  assert.equal(summary.summary.rules.count, 0);
+  assert.equal(summary.summary.permissions.count, 0);
+  assert.equal(summary.summary.tables.updatedAt, null);
 });
 
 test("meta summary endpoint uses cached aggregation envelope", async () => {
@@ -44,7 +44,7 @@ test("meta summary endpoint uses cached aggregation envelope", async () => {
 
   assert.equal(first.cached, false);
   assert.equal(second.cached, true);
-  assert.equal(second.summary.permissions.count, 1);
+  assert.equal(second.summary.permissions.count, 0);
 });
 
 function createController(): MetaController {

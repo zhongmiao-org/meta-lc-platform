@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(gateway): 从 runtime gateway facade 移除默认 orders demo seeds 与 mutation adapter wiring，demo wiring 改由 `examples/orders-demo` 注入。
 - docs(readme): 补充最终执行引擎拓扑中的 runtime 上下游关系说明。
 - fix(ci): 在 clean runner 的 runtime package-local test 前先构建 workspace 依赖。
 - chore(boundaries): 新增最终 Nx layer tags，并保持 runtime 是唯一允许同时依赖 kernel/query/permission/datasource/audit 的执行包。

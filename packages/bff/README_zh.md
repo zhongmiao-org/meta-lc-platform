@@ -10,6 +10,8 @@ BFF 对页面执行只调用 Runtime gateway facade。Runtime 负责 view lookup
 
 `/meta/*` 保留为只读的 thin Kernel gateway。它只返回 HTTP envelope，不发布 metadata、不执行 registry migration，也不参与页面执行。
 
+Nest module 可以为 examples 接收注入的 runtime runner 与 meta registry provider，但默认核心 BFF module 不内置 demo。
+
 ## 源码结构
 
 ```text
@@ -91,5 +93,6 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - BFF gateway config 禁止读取 DB、datasource、query compiler、permission policy、runtime node execution 或 audit persistence 配置。
 - 不把 runtime UI 或 kernel 的结构真源逻辑搬进 BFF。
 - Runtime datasource、permission、audit 与 org-scope wiring 必须留在 runtime 或所属包内。
+- demo runtime runner 与 metadata provider 必须放在 `examples/*`，不能进入 BFF source。
 - 禁止恢复 `/query`、`/mutation` 旧入口；页面级数据请求必须走 `POST /view/:name`。
 - 禁止新增 `application/**`、`contracts/**`、`domain/**`、`mapper/**`、`infra/repository/**` 或 `infra/interfaces/**`；BFF 只能作为 Gateway 调用 Runtime 并暴露 thin Kernel metadata reads。

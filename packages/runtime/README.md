@@ -27,6 +27,7 @@ English | [中文文档](./README_zh.md)
 - Frontend runtime adapters consume the package contract without direct database or business API access.
 - Query nodes build AST through `query`, apply `permission` AST transforms, compile SQL, and execute through the shared `datasource` adapter contract.
 - Runtime wires concrete execution dependencies for page execution; BFF does not construct datasource, permission, org-scope, or audit dependencies.
+- Demo-specific view seeds and mutation adapters are injected from `examples/*`; runtime defaults stay platform-only.
 - Runtime can emit optional audit observability events for plan, node, permission, and datasource boundaries without changing execution semantics.
 - `src/infra/adapter/**` contains runtime-consumed adapter contracts/ports, not package-owned infrastructure implementations.
 
@@ -55,3 +56,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - Keep `runtime-executor.ts`, `runtime-view-executor.ts`, and `runtime-interaction-executor.ts` names distinct: executor is the engine, view/interaction are facades.
 - Runtime query execution must not inject SQL permission clauses; it calls the permission AST transform before SQL compilation.
 - Runtime audit observers are optional and non-blocking; observer failures must not affect plan execution.
+- Do not add default business demo wiring to the runtime facade.
