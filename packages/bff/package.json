@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "pnpm --filter @zhongmiao/meta-lc-runtime build && npm run build && node --test \"dist/**/test/*.test.js\"",
+    "test": "pnpm --filter @zhongmiao/meta-lc-bff... build && node --test \"dist/**/test/*.test.js\"",
     "lint": "eslint \"src/**/*.ts\" --config ../../eslint.config.mjs",
     "start": "sh -c 'if [ -f ../../.env ]; then exec node --env-file=../../.env dist/bff/src/bootstrap/main.js; else exec node dist/bff/src/bootstrap/main.js; fi'"
   },

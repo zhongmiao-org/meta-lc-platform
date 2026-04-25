@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "sh -c 'if [ -f ../../.env ]; then exec node --env-file=../../.env dist/apps/bff-server/src/main.js; else exec node dist/apps/bff-server/src/main.js; fi'",
-    "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
+    "test": "pnpm --filter @zhongmiao/meta-lc-bff-server... build && node --test \"dist/**/test/*.test.js\"",
     "test:query-gate": "bash ../../infra/scripts/e2e-query-isolation.sh",
     "lint": "echo lint:bff-server"
   },

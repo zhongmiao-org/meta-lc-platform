@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- fix(ci): 在 package-local test 前先构建 workspace 依赖，确保 clean CI runner 能解析各包入口。
 - chore(boundaries): 通过 Nx module-boundary tags、全仓 ESLint 与硬边界检查锁死最终依赖规则，防止 kernel/query/datasource/audit 引入 workspace 依赖。
 - chore(boundaries): 通过更严格的 BFF gateway 目录、runtime 入口命名、datasource demo adapter 命名与依赖守护，封板最终七包拓扑。
 - refactor(boundaries): 锁定最终 runtime gateway topology，移除 BFF 数据装配，把执行依赖迁入 runtime，并禁止 kernel 反向依赖 runtime。
