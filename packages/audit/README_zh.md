@@ -17,10 +17,9 @@
 ## 与其他包关系
 
 - 直接拥有 audit contract，不再依赖过渡 `contracts` 包。
-- BFF 可在 query/mutation 结果后调用 audit service 或等价 integration。
 - Runtime 可通过可选 `RuntimeAuditObserver` 发出 observability event；observer 失败不得影响执行语义。
 - Migration orchestration 可通过此 contract 上报 migration audit record。
-- 持久化细节属于 sink implementation 或 BFF integration layer。
+- 持久化细节属于可选 Postgres runtime audit sink 等 sink implementation，不属于 BFF orchestration。
 
 ## 最小闭环
 

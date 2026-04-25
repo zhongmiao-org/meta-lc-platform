@@ -17,10 +17,9 @@ English | [中文文档](./README_zh.md)
 ## Relationship With Other Packages
 
 - Owns audit contracts directly; it does not depend on a transitional contracts package.
-- BFF can call audit service or equivalent integration after query/mutation outcomes.
 - Runtime can emit observability events through an optional `RuntimeAuditObserver`; observer failures must not affect execution semantics.
 - Migration orchestration can report migration audit records through this contract.
-- Persistence details belong to the sink implementation or BFF integration layer.
+- Persistence details belong to sink implementations such as the optional Postgres runtime audit sink, not to BFF orchestration.
 
 ## Minimal Flow
 

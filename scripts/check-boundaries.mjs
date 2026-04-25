@@ -2,15 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DB_DRIVER_PACKAGES = new Set(['bff', 'datasource', 'kernel']);
+const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'kernel']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/infra/postgres/postgres.adapter.ts',
+  'packages/datasource/src/infra/postgres/orders-mutation.adapter.ts',
+  'packages/datasource/src/infra/postgres/org-scope.adapter.ts',
   'packages/kernel/src/infra/persistence/postgres-meta-kernel-repository.ts',
-  'packages/bff/src/infra/integration/org-scope.service.ts',
-  'packages/bff/src/infra/integration/audit.service.ts',
-  'packages/bff/src/infra/integration/postgres-query.service.ts',
-  'packages/bff/src/bootstrap/migration-runner.ts'
+  'packages/audit/src/infra/postgres-runtime-audit.sink.ts'
 ]);
 const FORBIDDEN_PACKAGE_DIRS = [
   'packages/contracts',
@@ -25,16 +24,24 @@ const FORBIDDEN_PACKAGE_REFS = [
   '@zhongmiao/meta-lc-migration'
 ];
 const FORBIDDEN_KERNEL_DEPS = [
+  '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-datasource'
 ];
+const FORBIDDEN_QUERY_DEPS = [
+  '@zhongmiao/meta-lc-datasource'
+];
+const FORBIDDEN_BFF_DEPS = [
+  '@zhongmiao/meta-lc-datasource',
+  '@zhongmiao/meta-lc-permission',
+  'pg',
+  '@types/pg'
+];
 const BFF_TOP_LEVEL_DIRS = new Set([
   'bootstrap',
   'common',
-  'config',
   'constants',
-  'contracts',
   'controller',
   'dto',
   'infra',
@@ -44,6 +51,8 @@ const BFF_TOP_LEVEL_DIRS = new Set([
 const BFF_FORBIDDEN_SOURCE_DIRS = [
   'packages/bff/src/application',
   'packages/bff/src/application/orchestrator',
+  'packages/bff/src/contracts',
+  'packages/bff/src/config',
   'packages/bff/src/interface',
   'packages/bff/src/types'
 ];
@@ -54,7 +63,10 @@ const FORBIDDEN_BFF_SYMBOLS = [
   'MutationOrchestratorService',
   'TemporaryViewAdapter',
   'AggregationService',
-  'MetaQueryService'
+  'MetaQueryService',
+  'RuntimeViewDependenciesService',
+  'PostgresQueryExecutorService',
+  'RuntimeManagerAdapter'
 ];
 const FORBIDDEN_BFF_RUNTIME_IMPORTS = [
   'compileViewDefinition',
@@ -166,7 +178,7 @@ function checkSourceFile(file, root, violations) {
   if (importsPg(content)) {
     const packageName = getPackageName(rel);
     if (!DB_DRIVER_PACKAGES.has(packageName)) {
-      violations.push(`${rel}: direct pg import is forbidden outside bff/datasource/kernel packages.`);
+        violations.push(`${rel}: direct pg import is forbidden outside audit/datasource/kernel packages.`);
     } else if (!ALLOWED_PG_IMPORT_FILES.has(rel)) {
       violations.push(`${rel}: direct pg import is not allowed here.`);
     }
@@ -179,6 +191,26 @@ function checkSourceFile(file, root, violations) {
         violations.push(`${rel}: kernel cannot depend on ${dep}.`);
       }
     }
+  }
+  if (rel.startsWith('packages/query/')) {
+    for (const dep of FORBIDDEN_QUERY_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: query cannot depend on ${dep}.`);
+      }
+    }
+  }
+  if (rel.startsWith('packages/bff/')) {
+    for (const dep of FORBIDDEN_BFF_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: BFF cannot depend on ${dep}.`);
+      }
+    }
+    if (rel.includes('manager-adapter')) {
+      violations.push(`${rel}: runtime manager-adapter references are forbidden.`);
+    }
+  }
+  if (rel.startsWith('packages/runtime/') && rel.includes('manager-adapter')) {
+    violations.push(`${rel}: runtime manager-adapter references are forbidden.`);
   }
 }
 
@@ -300,7 +332,7 @@ function checkBffDependencyDirection(rel, content, file, root, violations) {
     if (sourceLayer === 'infra' && ['controller', 'application', 'bootstrap'].includes(targetLayer)) {
       violations.push(`${rel}: infra layer must not import ${targetLayer} (${specifier}).`);
     }
-    if (['common', 'config', 'constants', 'contracts'].includes(sourceLayer)) {
+    if (['common', 'constants'].includes(sourceLayer)) {
       if (['controller', 'application', 'domain', 'infra', 'bootstrap'].includes(targetLayer)) {
         violations.push(`${rel}: shared ${sourceLayer} layer must not import ${targetLayer} (${specifier}).`);
       }
@@ -349,10 +381,19 @@ function checkPackageManifest(file, root, violations) {
       if (FORBIDDEN_PACKAGE_REFS.includes(dependencyName)) {
         violations.push(`${rel}: forbidden transitional dependency "${dependencyName}" in ${blockName}.`);
       }
+      if (packageName === 'bff' && FORBIDDEN_BFF_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: BFF dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
+      if (packageName === 'query' && FORBIDDEN_QUERY_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: query dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
+      if (packageName === 'kernel' && dependencyName === '@zhongmiao/meta-lc-runtime') {
+        violations.push(`${rel}: kernel dependency "@zhongmiao/meta-lc-runtime" is forbidden in ${blockName}.`);
+      }
       if (!DB_DRIVER_DEPENDENCIES.has(dependencyName)) continue;
       if (!DB_DRIVER_PACKAGES.has(packageName)) {
         violations.push(
-          `${rel}: ${dependencyName} is forbidden in ${blockName} outside bff/datasource/kernel packages.`
+          `${rel}: ${dependencyName} is forbidden in ${blockName} outside audit/datasource/kernel packages.`
         );
       }
     }

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(boundaries): 锁定最终 runtime gateway topology，移除 BFF 数据装配，把执行依赖迁入 runtime，并禁止 kernel 反向依赖 runtime。
 - refactor(architecture): 通过移除 BFF application 编排、runtime orchestrator 残留与 migration package，完成 runtime、kernel、BFF、migration 边界最终收敛。
 - refactor(packages): 删除 contracts、shared、platform 过渡包，收敛到最终包拓扑。
 - feat(audit): 新增非阻塞 runtime observability event，并在 BFF 持久化 plan、node、permission、datasource execution 事件。

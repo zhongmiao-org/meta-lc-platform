@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(boundaries): 移除 manager-adapter 导出，并让 runtime gateway facade 接管 view lookup 与执行依赖装配。
 - refactor(executor): 将 manager event planning 收敛到 RuntimeExecutor，并移除 runtime orchestrator module。
 - refactor(contracts): 由 runtime 直接拥有执行契约，并消费 kernel 拥有的 ViewDefinition 与 node 结构契约。
 - feat(observability): 在 plan、node、permission、datasource 边界发出可选、非阻塞 runtime audit event。

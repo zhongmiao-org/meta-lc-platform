@@ -9,10 +9,13 @@
     "lint": "echo lint:audit"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.10",
     "@types/node": "^22.10.2",
     "typescript": "^5.7.2"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts"
 }

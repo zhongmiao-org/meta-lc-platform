@@ -4,11 +4,11 @@
 
 ## 包定位
 
-`bff` 是 NestJS IO Gateway 边界包。它只拥有 HTTP/WS DTO、协议 controller、bootstrap wiring 和 infra adapter；不得承载 runtime、query、mutation 或 meta 编排。
+`bff` 是 NestJS IO Gateway 边界包。它只拥有 HTTP/WS DTO、协议 controller 和 bootstrap wiring；不得承载 runtime、query、mutation、datasource、permission、audit 或 meta 编排。
 
-BFF 在调用 Runtime facade 前从 Kernel-backed meta registry 读取 view definition；它不发布元数据，也不执行 registry migration。
+BFF 对页面执行只调用 Runtime gateway facade。Runtime 负责 view lookup、execution context 构建、datasource wiring、permission context resolution、audit observation 与 `RuntimeExecutor` 执行。
 
-BFF 还会把 runtime audit observer 注入 Runtime facade，并把 observability event 作为 infra 职责持久化；audit 失败只记录并降级，不阻塞页面执行。
+`/meta/*` 保留为只读的 thin Kernel gateway。它只返回 HTTP envelope，不发布 metadata、不执行 registry migration，也不参与页面执行。
 
 ## 源码结构
 
@@ -23,20 +23,15 @@ bff/src/
 │   │       ├── health.controller.ts
 │   │       ├── operations.state.ts
 │   │       └── replay.store.ts
-│   └── cli/
 ├── infra/
 │   ├── repository/
 │   ├── integration/
 │   ├── cache/
 │   ├── types/
 │   └── interfaces/
-├── contracts/
-│   ├── types/
-│   └── interfaces/
 ├── mapper/
 ├── constants/
 ├── common/
-├── config/
 ├── bootstrap/
 ├── utils/
 └── index.ts
@@ -46,14 +41,11 @@ bff/src/
 
 - `controller/http/**` 是 HTTP API 入口层。
 - `controller/ws/**` 是 WebSocket 入口层。Runtime WebSocket 文件必须固定在 `controller/ws/runtime/**`。
-- `controller/cli/**` 是 CLI/RPC 入口层。
-- `infra/**` 放 repository、integration、cache 等外部依赖实现。
-- `contracts/**` 只放跨层共享的请求/响应数据形状和行为契约。
-- `mapper/**` 负责 protocol DTO、contracts 与 application input 之间的转换。
+- `infra/**` 只放 cache、kernel-backed registry integration 与 WebSocket infra helper。
+- `mapper/**` 预留给 protocol mapping，不得演变成 application orchestration 层。
 - `constants/**` 放包级常量和 provider token。
-- `config/**` 放环境变量与配置加载。
 - `common/**` 只放少量框架级 helper 和异常工具。
-- `bootstrap/**` 放 Nest module 装配、进程启动和 migration/bootstrap runner。
+- `bootstrap/**` 放 Nest module 装配与进程启动。
 - `utils/**` 只保留纯函数工具，必须尽量收敛。
 
 ## Type 与 Interface 规则
@@ -68,20 +60,20 @@ bff/src/
 ## 依赖方向
 
 ```text
-controller -> runtime facade / kernel registry / infra adapters
+controller/http -> runtime facade
+controller/http -> kernel registry
+controller/ws -> runtime WS contracts
 ```
 
-`bootstrap` 只负责装配各层。`common`、`contracts`、`config`、`constants` 是共享支撑层，但不能反向依赖 implementation layer。
+`bootstrap` 只负责装配模块。`common` 与 `constants` 是共享支撑层，但不能反向依赖 implementation layer。
 
 ## 最小闭环
 
 ```mermaid
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
-  Entry --> Kernel["Kernel meta registry"]
-  Entry --> Runtime["Runtime facade"]
-  Entry --> Infra["infra integration"]
-  Runtime --> Audit["runtime audit observer"]
+  Entry --> Runtime["Runtime gateway facade"]
+  Entry --> Kernel["Thin Kernel meta gateway"]
   Entry --> Response["HTTP response / WS event"]
 ```
 
@@ -96,8 +88,8 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 ## 边界约束
 
 - WebSocket 是入口协议层，不属于 infra，也不承载 application orchestration。
-- direct DB driver use 必须保留在允许的 edge files 内，并通过 `pnpm test:boundaries`。
+- BFF source 和 package manifest 禁止 direct DB driver use。
 - 不把 runtime UI 或 kernel 的结构真源逻辑搬进 BFF。
-- Runtime audit persistence 属于 infra integration，不得变成 request orchestration。
+- Runtime datasource、permission、audit 与 org-scope wiring 必须留在 runtime 或所属包内。
 - 禁止恢复 `/query`、`/mutation` 旧入口；页面级数据请求必须走 `POST /view/:name`。
-- 禁止新增 `application/**`；BFF 只能作为 Gateway 调用 Runtime 并读取 Kernel metadata。
+- 禁止新增 `application/**`、`contracts/**` 或 `config/**`；BFF 只能作为 Gateway 调用 Runtime 并暴露 thin Kernel metadata reads。

@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- feat(adapter): add Postgres demo orders mutation and org-scope loaders so runtime owns execution wiring without BFF DB access.
 - feat(adapter): add a stable datasource execution contract and Postgres adapter result normalization.
 - refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - docs(readme): add bilingual package README and minimal architecture flow.

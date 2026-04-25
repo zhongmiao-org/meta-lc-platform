@@ -17,13 +17,13 @@ import type {
   RuntimeWsReplayStore,
   WsClientLike,
   WsServerLike
-} from "../src/contracts/interfaces/runtime-ws.interface";
+} from "../src/controller/ws/runtime/runtime-ws.interface";
 import type {
   PageSubscribedEvent,
   RedisRuntimeWsStreamEntry,
   RuntimeWsBroadcastHandler,
   RuntimeWsBroadcastPublishOptions
-} from "../src/contracts/types/runtime-ws.type";
+} from "../src/controller/ws/runtime/runtime-ws.type";
 import { RuntimeWsHealthController } from "../src/controller/ws/runtime/health.controller";
 import { RuntimeWsOperationsState } from "../src/controller/ws/runtime/operations.state";
 import {

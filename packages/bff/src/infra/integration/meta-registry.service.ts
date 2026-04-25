@@ -5,20 +5,18 @@ import type {
   ViewDefinition
 } from "@zhongmiao/meta-lc-kernel";
 import {
+  META_KERNEL_APP_ID,
+  META_KERNEL_DEFINITION_SEEDS,
+  META_REGISTRY_UPDATED_AT,
   InMemoryMetaKernelRepository,
   MetaKernelService,
   type MetaDefinitionKind,
   type MetaDefinitionVersion
 } from "@zhongmiao/meta-lc-kernel";
-import {
-  META_KERNEL_APP_ID,
-  META_KERNEL_DEFINITION_SEEDS,
-  META_REGISTRY_UPDATED_AT
-} from "../../constants/meta-registry.constants";
 import type {
   MetaRegistryItem,
   MetaResourceKind
-} from "../../contracts/types/meta-registry.type";
+} from "../types/meta-registry.type";
 
 const STATIC_FIXTURES: Pick<Record<MetaResourceKind, MetaRegistryItem[]>, "tables" | "rules"> = {
   tables: [

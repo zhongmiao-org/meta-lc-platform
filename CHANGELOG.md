@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(boundaries): lock the final runtime gateway topology by removing BFF data wiring, moving execution dependencies into runtime, and forbidding kernel-to-runtime dependency drift.
 - refactor(architecture): finalize runtime, kernel, BFF, and migration boundaries by removing BFF application orchestration, runtime orchestrator remnants, and the migration package.
 - refactor(packages): converge the final package topology by deleting contracts, shared, and platform transitional packages.
 - feat(audit): add non-blocking runtime observability events and BFF persistence wiring for plan, node, permission, and datasource execution.

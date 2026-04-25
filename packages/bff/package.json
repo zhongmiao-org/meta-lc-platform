@@ -15,19 +15,14 @@
     "@nestjs/platform-express": "^10.4.22",
     "@nestjs/platform-socket.io": "^10.4.22",
     "@nestjs/websockets": "^10.4.22",
-    "@zhongmiao/meta-lc-audit": "workspace:*",
-    "@zhongmiao/meta-lc-datasource": "workspace:*",
     "@zhongmiao/meta-lc-kernel": "workspace:*",
     "@zhongmiao/meta-lc-runtime": "workspace:*",
-    "pg": "^8.13.1",
     "redis": "^4.7.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
-    "@zhongmiao/meta-lc-permission": "workspace:*"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "@types/pg": "^8.11.10",
     "typescript": "^5.7.2"
   },
   "main": "dist/bff/src/index.js",

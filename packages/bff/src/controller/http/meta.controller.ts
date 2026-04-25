@@ -2,12 +2,12 @@ import { Controller, Get, Req, Res } from "@nestjs/common";
 import { resolveRequestId } from "../../common/request-id";
 import { CacheService } from "../../infra/cache/cache.service";
 import { MetaRegistryService } from "../../infra/integration/meta-registry.service";
-import type { MetaRequestLike, MetaResponseLike } from "../../contracts/interfaces/meta-http.interface";
-import type { MetaListEnvelope, MetaSummary, MetaSummaryEnvelope } from "../../contracts/types/meta-http.type";
+import type { MetaRequestLike, MetaResponseLike } from "./meta.interface";
+import type { MetaListEnvelope, MetaSummary, MetaSummaryEnvelope } from "./meta.type";
 import type {
   MetaRegistryItem,
   MetaResourceKind
-} from "../../contracts/types/meta-registry.type";
+} from "./meta.type";
 
 @Controller("meta")
 export class MetaController {
