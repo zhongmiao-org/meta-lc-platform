@@ -10,10 +10,9 @@ import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import { executeSubmitPlan, type SubmitExecutionResult } from "./submit-executor";
 import type {
   RuntimeContext,
-  RuntimeStateStore,
-  TransformNodeDefinition,
-  ViewDefinition
+  RuntimeStateStore
 } from "../../types";
+import type { TransformNodeDefinition, ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 import type {
   QueryCompilerAdapter,
   QueryDatasourceAdapter,

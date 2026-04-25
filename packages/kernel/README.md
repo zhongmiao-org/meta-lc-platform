@@ -4,7 +4,7 @@ English | [中文文档](./README_zh.md)
 
 ## Package Role
 
-`kernel` is the structural metadata source for the platform. It owns MetaSchema types, schema validation, snapshot and migration DSL helpers, schema diff, SQL generation, API route manifest generation, permission manifest generation, version publishing, rollback, migration audit persistence, and the versioned meta definition registry for views, datasources, and permission policies.
+`kernel` is the structural metadata source for the platform. It owns MetaSchema, ViewDefinition, NodeDefinition, DatasourceDefinition, PermissionPolicy, schema validation, snapshot and migration DSL helpers, schema diff, SQL generation, version publishing, rollback, migration audit persistence, and the versioned meta definition registry.
 
 ## Responsibilities
 
@@ -17,10 +17,10 @@ English | [中文文档](./README_zh.md)
 
 ## Relationship With Other Packages
 
-- `migration` reuses kernel migration compile and safety helpers.
-- `bff` composes kernel registry services for meta definition lookup and can use kernel services for migration orchestration.
+- Migration lifecycle scripts reuse kernel migration compile and safety helpers from infra.
+- `bff` reads kernel registry definitions as a thin gateway and must not orchestrate metadata.
 - `query`, `permission`, and `datasource` must not become kernel dependencies.
-- Kernel owns datasource and permission policy definition contracts; `runtime` owns view definitions consumed by the registry.
+- Kernel owns structure contracts; runtime consumes view/node definitions and owns only execution contracts.
 
 ## Minimal Flow
 

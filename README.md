@@ -13,8 +13,8 @@ The platform keeps the frontend and runtime behind the BFF. Metadata flows throu
 ```mermaid
 flowchart LR
   Client["Runtime / Client"] --> BFF["packages/bff<br/>Gateway only"]
-  BFF --> Runtime["packages/runtime<br/>Execution engine + runtime contracts"]
-  BFF --> Kernel["packages/kernel<br/>Meta source of truth"]
+  BFF --> Runtime["packages/runtime<br/>Execution engine"]
+  BFF --> Kernel["packages/kernel<br/>Structure source of truth"]
   Runtime --> Query["packages/query<br/>AST -> SQL"]
   Runtime --> Permission["packages/permission<br/>AST transform + data scope"]
   Runtime --> Datasource["packages/datasource<br/>Datasource adapter"]
@@ -30,20 +30,19 @@ flowchart LR
 
 | Package | Role | Docs |
 | --- | --- | --- |
-| `packages/kernel` | MetaSchema validation, versioning, diff, migration SQL, API and permission manifest compilation. | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
+| `packages/runtime` | RuntimeExecutor execution engine, DAG/state execution contracts, manager planning, and WS event contracts. | [English](./packages/runtime/README.md) \| [中文文档](./packages/runtime/README_zh.md) |
+| `packages/kernel` | Structural metadata contracts, MetaSchema validation, definition registry, diff, and migration SQL helpers. | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
 | `packages/query` | Query DSL to SQL compilation. | [English](./packages/query/README.md) \| [中文文档](./packages/query/README_zh.md) |
 | `packages/permission` | RBAC and organization data-scope decisions. | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
 | `packages/datasource` | Postgres datasource configuration and execution adapter. | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
-| `packages/migration` | Facade for compiling and applying kernel migration DSL. | [English](./packages/migration/README.md) \| [中文文档](./packages/migration/README_zh.md) |
 | `packages/audit` | Query, mutation, migration, and access audit service contract. | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
-| `packages/runtime` | Runtime DSL parser, dependency graph, rule/function/orchestrator, and WS event contracts. | [English](./packages/runtime/README.md) \| [中文文档](./packages/runtime/README_zh.md) |
-| `packages/bff` | NestJS BFF orchestration for query, mutation, meta, cache, audit, and websocket flows. | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
+| `packages/bff` | NestJS IO Gateway for HTTP/WS DTOs, runtime invocation, and infra wiring. | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
 
 ## Dependency Direction
 
-- `runtime`, `kernel`, `query`, `permission`, `datasource`, `bff`, and `audit` are the seven core architecture packages.
-- `migration` remains the optional schema lifecycle package.
-- Contracts live in the owning package; `contracts`, `shared`, and `platform` packages are intentionally removed.
+- `runtime`, `kernel`, `query`, `permission`, `datasource`, `bff`, and `audit` are the seven final architecture packages.
+- Migration lifecycle scripts live under `infra/`; `packages/migration` is intentionally removed.
+- Contracts live in the owning package; `contracts`, `shared`, `platform`, and `migration` packages are intentionally removed.
 - `bff` remains a gateway and must not own runtime orchestration.
 - Deep cross-package imports are forbidden; import through package entrypoints.
 
@@ -69,7 +68,8 @@ pnpm infra:query-gate
 - Frontend and runtime consumers must go through the BFF for data access and realtime updates.
 - `meta_db`, `business_db`, and `audit_db` stay separated.
 - Kernel remains the structural source for metadata and migration planning.
-- BFF applies orchestration and integration logic; runtime packages must not embed business-specific rules.
+- BFF is an IO Gateway only: it owns HTTP/WS DTOs, controllers, bootstrap wiring, and infra adapters, not orchestration.
+- RuntimeExecutor is the only execution engine; runtime packages must not embed business-specific rules.
 - DB driver access is intentionally restricted by boundary checks.
 
 ## Release Governance

@@ -4,7 +4,7 @@
 
 ## 包定位
 
-`kernel` 是平台结构元数据来源。它负责 MetaSchema 类型、schema 校验、snapshot/migration DSL helper、schema diff、SQL 生成、API route manifest 生成、permission manifest 生成、版本发布、回滚、migration audit 持久化，以及 view、datasource、permission policy 的版本化 meta definition registry。
+`kernel` 是平台结构元数据来源。它拥有 MetaSchema、ViewDefinition、NodeDefinition、DatasourceDefinition、PermissionPolicy、schema 校验、snapshot/migration DSL helper、schema diff、SQL 生成、版本发布、回滚、migration audit 持久化，以及版本化 meta definition registry。
 
 ## 核心职责
 
@@ -17,10 +17,10 @@
 
 ## 与其他包关系
 
-- `migration` 复用 kernel 的 migration compile 与 safety helper。
-- `bff` 组合 kernel registry service 读取 meta definition，也可后续组合 kernel service 承载 migration orchestration。
+- Migration lifecycle scripts 在 infra 中复用 kernel 的 migration compile 与 safety helper。
+- `bff` 只能作为 thin gateway 读取 kernel registry definition，不承载 metadata orchestration。
 - `query`、`permission`、`datasource` 不能成为 kernel 依赖。
-- Kernel 直接拥有 datasource 与 permission policy definition contract；registry 消费由 `runtime` 拥有的 view definition。
+- Kernel 拥有结构契约；runtime 消费 view/node definition，只拥有执行契约。
 
 ## 最小闭环
 

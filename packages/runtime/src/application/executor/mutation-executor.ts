@@ -3,10 +3,10 @@ import type {
   MutationAdapterCommand,
   MutationAdapterResult,
   MutationExecutionResult,
-  MutationNodeDefinition,
   RuntimeContext,
   RuntimeStateStore
 } from "../../types";
+import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 import { NodeExecutorError } from "../../types";
 import type { MutationDatasourceAdapter } from "../../infra/adapter/mutation.adapter";
 

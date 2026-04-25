@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- refactor(contracts): 由 kernel 直接拥有 datasource 与 permission policy definition contract，并消费 runtime 拥有的 view definition。
+- refactor(contracts): 由 kernel 直接拥有 ViewDefinition 与 node 结构契约，并保持不依赖 runtime。
+- refactor(contracts): 由 kernel 直接拥有 datasource、permission policy、view 与 node 结构契约。
 - feat(meta-registry): 新增 view、datasource 与 permission policy definition 的版本化 registry API。
 - refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。
 - docs(readme): 新增双语子包 README 与最小架构流程图。

@@ -4,36 +4,33 @@ import {
   buildRuntimePageTopic,
   createRuntimeManagerExecutedEvent,
   type ExecutionPlan,
-  type RuntimePageDsl,
-  type ViewDefinition
+  type RuntimeContext,
+  type RuntimePageDsl
 } from "../src";
 
-test("runtime owns V2 view, execution, DSL, and websocket event contracts", () => {
-  const view: ViewDefinition = {
-    name: "orders-workbench",
-    nodes: {
-      orders: {
-        type: "query",
-        table: "orders",
-        fields: ["id"]
-      }
-    },
-    output: {
-      rows: "{{orders.rows}}"
-    }
+test("runtime owns execution, runtime context, DSL, and websocket event contracts", () => {
+  const context: RuntimeContext = {
+    requestId: "req-1",
+    tenantId: "tenant-a"
   };
   const plan: ExecutionPlan = {
     nodes: [
       {
         id: "orders",
         type: "query",
-        definition: view.nodes.orders
+        definition: {
+          type: "query",
+          table: "orders",
+          fields: ["id"]
+        }
       }
     ],
     edges: {
       orders: []
     },
-    output: view.output
+    output: {
+      rows: "{{orders.rows}}"
+    }
   };
   const dsl: RuntimePageDsl = {
     schemaVersion: "runtime-page-dsl.v1",
@@ -52,6 +49,7 @@ test("runtime owns V2 view, execution, DSL, and websocket event contracts", () =
     pageInstanceId: "instance-1"
   });
 
+  assert.equal(context.requestId, "req-1");
   assert.equal(plan.nodes[0]?.id, "orders");
   assert.equal(topic, "tenant.tenant-a.page.orders.instance.instance-1");
   assert.equal(

@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(architecture): finalize runtime, kernel, BFF, and migration boundaries by removing BFF application orchestration, runtime orchestrator remnants, and the migration package.
 - refactor(packages): converge the final package topology by deleting contracts, shared, and platform transitional packages.
 - feat(audit): add non-blocking runtime observability events and BFF persistence wiring for plan, node, permission, and datasource execution.
 - feat(kernel): add a versioned meta definition registry for view, datasource, and permission policy definitions.

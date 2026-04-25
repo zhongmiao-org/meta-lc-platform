@@ -15,12 +15,14 @@ const ALLOWED_PG_IMPORT_FILES = new Set([
 const FORBIDDEN_PACKAGE_DIRS = [
   'packages/contracts',
   'packages/shared',
-  'packages/platform'
+  'packages/platform',
+  'packages/migration'
 ];
 const FORBIDDEN_PACKAGE_REFS = [
   '@zhongmiao/meta-lc-contracts',
   '@zhongmiao/meta-lc-shared',
-  '@zhongmiao/meta-lc-platform'
+  '@zhongmiao/meta-lc-platform',
+  '@zhongmiao/meta-lc-migration'
 ];
 const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-bff',
@@ -28,20 +30,19 @@ const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-datasource'
 ];
 const BFF_TOP_LEVEL_DIRS = new Set([
-  'application',
   'bootstrap',
   'common',
   'config',
   'constants',
   'contracts',
   'controller',
-  'domain',
   'dto',
   'infra',
   'mapper',
   'utils'
 ]);
 const BFF_FORBIDDEN_SOURCE_DIRS = [
+  'packages/bff/src/application',
   'packages/bff/src/application/orchestrator',
   'packages/bff/src/interface',
   'packages/bff/src/types'
@@ -50,7 +51,10 @@ const FORBIDDEN_BFF_SYMBOLS = [
   'QueryOrchestrator',
   'MutationOrchestrator',
   'QueryOrchestratorService',
-  'MutationOrchestratorService'
+  'MutationOrchestratorService',
+  'TemporaryViewAdapter',
+  'AggregationService',
+  'MetaQueryService'
 ];
 const FORBIDDEN_BFF_RUNTIME_IMPORTS = [
   'compileViewDefinition',
@@ -58,7 +62,10 @@ const FORBIDDEN_BFF_RUNTIME_IMPORTS = [
   'executeQueryNode',
   'executeMutationNode'
 ];
-const V2_CORE_CONTRACT_DECLARATIONS = [
+const RUNTIME_FORBIDDEN_SOURCE_DIRS = [
+  'packages/runtime/src/application/orchestrator'
+];
+const KERNEL_STRUCTURE_CONTRACT_DECLARATIONS = [
   'ViewDefinition',
   'NodeDefinition',
   'QueryNodeDefinition',
@@ -66,9 +73,13 @@ const V2_CORE_CONTRACT_DECLARATIONS = [
   'TransformNodeDefinition',
   'MergeNodeDefinition',
   'OutputDefinition',
-  'SubmitDefinition',
+  'SubmitDefinition'
+];
+const RUNTIME_EXECUTION_CONTRACT_DECLARATIONS = [
   'ExecutionNode',
-  'ExecutionPlan'
+  'ExecutionPlan',
+  'Expression',
+  'RuntimeContext'
 ];
 
 export function checkWorkspace(root = process.cwd()) {
@@ -76,6 +87,7 @@ export function checkWorkspace(root = process.cwd()) {
   const violations = [];
   checkForbiddenPackageDirs(root, violations);
   checkBffLayout(root, violations);
+  checkRuntimeLayout(root, violations);
   walk(packagesDir, root, violations);
   return violations;
 }
@@ -111,6 +123,14 @@ function checkBffLayout(root, violations) {
   }
 }
 
+function checkRuntimeLayout(root, violations) {
+  for (const forbidden of RUNTIME_FORBIDDEN_SOURCE_DIRS) {
+    if (fs.existsSync(path.join(root, forbidden))) {
+      violations.push(`${forbidden}: forbidden runtime source directory.`);
+    }
+  }
+}
+
 function walk(dir, root, violations) {
   if (!fs.existsSync(dir)) return;
   for (const entry of sortedDirents(dir)) {
@@ -134,7 +154,7 @@ function checkSourceFile(file, root, violations) {
   const content = fs.readFileSync(file, 'utf8');
   checkForbiddenPackageRefs(rel, content, violations);
   checkBffSourceFile(rel, content, file, root, violations);
-  checkV2CoreContractDefinitions(rel, content, violations);
+  checkContractDefinitions(rel, content, violations);
 
   // No deep cross-package imports.
   const deepImport = content.match(/from\s+["'](?:@meta-lc\/[a-z-]+|@zhongmiao\/meta-lc-[a-z-]+)\//g);
@@ -215,14 +235,36 @@ function checkBffRuntimeImports(rel, content, violations) {
   }
 }
 
-function checkV2CoreContractDefinitions(rel, content, violations) {
-  if (rel.startsWith('packages/runtime/src/')) return;
+function checkContractDefinitions(rel, content, violations) {
   if (!rel.endsWith('.ts')) return;
 
-  for (const name of V2_CORE_CONTRACT_DECLARATIONS) {
+  if (!rel.startsWith('packages/kernel/src/')) {
+    checkContractDeclarations(
+      rel,
+      content,
+      violations,
+      KERNEL_STRUCTURE_CONTRACT_DECLARATIONS,
+      'structure',
+      'packages/kernel'
+    );
+  }
+  if (!rel.startsWith('packages/runtime/src/')) {
+    checkContractDeclarations(
+      rel,
+      content,
+      violations,
+      RUNTIME_EXECUTION_CONTRACT_DECLARATIONS,
+      'execution',
+      'packages/runtime'
+    );
+  }
+}
+
+function checkContractDeclarations(rel, content, violations, names, label, owner) {
+  for (const name of names) {
     const declaration = new RegExp(`^\\s*export\\s+(?:interface|type)\\s+${name}\\b`, 'm');
     if (declaration.test(content)) {
-      violations.push(`${rel}: V2 core contract "${name}" must be defined in packages/runtime only.`);
+      violations.push(`${rel}: ${label} contract "${name}" must be defined in ${owner} only.`);
     }
   }
 }
@@ -249,9 +291,6 @@ function checkBffDependencyDirection(rel, content, file, root, violations) {
     const targetLayer = getBffLayer(targetRel);
     if (!targetLayer || targetLayer === sourceLayer) continue;
 
-    if (sourceLayer === 'controller' && targetLayer === 'infra') {
-      violations.push(`${rel}: controller layer must not import infra directly (${specifier}).`);
-    }
     if (sourceLayer === 'application' && targetLayer === 'controller') {
       violations.push(`${rel}: application layer must not import controller (${specifier}).`);
     }

@@ -5,7 +5,7 @@ import {
   type RuntimePageDsl
 } from "../src";
 import {
-  orchestrateRuntimeEvent,
+  planRuntimeManagerEvent,
   parseRuntimePageDsl,
   RuntimeDependencyGraphError,
   RuntimeRuleEngineError
@@ -112,9 +112,9 @@ function createRuntimeDsl(): RuntimePageDsl {
   };
 }
 
-test("orchestrateRuntimeEvent parses raw DSL and creates a stable manager plan", async () => {
+test("planRuntimeManagerEvent parses raw DSL and creates a stable manager plan", async () => {
   const dsl = createRuntimeDsl();
-  const plan = await orchestrateRuntimeEvent({
+  const plan = await planRuntimeManagerEvent({
     dsl,
     state: dsl.state,
     event: {
@@ -165,10 +165,10 @@ test("orchestrateRuntimeEvent parses raw DSL and creates a stable manager plan",
   assert.deepEqual(plan.wsTopics, ["tenant.tenant-a.page.orders-page.instance.instance-1"]);
 });
 
-test("orchestrateRuntimeEvent accepts parsed DSL and preserves mutation refresh order", async () => {
+test("planRuntimeManagerEvent accepts parsed DSL and preserves mutation refresh order", async () => {
   const dsl = createRuntimeDsl();
   const parsedDsl = parseRuntimePageDsl(dsl);
-  const plan = await orchestrateRuntimeEvent({
+  const plan = await planRuntimeManagerEvent({
     dsl: parsedDsl,
     state: dsl.state,
     event: {
@@ -197,11 +197,11 @@ test("orchestrateRuntimeEvent accepts parsed DSL and preserves mutation refresh 
   assert.deepEqual(plan.wsTopics, []);
 });
 
-test("orchestrator keeps graph and rule errors observable", async () => {
+test("runtime manager event planning keeps graph and rule errors observable", async () => {
   const dsl = createRuntimeDsl();
   await assert.rejects(
     () =>
-      orchestrateRuntimeEvent({
+      planRuntimeManagerEvent({
         dsl,
         state: dsl.state,
         event: {
@@ -218,7 +218,7 @@ test("orchestrator keeps graph and rule errors observable", async () => {
 
   await assert.rejects(
     () =>
-      orchestrateRuntimeEvent({
+      planRuntimeManagerEvent({
         dsl: {
           ...dsl,
           rules: [

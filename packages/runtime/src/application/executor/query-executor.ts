@@ -6,11 +6,10 @@ import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import { resolveExpression } from "../../domain/dsl/expression";
 import {
   QueryExecutorError,
-  type QueryNodeDefinition,
   type RuntimeContext,
-  type RuntimeStateStore,
-  type ViewExpression
+  type RuntimeStateStore
 } from "../../types";
+import type { QueryNodeDefinition, ViewExpression } from "@zhongmiao/meta-lc-kernel";
 import {
   createQueryCompilerAdapter,
   createQueryPermissionAdapter,

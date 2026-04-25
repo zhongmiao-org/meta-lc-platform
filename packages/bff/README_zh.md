@@ -4,7 +4,7 @@
 
 ## 包定位
 
-`bff` 是 NestJS Gateway 边界包。它用严格分层隔离协议入口、Runtime 调用、领域模型、基础设施集成、启动逻辑和共享契约；不得承载 query / mutation 编排。
+`bff` 是 NestJS IO Gateway 边界包。它只拥有 HTTP/WS DTO、协议 controller、bootstrap wiring 和 infra adapter；不得承载 runtime、query、mutation 或 meta 编排。
 
 BFF 在调用 Runtime facade 前从 Kernel-backed meta registry 读取 view definition；它不发布元数据，也不执行 registry migration。
 
@@ -24,15 +24,6 @@ bff/src/
 │   │       ├── operations.state.ts
 │   │       └── replay.store.ts
 │   └── cli/
-├── application/
-│   ├── services/
-│   ├── types/
-│   └── interfaces/
-├── domain/
-│   ├── entities/
-│   ├── value-objects/
-│   ├── types/
-│   └── interfaces/
 ├── infra/
 │   ├── repository/
 │   ├── integration/
@@ -42,7 +33,6 @@ bff/src/
 ├── contracts/
 │   ├── types/
 │   └── interfaces/
-├── dto/
 ├── mapper/
 ├── constants/
 ├── common/
@@ -57,11 +47,8 @@ bff/src/
 - `controller/http/**` 是 HTTP API 入口层。
 - `controller/ws/**` 是 WebSocket 入口层。Runtime WebSocket 文件必须固定在 `controller/ws/runtime/**`。
 - `controller/cli/**` 是 CLI/RPC 入口层。
-- `application/**` 只负责应用服务和 runtime invocation，不放传输层 controller，也不承载 query / mutation 编排。
-- `domain/**` 放实体、值对象、领域数据形状和领域行为契约。
 - `infra/**` 放 repository、integration、cache 等外部依赖实现。
 - `contracts/**` 只放跨层共享的请求/响应数据形状和行为契约。
-- `dto/**` 只能放 class DTO，禁止声明 `type` 或 `interface`。
 - `mapper/**` 负责 protocol DTO、contracts 与 application input 之间的转换。
 - `constants/**` 放包级常量和 provider token。
 - `config/**` 放环境变量与配置加载。
@@ -81,7 +68,7 @@ bff/src/
 ## 依赖方向
 
 ```text
-controller -> application -> domain -> infra
+controller -> runtime facade / kernel registry / infra adapters
 ```
 
 `bootstrap` 只负责装配各层。`common`、`contracts`、`config`、`constants` 是共享支撑层，但不能反向依赖 implementation layer。
@@ -91,12 +78,11 @@ controller -> application -> domain -> infra
 ```mermaid
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
-  Entry --> App["application services"]
-  App --> Kernel["Kernel meta registry"]
-  App --> Runtime["Runtime facade"]
-  App --> Infra["infra integration"]
+  Entry --> Kernel["Kernel meta registry"]
+  Entry --> Runtime["Runtime facade"]
+  Entry --> Infra["infra integration"]
   Runtime --> Audit["runtime audit observer"]
-  App --> Response["HTTP response / WS event"]
+  Entry --> Response["HTTP response / WS event"]
 ```
 
 ## 常用命令
@@ -114,4 +100,4 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - 不把 runtime UI 或 kernel 的结构真源逻辑搬进 BFF。
 - Runtime audit persistence 属于 infra integration，不得变成 request orchestration。
 - 禁止恢复 `/query`、`/mutation` 旧入口；页面级数据请求必须走 `POST /view/:name`。
-- 禁止新增 `application/orchestrator/**`；BFF 只能作为 Gateway 调用 Runtime。
+- 禁止新增 `application/**`；BFF 只能作为 Gateway 调用 Runtime 并读取 Kernel metadata。

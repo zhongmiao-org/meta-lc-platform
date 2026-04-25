@@ -13,8 +13,8 @@
 ```mermaid
 flowchart LR
   Client["Runtime / Client"] --> BFF["packages/bff<br/>Gateway only"]
-  BFF --> Runtime["packages/runtime<br/>执行引擎 + runtime contract"]
-  BFF --> Kernel["packages/kernel<br/>Meta source of truth"]
+  BFF --> Runtime["packages/runtime<br/>执行引擎"]
+  BFF --> Kernel["packages/kernel<br/>结构真源"]
   Runtime --> Query["packages/query<br/>AST -> SQL"]
   Runtime --> Permission["packages/permission<br/>AST transform + 数据域"]
   Runtime --> Datasource["packages/datasource<br/>Datasource adapter"]
@@ -30,20 +30,19 @@ flowchart LR
 
 | Package | 定位 | 文档 |
 | --- | --- | --- |
-| `packages/kernel` | MetaSchema 校验、版本、diff、migration SQL、API/permission manifest 编译。 | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
+| `packages/runtime` | RuntimeExecutor 执行引擎、DAG/state 执行契约、manager planning 与 WS event contract。 | [English](./packages/runtime/README.md) \| [中文文档](./packages/runtime/README_zh.md) |
+| `packages/kernel` | 结构元数据契约、MetaSchema 校验、definition registry、diff 与 migration SQL helper。 | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
 | `packages/query` | Query DSL 到 SQL 编译。 | [English](./packages/query/README.md) \| [中文文档](./packages/query/README_zh.md) |
 | `packages/permission` | RBAC 与组织数据域决策。 | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
 | `packages/datasource` | Postgres datasource 配置与执行 adapter。 | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
-| `packages/migration` | kernel migration DSL 的 compile/apply facade。 | [English](./packages/migration/README.md) \| [中文文档](./packages/migration/README_zh.md) |
 | `packages/audit` | query、mutation、migration、access 审计服务 contract。 | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
-| `packages/runtime` | Runtime DSL parser、dependency graph、rule/function/orchestrator、WS event contract。 | [English](./packages/runtime/README.md) \| [中文文档](./packages/runtime/README_zh.md) |
-| `packages/bff` | NestJS BFF 编排层，串联 query、mutation、meta、cache、audit、websocket。 | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
+| `packages/bff` | NestJS IO Gateway，持有 HTTP/WS DTO、runtime invocation 与 infra wiring。 | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
 
 ## 依赖方向
 
-- `runtime`、`kernel`、`query`、`permission`、`datasource`、`bff`、`audit` 是 7 个核心架构层包。
-- `migration` 保留为可选 schema lifecycle 包。
-- contract 由所属包拥有；`contracts`、`shared`、`platform` 包已被删除。
+- `runtime`、`kernel`、`query`、`permission`、`datasource`、`bff`、`audit` 是最终 7 个架构层包。
+- migration lifecycle scripts 下沉到 `infra/`；`packages/migration` 已被删除。
+- contract 由所属包拥有；`contracts`、`shared`、`platform`、`migration` 包已被删除。
 - `bff` 只作为 gateway，不拥有 runtime orchestration。
 - 禁止 deep import，跨包引用必须通过 package entrypoint。
 
@@ -69,7 +68,8 @@ pnpm infra:query-gate
 - 前端和 runtime consumer 的数据访问与实时推送必须经过 BFF。
 - `meta_db`、`business_db`、`audit_db` 保持三库分离。
 - Kernel 是元数据结构与迁移计划的来源。
-- BFF 承担编排与集成逻辑；runtime 包不内嵌业务专用规则。
+- BFF 只能作为 IO Gateway，持有 HTTP/WS DTO、controller、bootstrap wiring 与 infra adapter，不持有 orchestration。
+- RuntimeExecutor 是唯一执行引擎；runtime 包不内嵌业务专用规则。
 - DB driver access 受 boundary check 限制。
 
 ## 发版治理

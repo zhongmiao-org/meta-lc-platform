@@ -23,9 +23,6 @@
       "@zhongmiao/meta-lc-kernel": [
         "packages/kernel/src"
       ],
-      "@zhongmiao/meta-lc-migration": [
-        "packages/migration/src"
-      ],
       "@zhongmiao/meta-lc-audit": [
         "packages/audit/src"
       ],

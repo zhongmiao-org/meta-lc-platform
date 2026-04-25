@@ -77,7 +77,8 @@ test('rejects removed transitional packages and references', () => {
       dependencies: {
         '@zhongmiao/meta-lc-contracts': 'workspace:*',
         '@zhongmiao/meta-lc-shared': 'workspace:*',
-        '@zhongmiao/meta-lc-platform': 'workspace:*'
+        '@zhongmiao/meta-lc-platform': 'workspace:*',
+        '@zhongmiao/meta-lc-migration': 'workspace:*'
       }
     }),
     'packages/runtime/src/bad.ts': 'import type { ViewDefinition } from "@zhongmiao/meta-lc-contracts";\n'
@@ -89,20 +90,21 @@ test('rejects removed transitional packages and references', () => {
     'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-contracts" in dependencies.',
     'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-shared" in dependencies.',
     'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-platform" in dependencies.',
+    'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-migration" in dependencies.',
     'packages/runtime/src/bad.ts: forbidden transitional package reference "@zhongmiao/meta-lc-contracts".'
   ]);
 });
 
-test('rejects legacy BFF interface/types directories and unsupported top-level dirs', () => {
+test('rejects legacy BFF application/interface/types directories and unsupported top-level dirs', () => {
   const workspace = createWorkspace({
-    'packages/bff/src/application/orchestrator/.gitkeep': '',
+    'packages/bff/src/application/services/.gitkeep': '',
     'packages/bff/src/interface/.gitkeep': '',
     'packages/bff/src/types/.gitkeep': '',
     'packages/bff/src/gateway/query.controller.ts': 'export class QueryController {}\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/bff/src/application/orchestrator: forbidden BFF source directory.',
+    'packages/bff/src/application: forbidden BFF source directory.',
     'packages/bff/src/interface: forbidden BFF source directory.',
     'packages/bff/src/types: forbidden BFF source directory.',
     'packages/bff/src/gateway: unsupported BFF top-level source directory.'
@@ -117,22 +119,24 @@ test('rejects legacy BFF query/mutation orchestration surfaces', () => {
       '  @Post("query") query() {}',
       '}'
     ].join('\n'),
-    'packages/bff/src/application/services/bad.service.ts': [
+    'packages/bff/src/controller/http/bad.service.ts': [
       'import { compileViewDefinition, executeQueryNode } from "@zhongmiao/meta-lc-runtime";',
-      'export class QueryOrchestratorService {}'
+      'export class QueryOrchestratorService {}',
+      'export class TemporaryViewAdapter {}'
     ].join('\n')
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/bff/src/application/services/bad.service.ts: legacy BFF orchestrator symbol "QueryOrchestrator" is forbidden.',
-    'packages/bff/src/application/services/bad.service.ts: legacy BFF orchestrator symbol "QueryOrchestratorService" is forbidden.',
-    'packages/bff/src/application/services/bad.service.ts: BFF must call runtime facade instead of importing compileViewDefinition.',
-    'packages/bff/src/application/services/bad.service.ts: BFF must call runtime facade instead of importing executeQueryNode.',
+    'packages/bff/src/controller/http/bad.service.ts: legacy BFF orchestrator symbol "QueryOrchestrator" is forbidden.',
+    'packages/bff/src/controller/http/bad.service.ts: legacy BFF orchestrator symbol "QueryOrchestratorService" is forbidden.',
+    'packages/bff/src/controller/http/bad.service.ts: legacy BFF orchestrator symbol "TemporaryViewAdapter" is forbidden.',
+    'packages/bff/src/controller/http/bad.service.ts: BFF must call runtime facade instead of importing compileViewDefinition.',
+    'packages/bff/src/controller/http/bad.service.ts: BFF must call runtime facade instead of importing executeQueryNode.',
     'packages/bff/src/controller/http/query.controller.ts: legacy /query and /mutation endpoints are forbidden.'
   ]);
 });
 
-test('rejects V2 core contract definitions outside runtime', () => {
+test('rejects misplaced structure and execution contract definitions', () => {
   const workspace = createWorkspace({
     'packages/runtime/src/types/shared.types.ts': [
       'export interface ViewDefinition {}',
@@ -145,8 +149,20 @@ test('rejects V2 core contract definitions outside runtime', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/kernel/src/types/shared.types.ts: V2 core contract "ViewDefinition" must be defined in packages/runtime only.',
-    'packages/kernel/src/types/shared.types.ts: V2 core contract "ExecutionPlan" must be defined in packages/runtime only.'
+    'packages/kernel/src/types/shared.types.ts: execution contract "ExecutionPlan" must be defined in packages/runtime only.',
+    'packages/runtime/src/types/shared.types.ts: structure contract "ViewDefinition" must be defined in packages/kernel only.'
+  ]);
+});
+
+test('rejects runtime orchestrator directory and migration package', () => {
+  const workspace = createWorkspace({
+    'packages/runtime/src/application/orchestrator/runtime.orchestrator.ts': 'export const x = 1;\n',
+    'packages/migration/package.json': packageJson({ dependencies: {} })
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/migration: forbidden transitional package directory.',
+    'packages/runtime/src/application/orchestrator: forbidden runtime source directory.'
   ]);
 });
 
@@ -154,14 +170,14 @@ test('rejects BFF type/interface mixing and implementation-local declarations', 
   const workspace = createWorkspace({
     'packages/bff/src/contracts/interfaces/bad.interface.ts': 'export type Bad = {};\n',
     'packages/bff/src/contracts/types/bad.type.ts': 'export interface Bad {}\n',
-    'packages/bff/src/application/services/bad.service.ts': 'interface Bad {}\nexport class BadService {}\n',
+    'packages/bff/src/controller/http/bad.service.ts': 'interface Bad {}\nexport class BadService {}\n',
     'packages/bff/src/dto/bad.dto.ts': 'export type BadDto = {};\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/bff/src/application/services/bad.service.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
     'packages/bff/src/contracts/interfaces/bad.interface.ts: *.interface.ts files may not export type declarations.',
     'packages/bff/src/contracts/types/bad.type.ts: *.type.ts files may not export interface declarations.',
+    'packages/bff/src/controller/http/bad.service.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
     'packages/bff/src/dto/bad.dto.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
     'packages/bff/src/dto/bad.dto.ts: BFF dto files must be class-only.'
   ]);
@@ -169,25 +185,24 @@ test('rejects BFF type/interface mixing and implementation-local declarations', 
 
 test('rejects BFF type and interface index aggregators', () => {
   const workspace = createWorkspace({
-    'packages/bff/src/application/types/index.ts': 'export type { QueryInput } from "./query.type";\n',
-    'packages/bff/src/application/interfaces/index.ts': 'export { QueryService } from "./query.interface";\n'
+    'packages/bff/src/contracts/types/index.ts': 'export type { QueryInput } from "./query.type";\n',
+    'packages/bff/src/contracts/interfaces/index.ts': 'export { QueryService } from "./query.interface";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/bff/src/application/interfaces/index.ts: type/interface index aggregators are forbidden in BFF.',
-    'packages/bff/src/application/types/index.ts: type/interface index aggregators are forbidden in BFF.'
+    'packages/bff/src/contracts/interfaces/index.ts: type/interface index aggregators are forbidden in BFF.',
+    'packages/bff/src/contracts/types/index.ts: type/interface index aggregators are forbidden in BFF.'
   ]);
 });
 
-test('rejects controller-to-infra and shared-layer reverse imports in BFF', () => {
+test('rejects shared-layer reverse imports in BFF while allowing thin controller-to-infra delegation', () => {
   const workspace = createWorkspace({
     'packages/bff/src/controller/http/query.controller.ts': 'import { Db } from "../../infra/integration/db";\n',
     'packages/bff/src/contracts/types/bad.type.ts': 'import { QueryController } from "../../controller/http/query.controller";\nexport type Bad = {};\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/bff/src/contracts/types/bad.type.ts: shared contracts layer must not import controller (../../controller/http/query.controller).',
-    'packages/bff/src/controller/http/query.controller.ts: controller layer must not import infra directly (../../infra/integration/db).'
+    'packages/bff/src/contracts/types/bad.type.ts: shared contracts layer must not import controller (../../controller/http/query.controller).'
   ]);
 });
 

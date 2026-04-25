@@ -4,19 +4,20 @@
 
 ## 包定位
 
-`runtime` 包含 runtime 侧编排原语：DSL parsing、template resolution、dependency tracking、function registry、rule evaluation、manager adapter、orchestrator 与 websocket event helper。
+`runtime` 是唯一执行核心。它拥有 `RuntimeExecutor`、执行契约、runtime context、DAG/state execution、manager event planning、expression evaluation 与 websocket event helper。
 
 ## 核心职责
 
 - 解析 runtime DSL 并收集 dependencies。
-- 跟踪 dependency changes，并编排 refresh/action execution。
+- 跟踪 dependency changes，并通过 RuntimeExecutor API 规划 refresh/action execution。
 - 从 runtime state 解析 template value。
 - 注册并执行 runtime function。
 - 创建与校验 websocket event payload。
 
 ## 与其他包关系
 
-- 直接拥有 V2 runtime DSL、`ViewDefinition`、`ExecutionPlan`、node、runtime event 与 page topic contract。
+- 直接拥有 `ExecutionPlan`、`ExecutionNode`、`Expression`、`RuntimeContext`、runtime event 与 page topic 等执行契约。
+- 从 `kernel` 消费 `ViewDefinition` 与 node definition 等结构契约。
 - BFF websocket code 可以发布与这些 contract 兼容的 runtime event。
 - 前端 runtime adapter 消费本包 contract，但不直连数据库或业务 API。
 - Query node 通过 `query` 构建 AST，经过 `permission` AST transform 后编译 SQL，并通过共享 `datasource` adapter 契约执行。
@@ -27,10 +28,10 @@
 
 ```mermaid
 flowchart LR
+  View["Kernel ViewDefinition"] --> Executor["RuntimeExecutor"]
   Dsl["Runtime DSL"] --> Parser["runtime-dsl-parser"]
-  Parser --> Deps["DependencyGraph"]
-  Deps --> Orchestrator["RuntimeOrchestrator"]
-  Orchestrator --> Event["WS event contract"]
+  Parser --> Executor
+  Executor --> Event["WS event contract"]
   Event --> BFF["BFF websocket gateway"]
 ```
 
@@ -43,7 +44,7 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 
 ## 边界约束
 
-- Runtime orchestration 不能内嵌业务专用后端逻辑。
+- RuntimeExecutor 是唯一执行引擎；禁止再新增 runtime orchestrator module。
 - Runtime consumer 的数据访问仍必须经过 BFF contract。
 - Runtime query execution 不能注入 SQL permission clause；必须在 SQL 编译前调用 permission AST transform。
 - Runtime audit observer 必须保持可选、非阻塞；observer 失败不得影响 plan execution。

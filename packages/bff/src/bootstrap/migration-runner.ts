@@ -43,11 +43,10 @@ export function createPool(config: DbConfig): Pool {
 }
 
 function resolveBootstrapSqlFile(rootDir: string, target: MigrationTarget): string {
-  const relativeFile = path.join("scripts", "sql", "bootstrap", TARGET_TO_FILE[target]);
+  const relativeFile = path.join("infra", "sql", "bootstrap", TARGET_TO_FILE[target]);
   const candidates = [
     path.join(rootDir, relativeFile),
-    path.join(rootDir, "packages", "bff", relativeFile),
-    path.resolve(rootDir, "..", "..", "packages", "bff", relativeFile)
+    path.resolve(rootDir, "..", "..", relativeFile)
   ];
 
   const match = candidates.find((candidate) => existsSync(candidate));

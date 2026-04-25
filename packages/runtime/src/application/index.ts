@@ -10,6 +10,5 @@ export * from "./executor/submit-executor";
 export * from "./executor/runtime-executor";
 export * from "./function-registry";
 export * from "./manager-adapter";
-export * from "./orchestrator/runtime.orchestrator";
 export * from "./rule-engine";
 export * from "./ws-events";

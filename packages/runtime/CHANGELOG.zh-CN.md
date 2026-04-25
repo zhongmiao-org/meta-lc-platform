@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- refactor(contracts): 由 runtime 直接拥有 V2 runtime DSL、ViewDefinition、ExecutionPlan、node 与 runtime event contract。
+- refactor(executor): 将 manager event planning 收敛到 RuntimeExecutor，并移除 runtime orchestrator module。
+- refactor(contracts): 由 runtime 直接拥有执行契约，并消费 kernel 拥有的 ViewDefinition 与 node 结构契约。
 - feat(observability): 在 plan、node、permission、datasource 边界发出可选、非阻塞 runtime audit event。
 - feat(permission): query node 在 SQL 编译前接入 Permission AST Transform。
 - refactor(datasource): query node 改为通过共享 datasource adapter 契约执行。

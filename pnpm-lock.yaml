@@ -128,9 +128,6 @@ importers:
       '@zhongmiao/meta-lc-permission':
         specifier: workspace:*
         version: link:../permission
-      '@zhongmiao/meta-lc-runtime':
-        specifier: workspace:*
-        version: link:../runtime
       pg:
         specifier: ^8.13.1
         version: 8.20.0
@@ -141,19 +138,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.10
         version: 8.20.0
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
-  packages/migration:
-    dependencies:
-      '@zhongmiao/meta-lc-kernel':
-        specifier: workspace:*
-        version: link:../kernel
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.19.17
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -188,6 +172,9 @@ importers:
       '@zhongmiao/meta-lc-datasource':
         specifier: workspace:*
         version: link:../datasource
+      '@zhongmiao/meta-lc-kernel':
+        specifier: workspace:*
+        version: link:../kernel
       '@zhongmiao/meta-lc-permission':
         specifier: workspace:*
         version: link:../permission

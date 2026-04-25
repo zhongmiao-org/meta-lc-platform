@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import {
   executeMergeNode,
   MergeExecutorError,
-  type MergeNodeDefinition,
   type RuntimeContext,
   type RuntimeStateStore
 } from "../src";
+import type { MergeNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const runtimeState: RuntimeStateStore = {
   get(path: string): unknown {

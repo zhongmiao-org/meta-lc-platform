@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { executeRuntimeView, type ViewDefinition } from "../src";
+import type { ViewDefinition } from "@zhongmiao/meta-lc-kernel";
+import { executeRuntimeView } from "../src";
 
 test("executeRuntimeView compiles a view and executes through the runtime entrypoint", async () => {
   const view: ViewDefinition = {

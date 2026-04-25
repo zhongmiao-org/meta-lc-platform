@@ -1,12 +1,10 @@
 import {
   type ExecutionNode,
   type ExecutionPlan,
-  type NodeDefinition,
-  type OutputDefinition,
-  type SubmitDefinition,
   type ViewCompilerDependency,
   ViewCompilerError
 } from "../../types";
+import type { NodeDefinition, OutputDefinition, SubmitDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const EXPRESSION_PATTERN = /\{\{\s*([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*)\s*\}\}/g;
 const RUNTIME_CONTEXT_ROOTS = new Set(["input", "params", "user", "ctx", "context", "state"]);

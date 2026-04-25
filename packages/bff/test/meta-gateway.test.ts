@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AggregationService } from "../src/application/services/aggregation.service";
-import { MetaQueryService } from "../src/application/services/meta-query.service";
-import { MetaRegistryService } from "../src/application/services/meta-registry.service";
+import { MetaRegistryService } from "../src/infra/integration/meta-registry.service";
 import { CacheService } from "../src/infra/cache/cache.service";
 import { MetaController } from "../src/controller/http/meta.controller";
 
@@ -22,18 +20,19 @@ test("meta controller returns stable envelope and request id", async () => {
   assert.equal(first.items[0]?.id, "orders");
 });
 
-test("aggregation summary returns resource counts and updated timestamps", async () => {
+test("meta registry summary inputs expose resource counts and updated timestamps", async () => {
   const registry = new MetaRegistryService();
-  const aggregation = new AggregationService(registry);
+  const summary = await new MetaController(registry, new CacheService()).summary(
+    request("req-summary-direct"),
+    response({})
+  );
 
-  const summary = await aggregation.summarizeMeta();
-
-  assert.equal(summary.tables.count, 1);
-  assert.equal(summary.pages.count, 1);
-  assert.equal(summary.datasources.count, 1);
-  assert.equal(summary.rules.count, 1);
-  assert.equal(summary.permissions.count, 1);
-  assert.equal(summary.tables.updatedAt, "2026-04-20T00:00:00.000Z");
+  assert.equal(summary.summary.tables.count, 1);
+  assert.equal(summary.summary.pages.count, 1);
+  assert.equal(summary.summary.datasources.count, 1);
+  assert.equal(summary.summary.rules.count, 1);
+  assert.equal(summary.summary.permissions.count, 1);
+  assert.equal(summary.summary.tables.updatedAt, "2026-04-20T00:00:00.000Z");
 });
 
 test("meta summary endpoint uses cached aggregation envelope", async () => {
@@ -50,7 +49,7 @@ test("meta summary endpoint uses cached aggregation envelope", async () => {
 
 function createController(): MetaController {
   const registry = new MetaRegistryService();
-  return new MetaController(new MetaQueryService(registry, new CacheService(), new AggregationService(registry)));
+  return new MetaController(registry, new CacheService());
 }
 
 function request(requestId: string): { headers: Record<string, string> } {
