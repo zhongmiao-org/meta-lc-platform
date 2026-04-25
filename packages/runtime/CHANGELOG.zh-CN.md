@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 补充最终执行引擎拓扑中的 runtime 上下游关系说明。
 - fix(ci): 在 clean runner 的 runtime package-local test 前先构建 workspace 依赖。
 - chore(boundaries): 新增最终 Nx layer tags，并保持 runtime 是唯一允许同时依赖 kernel/query/permission/datasource/audit 的执行包。
 - chore(boundaries): 将 runtime manager-event 测试命名改为 interaction-event，并明确 RuntimeExecutor 是唯一底层执行入口，view/interaction 位于 facade 层。

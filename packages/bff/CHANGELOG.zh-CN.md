@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 在最终 gateway-only 拓扑中补充 BFF 上下游关系说明。
 - fix(ci): 在 clean runner 的 BFF package-local test 前先构建 workspace 依赖。
 - chore(boundaries): 新增最终 Nx layer tags，并将 BFF 依赖守护锁定为只能依赖 runtime/kernel。
 - chore(boundaries): 删除 mapper/repository/interface 残留，新增 gateway-only config，并收紧依赖守护，封板 BFF gateway-only 目录。

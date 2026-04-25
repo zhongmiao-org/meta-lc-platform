@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(readme): add upstream/downstream relationship notes for the final architecture flow.
 - chore(boundaries): add final Nx layer tags and lock audit as a passive package without workspace dependencies.
 - feat(sink): add an optional Postgres runtime audit sink that degrades without blocking runtime execution.
 - refactor(contracts): own QueryAuditLog and audit status contracts directly.

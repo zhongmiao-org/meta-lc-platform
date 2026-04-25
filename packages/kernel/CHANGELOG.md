@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(readme): add kernel upstream/downstream notes for metadata ownership and meta_db persistence.
 - fix(package): align the kernel package main/types entrypoints with the dependency-free clean build output.
 - chore(boundaries): own `DataScopeType` as a local structural literal and remove the permission package dependency so kernel has no workspace dependencies.
 - refactor(meta): own the demo meta registry seeds used by runtime gateway view lookup.

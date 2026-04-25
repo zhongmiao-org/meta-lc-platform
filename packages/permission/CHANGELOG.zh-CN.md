@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(readme): 明确 permission 上下游关系与仅 type-only 依赖 query AST/types 的边界。
 - fix(ci): 在 clean runner 的 permission package-local test 前先构建 query。
 - chore(boundaries): 新增最终 Nx layer tags，并将 permission 锁定为只能依赖 query。
 - refactor(contracts): 由 permission 直接拥有组织与数据域 DTO contract。
