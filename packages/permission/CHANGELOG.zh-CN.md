@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- fix(ci): 在 clean runner 的 permission package-local test 前先构建 query。
 - chore(boundaries): 新增最终 Nx layer tags，并将 permission 锁定为只能依赖 query。
 - refactor(contracts): 由 permission 直接拥有组织与数据域 DTO contract。
 - feat(permission-ast): 新增覆盖 tenant、self 与组织数据域的 Query AST transform。

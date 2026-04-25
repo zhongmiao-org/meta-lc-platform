@@ -16,8 +16,8 @@
     "@types/pg": "^8.11.10",
     "typescript": "^5.7.2"
   },
-  "main": "dist/kernel/src/index.js",
-  "types": "dist/kernel/src/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "nx": {
     "tags": ["layer:kernel"]
   }
