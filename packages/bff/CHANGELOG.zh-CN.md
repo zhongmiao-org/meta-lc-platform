@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(boundaries): 删除 BFF contracts 与数据执行依赖，让 view controller 只调用 runtime gateway facade。
 - refactor(gateway): 删除 BFF application 层，让 controller 只作为 thin runtime/kernel gateway，并仅保留 infra wiring。
 - refactor(contracts): BFF 改为消费 runtime、kernel、permission 所属 contract，不再依赖过渡 contracts 包。
 - feat(observability): 通过 BFF infra observer 持久化 runtime audit event，且不阻塞 view execution。

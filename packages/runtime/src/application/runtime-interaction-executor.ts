@@ -1,18 +1,18 @@
 import type { RuntimeManagerCommand, RuntimeManagerPlan } from "./executor/runtime-executor";
 
-export interface RuntimeManagerAdapter {
-  patchState?(patch: Record<string, unknown>, context: RuntimeManagerAdapterContext): void | Promise<void>;
-  refreshDatasource?(datasourceId: string, context: RuntimeManagerAdapterContext): unknown | Promise<unknown>;
-  runAction?(actionId: string, context: RuntimeManagerAdapterContext): unknown | Promise<unknown>;
+export interface RuntimeInteractionPort {
+  patchState?(patch: Record<string, unknown>, context: RuntimeInteractionContext): void | Promise<void>;
+  refreshDatasource?(datasourceId: string, context: RuntimeInteractionContext): unknown | Promise<unknown>;
+  runAction?(actionId: string, context: RuntimeInteractionContext): unknown | Promise<unknown>;
 }
 
-export interface RuntimeManagerAdapterContext {
+export interface RuntimeInteractionContext {
   state: Record<string, unknown>;
   commandIndex: number;
   plan: RuntimeManagerPlan;
 }
 
-export type RuntimeManagerCommandResult =
+export type RuntimeInteractionCommandResult =
   | {
       type: "patchState";
       patch: Record<string, unknown>;
@@ -28,32 +28,32 @@ export type RuntimeManagerCommandResult =
       result: unknown;
     };
 
-export interface RuntimeManagerExecutionRequest {
+export interface RuntimeInteractionExecutionRequest {
   plan: RuntimeManagerPlan;
-  adapter: RuntimeManagerAdapter;
+  port: RuntimeInteractionPort;
 }
 
-export interface RuntimeManagerExecutionResult {
+export interface RuntimeInteractionExecutionResult {
   nextState: Record<string, unknown>;
-  commandResults: RuntimeManagerCommandResult[];
+  commandResults: RuntimeInteractionCommandResult[];
   wsTopics: string[];
 }
 
-export async function executeRuntimeManagerPlan(
-  request: RuntimeManagerExecutionRequest
-): Promise<RuntimeManagerExecutionResult> {
+export async function executeRuntimeInteractionPlan(
+  request: RuntimeInteractionExecutionRequest
+): Promise<RuntimeInteractionExecutionResult> {
   let nextState = { ...request.plan.nextState };
-  const commandResults: RuntimeManagerCommandResult[] = [];
+  const commandResults: RuntimeInteractionCommandResult[] = [];
 
   for (const [commandIndex, command] of request.plan.managerCommands.entries()) {
-    const context: RuntimeManagerAdapterContext = {
+    const context: RuntimeInteractionContext = {
       state: nextState,
       commandIndex,
       plan: request.plan
     };
 
     if (command.type === "patchState") {
-      await request.adapter.patchState?.(command.patch, context);
+      await request.port.patchState?.(command.patch, context);
       nextState = {
         ...nextState,
         ...command.patch
@@ -66,7 +66,7 @@ export async function executeRuntimeManagerPlan(
     }
 
     if (command.type === "refreshDatasource") {
-      const result = await request.adapter.refreshDatasource?.(command.datasourceId, context);
+      const result = await request.port.refreshDatasource?.(command.datasourceId, context);
       commandResults.push({
         type: "refreshDatasource",
         datasourceId: command.datasourceId,
@@ -75,7 +75,7 @@ export async function executeRuntimeManagerPlan(
       continue;
     }
 
-    const result = await request.adapter.runAction?.(command.actionId, context);
+    const result = await request.port.runAction?.(command.actionId, context);
     commandResults.push({
       type: "runAction",
       actionId: command.actionId,
@@ -90,11 +90,11 @@ export async function executeRuntimeManagerPlan(
   };
 }
 
-export interface RecordingRuntimeManagerAdapter extends RuntimeManagerAdapter {
+export interface RecordingRuntimeInteractionPort extends RuntimeInteractionPort {
   readonly calls: RuntimeManagerCommand[];
 }
 
-export function createRecordingRuntimeManagerAdapter(): RecordingRuntimeManagerAdapter {
+export function createRecordingRuntimeInteractionPort(): RecordingRuntimeInteractionPort {
   const calls: RuntimeManagerCommand[] = [];
   return {
     calls,

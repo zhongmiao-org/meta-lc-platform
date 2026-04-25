@@ -3,7 +3,7 @@ import type {
   RuntimeWsBroadcastHandler,
   RuntimeWsBroadcastPublishOptions,
   RedisRuntimeWsStreamEntry
-} from "../types/runtime-ws.type";
+} from "./runtime-ws.type";
 
 export interface RuntimeWsBroadcastBus {
   publish(event: RuntimeManagerExecutedEvent, options: RuntimeWsBroadcastPublishOptions): Promise<void>;

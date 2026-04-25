@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createRuntimeManagerExecutionWsEvent,
-  type RuntimeManagerExecutionResult
+  type RuntimeInteractionExecutionResult
 } from "../src";
 
 const page = {
@@ -12,7 +12,7 @@ const page = {
 };
 
 test("createRuntimeManagerExecutionWsEvent summarizes manager command results", () => {
-  const executionResult: RuntimeManagerExecutionResult = {
+  const executionResult: RuntimeInteractionExecutionResult = {
     nextState: {
       filter: "PAID",
       shouldReload: true
@@ -44,7 +44,7 @@ test("createRuntimeManagerExecutionWsEvent summarizes manager command results", 
 });
 
 test("createRuntimeManagerExecutionWsEvent handles empty command results", () => {
-  const executionResult: RuntimeManagerExecutionResult = {
+  const executionResult: RuntimeInteractionExecutionResult = {
     nextState: {},
     commandResults: [],
     wsTopics: ["tenant.tenant-a.page.orders.instance.instance-1"]

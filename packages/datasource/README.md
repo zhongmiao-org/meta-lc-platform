@@ -15,7 +15,7 @@ English | [中文文档](./README_zh.md)
 ## Relationship With Other Packages
 
 - `runtime` consumes datasource adapters through a stable execution contract.
-- `bff` wires the concrete Postgres adapter into runtime view execution.
+- Runtime wires concrete Postgres adapters for page execution; BFF does not depend on this package.
 - `query` produces SQL that a datasource adapter can execute.
 - `permission` affects the constraints included before execution.
 - `kernel` remains separate; metadata versioning is not owned by this package.
@@ -40,5 +40,6 @@ pnpm --filter @zhongmiao/meta-lc-datasource test
 ## Boundary Notes
 
 - Keep adapter code focused on database execution and lifecycle.
+- Demo business mutations and org-scope reads belong here as Postgres adapters, not in BFF.
 - Do not add HTTP controller or runtime orchestration here.
 - Do not read BFF-specific request objects here.

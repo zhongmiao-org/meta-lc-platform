@@ -2,9 +2,8 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORKSPACE_DIR="$(cd "${ROOT_DIR}/../.." && pwd)"
-SEED_SQL="${ROOT_DIR}/scripts/sql/001_orders_demo.sql"
+WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SEED_SQL="${WORKSPACE_DIR}/infra/sql/001_orders_demo.sql"
 TMP_DIR="$(mktemp -d)"
 ENV_FILE="${WORKSPACE_DIR}/.env"
 EXPLICIT_PORT="${PORT:-}"
@@ -21,8 +20,6 @@ RUN_ID="${RUN_ID:-$(date +%s)}"
 PORT="${EXPLICIT_PORT:-$((16000 + RUN_ID % 1000))}"
 BFF_URL="${EXPLICIT_BFF_URL:-http://127.0.0.1:${PORT}}"
 NODE_ENV="${NODE_ENV:-development}"
-LC_DB_BOOTSTRAP_MODE="${LC_DB_BOOTSTRAP_MODE:-auto}"
-
 LC_DB_HOST="${LC_DB_HOST:-127.0.0.1}"
 LC_DB_PORT="${LC_DB_PORT:-5432}"
 LC_DB_USER="${LC_DB_USER:-lowcode}"
@@ -73,7 +70,7 @@ run_sql_file() {
   local sql_file="$2"
 
   (
-    cd "${ROOT_DIR}"
+    cd "${WORKSPACE_DIR}"
     node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "${database}" "${LC_DB_SSL}" "${sql_file}" <<'NODE'
 const { Client } = require("pg");
 const fs = require("node:fs");
@@ -92,6 +89,50 @@ const client = new Client({
   await client.connect();
   try {
     await client.query(fs.readFileSync(sqlFile, "utf8"));
+  } finally {
+    await client.end();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+NODE
+  )
+}
+
+create_database() {
+  local database="$1"
+
+  (
+    cd "${WORKSPACE_DIR}"
+    node - "${LC_DB_HOST}" "${LC_DB_PORT}" "${LC_DB_USER}" "${LC_DB_PASSWORD}" "postgres" "${LC_DB_SSL}" "${database}" <<'NODE'
+const { Client } = require("pg");
+
+const [host, port, user, password, database, sslRaw, targetDatabase] = process.argv.slice(2);
+const client = new Client({
+  host,
+  port: Number(port),
+  user,
+  password,
+  database,
+  ssl: sslRaw === "true" ? { rejectUnauthorized: false } : false
+});
+
+function quoteIdentifier(value) {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
+    throw new Error(`Invalid identifier: ${value}`);
+  }
+  return `"${value}"`;
+}
+
+(async () => {
+  await client.connect();
+  try {
+    await client.query(`CREATE DATABASE ${quoteIdentifier(targetDatabase)}`);
+  } catch (error) {
+    if (!String(error.message || error).toLowerCase().includes("already exists")) {
+      throw error;
+    }
   } finally {
     await client.end();
   }
@@ -198,7 +239,7 @@ if [[ ! -f "${SEED_SQL}" ]]; then
   exit 1
 fi
 
-if [[ ! -d "${ROOT_DIR}/node_modules" ]]; then
+if [[ ! -d "${WORKSPACE_DIR}/node_modules" ]]; then
   log "installing dependencies"
   (cd "${WORKSPACE_DIR}" && pnpm install)
 fi
@@ -206,11 +247,18 @@ fi
 log "building bff-server and dependencies"
 (cd "${WORKSPACE_DIR}" && pnpm --filter @zhongmiao/meta-lc-bff-server... build)
 
+log "bootstrapping databases through infra SQL"
+create_database "${LC_DB_META_NAME}"
+create_database "${LC_DB_BUSINESS_NAME}"
+create_database "${LC_DB_AUDIT_NAME}"
+run_sql_file "${LC_DB_META_NAME}" "${WORKSPACE_DIR}/infra/sql/bootstrap/100_meta_baseline.sql"
+run_sql_file "${LC_DB_BUSINESS_NAME}" "${WORKSPACE_DIR}/infra/sql/bootstrap/200_business_baseline.sql"
+run_sql_file "${LC_DB_AUDIT_NAME}" "${WORKSPACE_DIR}/infra/sql/bootstrap/300_audit_baseline.sql"
+
 log "starting bff"
 (
   cd "${WORKSPACE_DIR}"
   NODE_ENV="${NODE_ENV}" \
-  LC_DB_BOOTSTRAP_MODE="${LC_DB_BOOTSTRAP_MODE}" \
   LC_DB_HOST="${LC_DB_HOST}" \
   LC_DB_PORT="${LC_DB_PORT}" \
   LC_DB_USER="${LC_DB_USER}" \

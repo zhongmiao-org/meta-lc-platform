@@ -14,6 +14,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.29.7
         version: 2.31.0(@types/node@22.19.17)
+      '@types/pg':
+        specifier: ^8.20.0
+        version: 8.20.0
       '@typescript-eslint/parser':
         specifier: ^8.59.0
         version: 8.59.0(eslint@10.2.1)(typescript@5.9.3)
@@ -23,6 +26,9 @@ importers:
       nx:
         specifier: ^20.0.0
         version: 20.8.4
+      pg:
+        specifier: ^8.20.0
+        version: 8.20.0
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -44,10 +50,17 @@ importers:
         version: 5.9.3
 
   packages/audit:
+    dependencies:
+      pg:
+        specifier: ^8.13.1
+        version: 8.20.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
         version: 22.19.17
+      '@types/pg':
+        specifier: ^8.11.10
+        version: 8.20.0
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -69,24 +82,12 @@ importers:
       '@nestjs/websockets':
         specifier: ^10.4.22
         version: 10.4.22(@nestjs/common@10.4.22(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)(@nestjs/platform-socket.io@10.4.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@zhongmiao/meta-lc-audit':
-        specifier: workspace:*
-        version: link:../audit
-      '@zhongmiao/meta-lc-datasource':
-        specifier: workspace:*
-        version: link:../datasource
       '@zhongmiao/meta-lc-kernel':
         specifier: workspace:*
         version: link:../kernel
-      '@zhongmiao/meta-lc-permission':
-        specifier: workspace:*
-        version: link:../permission
       '@zhongmiao/meta-lc-runtime':
         specifier: workspace:*
         version: link:../runtime
-      pg:
-        specifier: ^8.13.1
-        version: 8.20.0
       redis:
         specifier: ^4.7.1
         version: 4.7.1
@@ -100,9 +101,6 @@ importers:
       '@types/node':
         specifier: ^22.10.2
         version: 22.19.17
-      '@types/pg':
-        specifier: ^8.11.10
-        version: 8.20.0
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

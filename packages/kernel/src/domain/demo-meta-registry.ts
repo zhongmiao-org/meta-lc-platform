@@ -1,9 +1,18 @@
 import type {
   DatasourceDefinition,
+  MetaDefinitionKind,
+  MetaDefinitionVersion,
   PermissionPolicy,
   ViewDefinition
-} from "@zhongmiao/meta-lc-kernel";
-import type { InMemoryMetaDefinitionSeed } from "@zhongmiao/meta-lc-kernel";
+} from "../types/shared.types";
+
+export interface DemoMetaDefinitionSeed<K extends MetaDefinitionKind = MetaDefinitionKind> {
+  appId: string;
+  kind: K;
+  id: string;
+  definition: MetaDefinitionVersion<K>["definition"];
+  metadata: Partial<MetaDefinitionVersion<K>["metadata"]>;
+}
 
 export const META_REGISTRY_UPDATED_AT = "2026-04-20T00:00:00.000Z";
 export const META_KERNEL_APP_ID = "orders-demo-app";
@@ -36,7 +45,7 @@ export const META_REGISTRY_VIEW_FIXTURES: Record<string, ViewDefinition> = {
 export const META_REGISTRY_DATASOURCE_FIXTURES: Record<string, DatasourceDefinition> = {
   "orders-query": {
     id: "orders-query",
-    type: "bff-query",
+    type: "runtime-query",
     description: "Orders runtime query datasource"
   }
 };
@@ -50,7 +59,7 @@ export const META_REGISTRY_PERMISSION_FIXTURES: Record<string, PermissionPolicy>
   }
 };
 
-export const META_KERNEL_DEFINITION_SEEDS: InMemoryMetaDefinitionSeed[] = [
+export const META_KERNEL_DEFINITION_SEEDS: DemoMetaDefinitionSeed[] = [
   ...Object.entries(META_REGISTRY_VIEW_FIXTURES).map(([id, definition]) => ({
     appId: META_KERNEL_APP_ID,
     kind: "view" as const,

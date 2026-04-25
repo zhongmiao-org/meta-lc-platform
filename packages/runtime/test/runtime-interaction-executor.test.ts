@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  createRecordingRuntimeManagerAdapter,
-  executeRuntimeManagerPlan,
+  createRecordingRuntimeInteractionPort,
+  executeRuntimeInteractionPlan,
   type RuntimeManagerPlan
 } from "../src";
 
@@ -37,12 +37,12 @@ function createPlan(): RuntimeManagerPlan {
   };
 }
 
-test("executeRuntimeManagerPlan executes commands in plan order", async () => {
+test("executeRuntimeInteractionPlan executes commands in plan order", async () => {
   const plan = createPlan();
-  const adapter = createRecordingRuntimeManagerAdapter();
-  const result = await executeRuntimeManagerPlan({ plan, adapter });
+  const port = createRecordingRuntimeInteractionPort();
+  const result = await executeRuntimeInteractionPlan({ plan, port });
 
-  assert.deepEqual(adapter.calls, plan.managerCommands);
+  assert.deepEqual(port.calls, plan.managerCommands);
   assert.deepEqual(result.commandResults, [
     { type: "patchState", patch: { shouldReload: true } },
     { type: "refreshDatasource", datasourceId: "orders", result: { datasourceId: "orders" } },
@@ -50,11 +50,11 @@ test("executeRuntimeManagerPlan executes commands in plan order", async () => {
   ]);
 });
 
-test("executeRuntimeManagerPlan merges patch state and forwards ws topics", async () => {
+test("executeRuntimeInteractionPlan merges patch state and forwards ws topics", async () => {
   const plan = createPlan();
-  const result = await executeRuntimeManagerPlan({
+  const result = await executeRuntimeInteractionPlan({
     plan,
-    adapter: createRecordingRuntimeManagerAdapter()
+    port: createRecordingRuntimeInteractionPort()
   });
 
   assert.deepEqual(result.nextState, {
@@ -64,15 +64,15 @@ test("executeRuntimeManagerPlan merges patch state and forwards ws topics", asyn
   assert.deepEqual(result.wsTopics, ["tenant.tenant-a.page.orders.instance.instance-1"]);
 });
 
-test("executeRuntimeManagerPlan fails fast when adapter throws", async () => {
+test("executeRuntimeInteractionPlan fails fast when port throws", async () => {
   const plan = createPlan();
   const calls: string[] = [];
 
   await assert.rejects(
     () =>
-      executeRuntimeManagerPlan({
+      executeRuntimeInteractionPlan({
         plan,
-        adapter: {
+        port: {
           patchState: () => {
             calls.push("patchState");
           },

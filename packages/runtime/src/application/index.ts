@@ -9,6 +9,6 @@ export * from "./executor/runtime-view-executor";
 export * from "./executor/submit-executor";
 export * from "./executor/runtime-executor";
 export * from "./function-registry";
-export * from "./manager-adapter";
+export * from "./runtime-interaction-executor";
 export * from "./rule-engine";
 export * from "./ws-events";

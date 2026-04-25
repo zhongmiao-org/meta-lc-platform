@@ -27,12 +27,12 @@ import type {
   RuntimeWsReplayStore,
   WsClientLike,
   WsServerLike
-} from "../../../contracts/interfaces/runtime-ws.interface";
+} from "./runtime-ws.interface";
 import type {
   PageSubscribedEvent,
   RuntimeWsBroadcastMessage,
   SubscribePageMessage
-} from "../../../contracts/types/runtime-ws.type";
+} from "./runtime-ws.type";
 
 @WebSocketGateway({ namespace: "runtime" })
 export class RuntimeWsGateway

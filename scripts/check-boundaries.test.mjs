@@ -26,18 +26,18 @@ test('rejects pg declarations in non-db-boundary package manifests', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/query/package.json: pg is forbidden in dependencies outside bff/datasource/kernel packages.',
-    'packages/query/package.json: @types/pg is forbidden in devDependencies outside bff/datasource/kernel packages.'
+    'packages/query/package.json: pg is forbidden in dependencies outside audit/datasource/kernel packages.',
+    'packages/query/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/kernel packages.'
   ]);
 });
 
 test('rejects pg imports outside db-boundary packages', () => {
   const workspace = createWorkspace({
-    'packages/audit/src/index.ts': 'import { Pool } from "pg";\n'
+    'packages/runtime/src/index.ts': 'import { Pool } from "pg";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/audit/src/index.ts: direct pg import is forbidden outside bff/datasource/kernel packages.'
+    'packages/runtime/src/index.ts: direct pg import is forbidden outside audit/datasource/kernel packages.'
   ]);
 });
 
@@ -48,7 +48,8 @@ test('rejects unapproved pg imports inside db-boundary packages', () => {
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/bff/src/random-db-helper.ts: unsupported BFF top-level source file.',
-    'packages/bff/src/random-db-helper.ts: direct pg import is not allowed here.'
+    'packages/bff/src/random-db-helper.ts: direct pg import is forbidden outside audit/datasource/kernel packages.',
+    'packages/bff/src/random-db-helper.ts: BFF cannot depend on pg.'
   ]);
 });
 
@@ -168,41 +169,65 @@ test('rejects runtime orchestrator directory and migration package', () => {
 
 test('rejects BFF type/interface mixing and implementation-local declarations', () => {
   const workspace = createWorkspace({
-    'packages/bff/src/contracts/interfaces/bad.interface.ts': 'export type Bad = {};\n',
-    'packages/bff/src/contracts/types/bad.type.ts': 'export interface Bad {}\n',
+    'packages/bff/src/controller/http/bad.interface.ts': 'export type Bad = {};\n',
+    'packages/bff/src/controller/http/bad.type.ts': 'export interface Bad {}\n',
     'packages/bff/src/controller/http/bad.service.ts': 'interface Bad {}\nexport class BadService {}\n',
     'packages/bff/src/dto/bad.dto.ts': 'export type BadDto = {};\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/bff/src/contracts/interfaces/bad.interface.ts: *.interface.ts files may not export type declarations.',
-    'packages/bff/src/contracts/types/bad.type.ts: *.type.ts files may not export interface declarations.',
+    'packages/bff/src/controller/http/bad.interface.ts: *.interface.ts files may not export type declarations.',
     'packages/bff/src/controller/http/bad.service.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
+    'packages/bff/src/controller/http/bad.type.ts: *.type.ts files may not export interface declarations.',
     'packages/bff/src/dto/bad.dto.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
     'packages/bff/src/dto/bad.dto.ts: BFF dto files must be class-only.'
   ]);
 });
 
-test('rejects BFF type and interface index aggregators', () => {
+test('rejects removed BFF contracts directory', () => {
   const workspace = createWorkspace({
     'packages/bff/src/contracts/types/index.ts': 'export type { QueryInput } from "./query.type";\n',
     'packages/bff/src/contracts/interfaces/index.ts': 'export { QueryService } from "./query.interface";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
+    'packages/bff/src/contracts: forbidden BFF source directory.',
     'packages/bff/src/contracts/interfaces/index.ts: type/interface index aggregators are forbidden in BFF.',
     'packages/bff/src/contracts/types/index.ts: type/interface index aggregators are forbidden in BFF.'
   ]);
 });
 
-test('rejects shared-layer reverse imports in BFF while allowing thin controller-to-infra delegation', () => {
+test('rejects BFF data dependencies while allowing thin controller-to-infra delegation', () => {
   const workspace = createWorkspace({
+    'packages/bff/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-datasource': 'workspace:*',
+        '@zhongmiao/meta-lc-permission': 'workspace:*',
+        pg: '^8.13.1'
+      },
+      devDependencies: {
+        '@types/pg': '^8.11.10'
+      }
+    }),
     'packages/bff/src/controller/http/query.controller.ts': 'import { Db } from "../../infra/integration/db";\n',
-    'packages/bff/src/contracts/types/bad.type.ts': 'import { QueryController } from "../../controller/http/query.controller";\nexport type Bad = {};\n'
+    'packages/bff/src/controller/http/bad.ts': [
+      'import { Pool } from "pg";',
+      'import { x } from "@zhongmiao/meta-lc-datasource";',
+      'import { y } from "@zhongmiao/meta-lc-permission";'
+    ].join('\n')
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/bff/src/contracts/types/bad.type.ts: shared contracts layer must not import controller (../../controller/http/query.controller).'
+    'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-datasource" is forbidden in dependencies.',
+    'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
+    'packages/bff/package.json: BFF dependency "pg" is forbidden in dependencies.',
+    'packages/bff/package.json: pg is forbidden in dependencies outside audit/datasource/kernel packages.',
+    'packages/bff/package.json: BFF dependency "@types/pg" is forbidden in devDependencies.',
+    'packages/bff/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/kernel packages.',
+    'packages/bff/src/controller/http/bad.ts: direct pg import is forbidden outside audit/datasource/kernel packages.',
+    'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-datasource.',
+    'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-permission.',
+    'packages/bff/src/controller/http/bad.ts: BFF cannot depend on pg.'
   ]);
 });
 

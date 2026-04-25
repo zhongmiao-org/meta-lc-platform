@@ -3,11 +3,11 @@ import {
   type RuntimeManagerExecutedEvent,
   type RuntimePageTopicRef
 } from "../types";
-import type { RuntimeManagerExecutionResult } from "./manager-adapter";
+import type { RuntimeInteractionExecutionResult } from "./runtime-interaction-executor";
 
 export interface CreateRuntimeManagerExecutionWsEventRequest {
   page: RuntimePageTopicRef;
-  executionResult: RuntimeManagerExecutionResult;
+  executionResult: RuntimeInteractionExecutionResult;
   requestId?: string;
 }
 

@@ -4,11 +4,11 @@ English | [中文文档](./README_zh.md)
 
 ## Package Role
 
-`bff` is the NestJS IO Gateway boundary package. It owns HTTP/WS DTOs, protocol controllers, bootstrap wiring, and infrastructure adapters; it must not own runtime, query, mutation, or meta orchestration.
+`bff` is the NestJS IO Gateway boundary package. It owns HTTP/WS DTOs, protocol controllers, and bootstrap wiring; it must not own runtime, query, mutation, datasource, permission, audit, or meta orchestration.
 
-BFF reads view definitions from the Kernel-backed meta registry before invoking the Runtime facade; it does not publish metadata or execute registry migrations itself.
+BFF invokes the Runtime gateway facade for page execution. Runtime performs view lookup, execution context construction, datasource wiring, permission context resolution, audit observation, and `RuntimeExecutor` execution.
 
-BFF also wires a runtime audit observer into the Runtime facade and persists observability events as an infrastructure concern; audit failures are logged and degraded without blocking page execution.
+`/meta/*` remains a thin read-only Kernel gateway. It returns HTTP envelopes only and does not publish metadata, execute registry migrations, or participate in page execution.
 
 ## Source Layout
 
@@ -23,20 +23,15 @@ bff/src/
 │   │       ├── health.controller.ts
 │   │       ├── operations.state.ts
 │   │       └── replay.store.ts
-│   └── cli/
 ├── infra/
 │   ├── repository/
 │   ├── integration/
 │   ├── cache/
 │   ├── types/
 │   └── interfaces/
-├── contracts/
-│   ├── types/
-│   └── interfaces/
 ├── mapper/
 ├── constants/
 ├── common/
-├── config/
 ├── bootstrap/
 ├── utils/
 └── index.ts
@@ -46,14 +41,11 @@ bff/src/
 
 - `controller/http/**` is the HTTP API entry layer.
 - `controller/ws/**` is the WebSocket entry layer. Runtime WebSocket files must stay under `controller/ws/runtime/**`.
-- `controller/cli/**` is the CLI/RPC entry layer.
-- `infra/**` owns repository, integration, cache, and external dependency implementations.
-- `contracts/**` owns cross-layer request/response shapes and behavior contracts shared by entry/application layers.
-- `mapper/**` owns conversion between protocol DTOs, contracts, and application inputs.
+- `infra/**` owns cache, kernel-backed registry integration, and WebSocket infrastructure helpers only.
+- `mapper/**` is reserved for protocol mapping and must not become an application orchestration layer.
 - `constants/**` owns package-level constants and provider tokens.
-- `config/**` owns environment/config loading.
 - `common/**` owns small framework-level helpers and exception utilities only.
-- `bootstrap/**` owns Nest module wiring, process startup, and migration/bootstrap runners.
+- `bootstrap/**` owns Nest module wiring and process startup.
 - `utils/**` is reserved for pure helpers and should stay small.
 
 ## Type And Interface Rules
@@ -68,20 +60,20 @@ bff/src/
 ## Dependency Direction
 
 ```text
-controller -> runtime facade / kernel registry / infra adapters
+controller/http -> runtime facade
+controller/http -> kernel registry
+controller/ws -> runtime WS contracts
 ```
 
-`bootstrap` wires the layers together. `common`, `contracts`, `config`, and `constants` may be shared support layers, but they must not import implementation layers back upward.
+`bootstrap` wires the module. `common` and `constants` may be shared support layers, but they must not import implementation layers back upward.
 
 ## Minimal Flow
 
 ```mermaid
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
-  Entry --> Kernel["Kernel meta registry"]
-  Entry --> Runtime["Runtime facade"]
-  Entry --> Infra["infra integration"]
-  Runtime --> Audit["runtime audit observer"]
+  Entry --> Runtime["Runtime gateway facade"]
+  Entry --> Kernel["Thin Kernel meta gateway"]
   Entry --> Response["HTTP response / WS event"]
 ```
 
@@ -96,8 +88,8 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 ## Boundary Notes
 
 - WebSocket is an entry protocol layer, not infra and not application orchestration.
-- Direct DB driver use must stay inside approved edge files and pass `pnpm test:boundaries`.
+- Direct DB driver use is forbidden in BFF source and package manifests.
 - Runtime UI and kernel source-of-truth logic must not be moved into BFF.
-- Runtime audit persistence is an infra integration and must not become request orchestration.
+- Runtime datasource, permission, audit, and org-scope wiring must stay inside runtime or the owning packages.
 - Do not restore legacy `/query` or `/mutation` endpoints; page data requests must use `POST /view/:name`.
-- Do not add `application/**`; BFF is only a Gateway invoking Runtime and reading Kernel metadata.
+- Do not add `application/**`, `contracts/**`, or `config/**`; BFF is only a Gateway invoking Runtime and exposing thin Kernel metadata reads.

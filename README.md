@@ -20,8 +20,6 @@ flowchart LR
   Runtime --> Datasource["packages/datasource<br/>Datasource adapter"]
   Runtime --> Audit["packages/audit<br/>Observability events"]
   Kernel --> MetaDb[("meta_db")]
-  Query --> Datasource
-  Permission --> Query
   Datasource --> BusinessDb[("business_db")]
   Audit --> AuditDb[("audit_db")]
 ```
@@ -30,20 +28,22 @@ flowchart LR
 
 | Package | Role | Docs |
 | --- | --- | --- |
-| `packages/runtime` | RuntimeExecutor execution engine, DAG/state execution contracts, manager planning, and WS event contracts. | [English](./packages/runtime/README.md) \| [中文文档](./packages/runtime/README_zh.md) |
+| `packages/runtime` | RuntimeExecutor execution engine, DAG/state execution contracts, runtime gateway facade, and WS event contracts. | [English](./packages/runtime/README.md) \| [中文文档](./packages/runtime/README_zh.md) |
 | `packages/kernel` | Structural metadata contracts, MetaSchema validation, definition registry, diff, and migration SQL helpers. | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
 | `packages/query` | Query DSL to SQL compilation. | [English](./packages/query/README.md) \| [中文文档](./packages/query/README_zh.md) |
 | `packages/permission` | RBAC and organization data-scope decisions. | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
 | `packages/datasource` | Postgres datasource configuration and execution adapter. | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
-| `packages/audit` | Query, mutation, migration, and access audit service contract. | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
-| `packages/bff` | NestJS IO Gateway for HTTP/WS DTOs, runtime invocation, and infra wiring. | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
+| `packages/audit` | Audit contracts and optional non-blocking runtime observability sinks. | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
+| `packages/bff` | NestJS IO Gateway for HTTP/WS DTOs and thin runtime/kernel controller entrypoints. | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
 
 ## Dependency Direction
 
 - `runtime`, `kernel`, `query`, `permission`, `datasource`, `bff`, and `audit` are the seven final architecture packages.
 - Migration lifecycle scripts live under `infra/`; `packages/migration` is intentionally removed.
 - Contracts live in the owning package; `contracts`, `shared`, `platform`, and `migration` packages are intentionally removed.
-- `bff` remains a gateway and must not own runtime orchestration.
+- `runtime -> kernel` is allowed so runtime can read structure definitions; `kernel -> runtime` is forbidden.
+- `query` compiles AST to SQL and must not depend on `datasource`.
+- `bff` remains a gateway and must not own runtime orchestration, datasource wiring, permission decisions, or DB access.
 - Deep cross-package imports are forbidden; import through package entrypoints.
 
 ## Runtime Entries
@@ -65,11 +65,11 @@ pnpm infra:query-gate
 
 ## Architectural Constraints
 
-- Frontend and runtime consumers must go through the BFF for data access and realtime updates.
+- Frontend consumers enter through the BFF for HTTP and realtime protocols; page execution then crosses exactly one boundary into the runtime facade.
 - `meta_db`, `business_db`, and `audit_db` stay separated.
 - Kernel remains the structural source for metadata and migration planning.
-- BFF is an IO Gateway only: it owns HTTP/WS DTOs, controllers, bootstrap wiring, and infra adapters, not orchestration.
-- RuntimeExecutor is the only execution engine; runtime packages must not embed business-specific rules.
+- BFF is an IO Gateway only: it owns HTTP/WS DTOs, controllers, and bootstrap wiring, not orchestration or data execution.
+- RuntimeExecutor is the only execution engine; runtime owns execution wiring and consumes query, permission, datasource, audit, and kernel boundaries.
 - DB driver access is intentionally restricted by boundary checks.
 
 ## Release Governance

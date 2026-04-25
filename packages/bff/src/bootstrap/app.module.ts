@@ -22,12 +22,7 @@ import {
   parseRuntimeWsReplayStoreMode
 } from "../controller/ws/runtime/replay.store";
 import { RuntimeWsGateway } from "../controller/ws/runtime/ws.gateway";
-import { AuditPersistenceService } from "../infra/integration/audit.service";
 import { MetaRegistryService } from "../infra/integration/meta-registry.service";
-import { OrgScopeService } from "../infra/integration/org-scope.service";
-import { PostgresQueryExecutorService } from "../infra/integration/postgres-query.service";
-import { RuntimeAuditObserverService } from "../infra/integration/runtime-audit-observer.service";
-import { RuntimeViewDependenciesService } from "../infra/integration/runtime-view-dependencies.service";
 
 @Module({
   imports: [],
@@ -35,11 +30,6 @@ import { RuntimeViewDependenciesService } from "../infra/integration/runtime-vie
   providers: [
     CacheService,
     MetaRegistryService,
-    PostgresQueryExecutorService,
-    RuntimeAuditObserverService,
-    RuntimeViewDependenciesService,
-    OrgScopeService,
-    AuditPersistenceService,
     {
       provide: RUNTIME_WS_INSTANCE_ID,
       useFactory: () => randomUUID()

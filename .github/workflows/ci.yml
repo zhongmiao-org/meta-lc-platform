@@ -50,7 +50,6 @@ jobs:
       - name: query-gate (e2e)
         env:
           NODE_ENV: development
-          LC_DB_BOOTSTRAP_MODE: ${{ vars.LC_DB_BOOTSTRAP_MODE || 'auto' }}
           LC_DB_HOST: ${{ vars.LC_DB_HOST }}
           LC_DB_PORT: ${{ vars.LC_DB_PORT || '5432' }}
           LC_DB_USER: ${{ secrets.LC_DB_USER }}
