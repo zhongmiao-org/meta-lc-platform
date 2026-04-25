@@ -1,8 +1,8 @@
 import {
   type ExecutionPlan,
-  type ViewDefinition,
   ViewCompilerError
 } from "../../types";
+import type { ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 import { buildExecutionPlan } from "./plan-builder";
 
 export function compileViewDefinition(view: ViewDefinition): ExecutionPlan {

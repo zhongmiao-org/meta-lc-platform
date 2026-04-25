@@ -2,7 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
-- refactor(contracts): own V2 runtime DSL, ViewDefinition, ExecutionPlan, node, and runtime event contracts directly.
+- refactor(executor): move manager event planning under RuntimeExecutor and remove the runtime orchestrator module.
+- refactor(contracts): own execution contracts directly while consuming kernel-owned ViewDefinition and node structure contracts.
 - feat(observability): emit optional non-blocking runtime audit events for plan, node, permission, and datasource boundaries.
 - feat(permission): route query nodes through Permission AST Transform before SQL compilation.
 - refactor(datasource): execute query nodes through the shared datasource adapter contract.

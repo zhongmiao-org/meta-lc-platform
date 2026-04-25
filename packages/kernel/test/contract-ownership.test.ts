@@ -2,19 +2,21 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type {
   DatasourceDefinition,
+  NodeDefinition,
   PermissionPolicy,
   ViewDefinition
 } from "../src";
 
-test("kernel exposes datasource and permission policy definitions with runtime-owned views", () => {
+test("kernel owns view, node, datasource, and permission policy structure contracts", () => {
+  const node: NodeDefinition = {
+    type: "query",
+    table: "orders",
+    fields: ["id"]
+  };
   const view: ViewDefinition = {
     name: "orders-workbench",
     nodes: {
-      orders: {
-        type: "query",
-        table: "orders",
-        fields: ["id"]
-      }
+      orders: node
     },
     output: {
       rows: "{{orders.rows}}"

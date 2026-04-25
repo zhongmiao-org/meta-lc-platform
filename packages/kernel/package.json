@@ -10,8 +10,7 @@
   },
   "dependencies": {
     "pg": "^8.13.1",
-    "@zhongmiao/meta-lc-permission": "workspace:*",
-    "@zhongmiao/meta-lc-runtime": "workspace:*"
+    "@zhongmiao/meta-lc-permission": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

@@ -1,13 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
-import { AggregationService } from "../application/services/aggregation.service";
-import { HealthService } from "../application/services/health.service";
-import { MetaQueryService } from "../application/services/meta-query.service";
-import { MetaRegistryService } from "../application/services/meta-registry.service";
-import { TemporaryViewAdapter } from "../application/services/temporary-view-adapter.service";
 import { CacheService } from "../infra/cache/cache.service";
-import { AuditLogService } from "../application/services/audit-log.service";
 import { HttpExceptionFilter } from "../common/http-exception.filter";
 import { MetaController } from "../controller/http/meta.controller";
 import { ViewController } from "../controller/http/view.controller";
@@ -29,6 +23,7 @@ import {
 } from "../controller/ws/runtime/replay.store";
 import { RuntimeWsGateway } from "../controller/ws/runtime/ws.gateway";
 import { AuditPersistenceService } from "../infra/integration/audit.service";
+import { MetaRegistryService } from "../infra/integration/meta-registry.service";
 import { OrgScopeService } from "../infra/integration/org-scope.service";
 import { PostgresQueryExecutorService } from "../infra/integration/postgres-query.service";
 import { RuntimeAuditObserverService } from "../infra/integration/runtime-audit-observer.service";
@@ -38,18 +33,13 @@ import { RuntimeViewDependenciesService } from "../infra/integration/runtime-vie
   imports: [],
   controllers: [HealthController, ViewController, MetaController, RuntimeWsHealthController],
   providers: [
-    AggregationService,
     CacheService,
-    HealthService,
-    MetaQueryService,
     MetaRegistryService,
     PostgresQueryExecutorService,
     RuntimeAuditObserverService,
     RuntimeViewDependenciesService,
     OrgScopeService,
     AuditPersistenceService,
-    TemporaryViewAdapter,
-    AuditLogService,
     {
       provide: RUNTIME_WS_INSTANCE_ID,
       useFactory: () => randomUUID()

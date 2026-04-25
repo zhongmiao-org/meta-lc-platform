@@ -4,7 +4,7 @@ English | [中文文档](./README_zh.md)
 
 ## Package Role
 
-`bff` is the NestJS Gateway boundary package. It keeps protocol entry points, Runtime invocation, domain model, infrastructure integrations, bootstrap logic, and shared contracts in strict layers; it must not own query or mutation orchestration.
+`bff` is the NestJS IO Gateway boundary package. It owns HTTP/WS DTOs, protocol controllers, bootstrap wiring, and infrastructure adapters; it must not own runtime, query, mutation, or meta orchestration.
 
 BFF reads view definitions from the Kernel-backed meta registry before invoking the Runtime facade; it does not publish metadata or execute registry migrations itself.
 
@@ -24,15 +24,6 @@ bff/src/
 │   │       ├── operations.state.ts
 │   │       └── replay.store.ts
 │   └── cli/
-├── application/
-│   ├── services/
-│   ├── types/
-│   └── interfaces/
-├── domain/
-│   ├── entities/
-│   ├── value-objects/
-│   ├── types/
-│   └── interfaces/
 ├── infra/
 │   ├── repository/
 │   ├── integration/
@@ -42,7 +33,6 @@ bff/src/
 ├── contracts/
 │   ├── types/
 │   └── interfaces/
-├── dto/
 ├── mapper/
 ├── constants/
 ├── common/
@@ -57,11 +47,8 @@ bff/src/
 - `controller/http/**` is the HTTP API entry layer.
 - `controller/ws/**` is the WebSocket entry layer. Runtime WebSocket files must stay under `controller/ws/runtime/**`.
 - `controller/cli/**` is the CLI/RPC entry layer.
-- `application/**` owns application services and runtime invocation. It must not contain transport controllers, direct SQL implementation, or query/mutation orchestration.
-- `domain/**` owns entities, value objects, domain data shapes, and domain behavior contracts.
 - `infra/**` owns repository, integration, cache, and external dependency implementations.
 - `contracts/**` owns cross-layer request/response shapes and behavior contracts shared by entry/application layers.
-- `dto/**` is class-only. Do not declare `type` or `interface` in DTO files.
 - `mapper/**` owns conversion between protocol DTOs, contracts, and application inputs.
 - `constants/**` owns package-level constants and provider tokens.
 - `config/**` owns environment/config loading.
@@ -81,7 +68,7 @@ bff/src/
 ## Dependency Direction
 
 ```text
-controller -> application -> domain -> infra
+controller -> runtime facade / kernel registry / infra adapters
 ```
 
 `bootstrap` wires the layers together. `common`, `contracts`, `config`, and `constants` may be shared support layers, but they must not import implementation layers back upward.
@@ -91,12 +78,11 @@ controller -> application -> domain -> infra
 ```mermaid
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
-  Entry --> App["application services"]
-  App --> Kernel["Kernel meta registry"]
-  App --> Runtime["Runtime facade"]
-  App --> Infra["infra integration"]
+  Entry --> Kernel["Kernel meta registry"]
+  Entry --> Runtime["Runtime facade"]
+  Entry --> Infra["infra integration"]
   Runtime --> Audit["runtime audit observer"]
-  App --> Response["HTTP response / WS event"]
+  Entry --> Response["HTTP response / WS event"]
 ```
 
 ## Commands
@@ -114,4 +100,4 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - Runtime UI and kernel source-of-truth logic must not be moved into BFF.
 - Runtime audit persistence is an infra integration and must not become request orchestration.
 - Do not restore legacy `/query` or `/mutation` endpoints; page data requests must use `POST /view/:name`.
-- Do not add `application/orchestrator/**`; BFF is only a Gateway invoking Runtime.
+- Do not add `application/**`; BFF is only a Gateway invoking Runtime and reading Kernel metadata.

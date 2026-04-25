@@ -2,14 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { NotFoundException } from "@nestjs/common";
 import type { RuntimeAuditEvent } from "@zhongmiao/meta-lc-audit";
-import { TemporaryViewAdapter } from "../src/application/services/temporary-view-adapter.service";
-import { MetaRegistryService } from "../src/application/services/meta-registry.service";
+import { ViewController } from "../src/controller/http/view.controller";
+import { MetaRegistryService } from "../src/infra/integration/meta-registry.service";
 
-test("temporary view adapter executes runtime view and propagates context into the query node", async () => {
+test("view gateway executes runtime view and propagates context into the query node", async () => {
   const queryCalls: Array<{ kind: string; sql: string; params: unknown[] }> = [];
   const auditEvents: RuntimeAuditEvent[] = [];
   const registry = new MetaRegistryService();
-  const adapter = new TemporaryViewAdapter(
+  const controller = new ViewController(
     registry,
     {
       async resolveContext(input: { tenantId: string; userId: string; roles: string[] }) {
@@ -71,7 +71,8 @@ test("temporary view adapter executes runtime view and propagates context into t
     } as never
   );
 
-  const result = await adapter.execute(
+  const headers: Record<string, string> = {};
+  const result = await controller.executeView(
     "orders-workbench",
     {
       tenantId: "tenant-a",
@@ -85,11 +86,12 @@ test("temporary view adapter executes runtime view and propagates context into t
         locale: "zh-CN"
       }
     },
-    "req-view-1"
+    { headers: { "x-request-id": "req-view-1" } },
+    response(headers)
   );
 
   assert.equal(result.requestId, "req-view-1");
-  assert.equal(result.viewName, "orders-workbench");
+  assert.equal(headers["x-request-id"], "req-view-1");
   assert.deepEqual(
     auditEvents.map((event) => event.type),
     [
@@ -111,7 +113,7 @@ test("temporary view adapter executes runtime view and propagates context into t
       params: ["tenant-a", "Ada", "user-a", "tenant-a", "dept-a", "user-a"]
     }
   ]);
-  assert.deepEqual(result.runtime.viewModel, {
+  assert.deepEqual(result.viewModel, {
     requestId: "req-view-1",
     tenantId: "tenant-a",
     owner: "Ada",
@@ -127,8 +129,8 @@ test("temporary view adapter executes runtime view and propagates context into t
   });
 });
 
-test("temporary view adapter returns a stable 404 when the view is missing", async () => {
-  const adapter = new TemporaryViewAdapter(
+test("view gateway returns a stable 404 when the view is missing", async () => {
+  const controller = new ViewController(
     new MetaRegistryService(),
     {
       async resolveContext() {
@@ -151,14 +153,15 @@ test("temporary view adapter returns a stable 404 when the view is missing", asy
 
   await assert.rejects(
     () =>
-      adapter.execute(
+      controller.executeView(
         "missing-view",
         {
           tenantId: "tenant-a",
           userId: "user-a",
           roles: ["USER"]
         },
-        "req-view-2"
+        { headers: { "x-request-id": "req-view-2" } },
+        response({})
       ),
     (error: unknown) => {
       assert.ok(error instanceof NotFoundException);
@@ -167,3 +170,11 @@ test("temporary view adapter returns a stable 404 when the view is missing", asy
     }
   );
 });
+
+function response(headers: Record<string, string>): { setHeader(name: string, value: string): void } {
+  return {
+    setHeader(name: string, value: string): void {
+      headers[name] = value;
+    }
+  };
+}

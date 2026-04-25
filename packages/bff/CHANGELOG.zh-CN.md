@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(gateway): 删除 BFF application 层，让 controller 只作为 thin runtime/kernel gateway，并仅保留 infra wiring。
 - refactor(contracts): BFF 改为消费 runtime、kernel、permission 所属 contract，不再依赖过渡 contracts 包。
 - feat(observability): 通过 BFF infra observer 持久化 runtime audit event，且不阻塞 view execution。
 - refactor(meta): demo view、datasource 与 permission definition 改为从 Kernel-backed registry 读取。

@@ -1,14 +1,16 @@
 import {
   type ExecutionNode,
-  type MergeNodeDefinition,
-  type MutationNodeDefinition,
-  type NodeDefinition,
-  type QueryNodeDefinition,
   type RuntimeContext,
   type RuntimeStateStore,
-  type TransformNodeDefinition,
   NodeExecutorError
 } from "../../types";
+import type {
+  MergeNodeDefinition,
+  MutationNodeDefinition,
+  NodeDefinition,
+  QueryNodeDefinition,
+  TransformNodeDefinition
+} from "@zhongmiao/meta-lc-kernel";
 
 export type NodeExecutionResult = unknown;
 

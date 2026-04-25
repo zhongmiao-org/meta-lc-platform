@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import {
   compileViewDefinition,
   type ExecutionPlan,
-  type ViewDefinition,
   ViewCompilerError
 } from "../src";
+import type { ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 
 test("compileViewDefinition compiles a single query node into a stable plan", () => {
   const plan = compileViewDefinition({

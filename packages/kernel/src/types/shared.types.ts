@@ -1,5 +1,66 @@
 import type { DataScopeType } from "@zhongmiao/meta-lc-permission";
-import type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";
+
+export type ViewExpression =
+  | string
+  | number
+  | boolean
+  | null
+  | ViewExpression[]
+  | { [key: string]: ViewExpression };
+
+export interface ViewDefinition {
+  name: string;
+  params?: Record<string, ViewExpression>;
+  nodes: Record<string, NodeDefinition>;
+  output: OutputDefinition;
+  submit?: SubmitDefinition;
+}
+
+export type NodeDefinition = QueryNodeDefinition | MutationNodeDefinition | TransformNodeDefinition | MergeNodeDefinition;
+
+export type MergeStrategy = "objectMerge" | "arrayConcat" | "custom";
+
+export interface BaseNodeDefinition {
+  type: "query" | "mutation" | "transform" | "merge";
+  [key: string]: unknown;
+}
+
+export interface QueryNodeDefinition extends BaseNodeDefinition {
+  type: "query";
+  request?: ViewExpression;
+  table?: ViewExpression;
+  fields?: ViewExpression[];
+  filters?: Record<string, ViewExpression>;
+  limit?: ViewExpression;
+}
+
+export interface MutationNodeDefinition extends BaseNodeDefinition {
+  type: "mutation";
+  model?: ViewExpression;
+  operation?: ViewExpression;
+  payload?: Record<string, ViewExpression>;
+  condition?: ViewExpression;
+}
+
+export interface TransformNodeDefinition extends BaseNodeDefinition {
+  type: "transform";
+}
+
+export interface MergeNodeDefinition extends BaseNodeDefinition {
+  type: "merge";
+  strategy?: MergeStrategy;
+  inputs?: Record<string, ViewExpression>;
+  hook?: string;
+}
+
+export interface OutputDefinition {
+  [key: string]: ViewExpression;
+}
+
+export interface SubmitDefinition {
+  nodes?: string[];
+  [key: string]: unknown;
+}
 
 export interface DatasourceDefinition {
   id: string;
@@ -262,5 +323,3 @@ export interface MetaDefinitionDiff {
 
 export type LatestMetaDefinitionVersion<K extends MetaDefinitionKind = MetaDefinitionKind> =
   MetaDefinitionVersion<K>;
-
-export type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";

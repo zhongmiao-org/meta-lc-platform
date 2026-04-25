@@ -1,6 +1,10 @@
 import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
 import { resolveExpression } from "../../domain/dsl/expression";
+import { parseRuntimePageDsl } from "../../domain/dsl/runtime-dsl-parser";
 import { resolveExecutionOrder } from "../../domain/graph/dep-resolver";
+import { buildDependencyGraph, planRefresh } from "../../domain/graph/runtime-dependency-graph";
+import { createFunctionRegistry } from "../function-registry";
+import { evaluateRules } from "../rule-engine";
 import { executeNode, type NodeExecutorDependencies } from "./node-executor";
 import {
   createRuntimeAuditDispatchContext,
@@ -18,13 +22,51 @@ import {
   type RuntimeQueryNodeResult,
   type RuntimeStateStore,
   type RuntimeValueNodeResult,
-  type RuntimeContext
+  type RuntimeContext,
+  buildRuntimePageTopic,
+  type ParsedRuntimePageDsl,
+  type RuntimeFunctionRegistry,
+  type RuntimePageDsl,
+  type RuntimePageTopicRef,
+  type RuntimeRefreshEvent,
+  type RuntimeRefreshPlan,
+  type RuntimeRuleEffectsPlan
 } from "../../types";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 
 export interface RuntimeExecutorDependencies {
   executors: NodeExecutorDependencies;
   auditObserver?: RuntimeAuditObserver;
+}
+
+export type RuntimeManagerCommand =
+  | {
+      type: "patchState";
+      patch: Record<string, unknown>;
+    }
+  | {
+      type: "refreshDatasource";
+      datasourceId: string;
+    }
+  | {
+      type: "runAction";
+      actionId: string;
+    };
+
+export interface RuntimeManagerEventRequest {
+  dsl: RuntimePageDsl | ParsedRuntimePageDsl;
+  state: Record<string, unknown>;
+  event: RuntimeRefreshEvent;
+  functionRegistry?: RuntimeFunctionRegistry;
+  pageInstance?: RuntimePageTopicRef;
+}
+
+export interface RuntimeManagerPlan {
+  refreshPlan: RuntimeRefreshPlan;
+  ruleEffects: RuntimeRuleEffectsPlan;
+  nextState: Record<string, unknown>;
+  managerCommands: RuntimeManagerCommand[];
+  wsTopics: string[];
 }
 
 export class RuntimeExecutor {
@@ -67,6 +109,32 @@ export class RuntimeExecutor {
       });
       throw error;
     }
+  }
+
+  async planManagerEvent(request: RuntimeManagerEventRequest): Promise<RuntimeManagerPlan> {
+    const parsedDsl = isParsedRuntimePageDsl(request.dsl) ? request.dsl : parseRuntimePageDsl(request.dsl);
+    const graph = buildDependencyGraph(parsedDsl);
+    const refreshPlan = planRefresh(graph, request.event);
+    const functionRegistry = request.functionRegistry ?? createFunctionRegistry();
+    const ruleEffects = await evaluateRules({
+      event: request.event,
+      state: request.state,
+      parsedDsl,
+      graph,
+      functionRegistry
+    });
+    const nextState = {
+      ...request.state,
+      ...ruleEffects.patchState
+    };
+
+    return {
+      refreshPlan,
+      ruleEffects,
+      nextState,
+      managerCommands: buildManagerCommands(refreshPlan, ruleEffects),
+      wsTopics: request.pageInstance ? [buildRuntimePageTopic(request.pageInstance)] : []
+    };
   }
 
   private async executeInternal(
@@ -167,6 +235,10 @@ export class RuntimeExecutor {
   }
 }
 
+export function planRuntimeManagerEvent(request: RuntimeManagerEventRequest): Promise<RuntimeManagerPlan> {
+  return new RuntimeExecutor().planManagerEvent(request);
+}
+
 function buildNodeLookup(nodes: ExecutionPlan["nodes"]): Map<string, ExecutionNode> {
   return new Map(nodes.map((node) => [node.id, node]));
 }
@@ -194,6 +266,55 @@ function validatePlanCoverage(plan: ExecutionPlan, nodeById: Map<string, Executi
       );
     }
   }
+}
+
+function buildManagerCommands(
+  refreshPlan: RuntimeRefreshPlan,
+  ruleEffects: RuntimeRuleEffectsPlan
+): RuntimeManagerCommand[] {
+  const commands: RuntimeManagerCommand[] = [];
+  if (Object.keys(ruleEffects.patchState).length > 0) {
+    commands.push({
+      type: "patchState",
+      patch: ruleEffects.patchState
+    });
+  }
+
+  for (const datasourceId of mergeStableIds(refreshPlan.datasourceIds, ruleEffects.refreshDatasourceIds)) {
+    commands.push({
+      type: "refreshDatasource",
+      datasourceId
+    });
+  }
+
+  for (const actionId of mergeStableIds(refreshPlan.actionIds, ruleEffects.runActionIds)) {
+    commands.push({
+      type: "runAction",
+      actionId
+    });
+  }
+  return commands;
+}
+
+function mergeStableIds(primary: string[], secondary: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  const append = (id: string): void => {
+    if (seen.has(id)) {
+      return;
+    }
+    seen.add(id);
+    result.push(id);
+  };
+
+  primary.forEach(append);
+  [...secondary].sort((left, right) => left.localeCompare(right)).forEach(append);
+  return result;
+}
+
+function isParsedRuntimePageDsl(value: RuntimePageDsl | ParsedRuntimePageDsl): value is ParsedRuntimePageDsl {
+  return "stateKeys" in value && "dependencies" in value;
 }
 
 function normalizeNodeResult(

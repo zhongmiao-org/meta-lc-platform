@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import {
   executeMutationNode,
   type MutationDatasourceAdapter,
-  type MutationNodeDefinition,
   type RuntimeContext,
   type RuntimeStateStore
 } from "../src";
+import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const runtimeInput = {
   tenantId: "tenant-a",

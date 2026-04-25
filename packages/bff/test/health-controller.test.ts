@@ -4,8 +4,8 @@ import { HealthController } from "../src/controller/http/health.controller";
 
 test("health controller returns the gateway health result without legacy orchestrators", async () => {
   const controller = new HealthController({
-    async check() {
-      return { ok: true };
+    async health() {
+      return true;
     }
   } as never);
 

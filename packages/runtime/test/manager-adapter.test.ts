@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import {
   createRecordingRuntimeManagerAdapter,
   executeRuntimeManagerPlan,
-  type RuntimeOrchestrationPlan
+  type RuntimeManagerPlan
 } from "../src";
 
-function createPlan(): RuntimeOrchestrationPlan {
+function createPlan(): RuntimeManagerPlan {
   return {
     refreshPlan: {
       triggeredBy: { type: "state.changed", stateKeys: ["filter"] },

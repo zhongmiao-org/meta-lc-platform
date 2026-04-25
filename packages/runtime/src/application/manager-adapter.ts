@@ -1,4 +1,4 @@
-import type { RuntimeOrchestrationPlan, RuntimeManagerCommand } from "./orchestrator/runtime.orchestrator";
+import type { RuntimeManagerCommand, RuntimeManagerPlan } from "./executor/runtime-executor";
 
 export interface RuntimeManagerAdapter {
   patchState?(patch: Record<string, unknown>, context: RuntimeManagerAdapterContext): void | Promise<void>;
@@ -9,7 +9,7 @@ export interface RuntimeManagerAdapter {
 export interface RuntimeManagerAdapterContext {
   state: Record<string, unknown>;
   commandIndex: number;
-  plan: RuntimeOrchestrationPlan;
+  plan: RuntimeManagerPlan;
 }
 
 export type RuntimeManagerCommandResult =
@@ -29,7 +29,7 @@ export type RuntimeManagerCommandResult =
     };
 
 export interface RuntimeManagerExecutionRequest {
-  plan: RuntimeOrchestrationPlan;
+  plan: RuntimeManagerPlan;
   adapter: RuntimeManagerAdapter;
 }
 

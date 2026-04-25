@@ -6,12 +6,12 @@ import {
   type ExecutionNode,
   type ExecutionPlan,
   type MutationDatasourceAdapter,
-  type MutationNodeDefinition,
   type NodeExecutorDependencies,
   type RuntimeContext,
   type RuntimeExecutorDependencies,
   type RuntimeStateStore
 } from "../src";
+import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const runtimeContext: RuntimeContext = {
   input: {

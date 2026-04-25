@@ -1,4 +1,11 @@
 import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
+import type {
+  MergeStrategy,
+  NodeDefinition,
+  OutputDefinition,
+  SubmitDefinition,
+  ViewExpression
+} from "@zhongmiao/meta-lc-kernel";
 export type {
   RuntimeAuditEvent,
   RuntimeAuditObserver
@@ -6,69 +13,7 @@ export type {
 
 export type MutationOperation = "create" | "update" | "delete";
 
-export type ViewExpression =
-  | string
-  | number
-  | boolean
-  | null
-  | ViewExpression[]
-  | { [key: string]: ViewExpression };
-
 export type Expression = ViewExpression;
-
-export interface ViewDefinition {
-  name: string;
-  params?: Record<string, ViewExpression>;
-  nodes: Record<string, NodeDefinition>;
-  output: OutputDefinition;
-  submit?: SubmitDefinition;
-}
-
-export type NodeDefinition = QueryNodeDefinition | MutationNodeDefinition | TransformNodeDefinition | MergeNodeDefinition;
-
-export type MergeStrategy = "objectMerge" | "arrayConcat" | "custom";
-
-export interface BaseNodeDefinition {
-  type: "query" | "mutation" | "transform" | "merge";
-  [key: string]: unknown;
-}
-
-export interface QueryNodeDefinition extends BaseNodeDefinition {
-  type: "query";
-  request?: ViewExpression;
-  table?: ViewExpression;
-  fields?: ViewExpression[];
-  filters?: Record<string, ViewExpression>;
-  limit?: ViewExpression;
-}
-
-export interface MutationNodeDefinition extends BaseNodeDefinition {
-  type: "mutation";
-  model?: ViewExpression;
-  operation?: ViewExpression;
-  payload?: Record<string, ViewExpression>;
-  condition?: ViewExpression;
-}
-
-export interface TransformNodeDefinition extends BaseNodeDefinition {
-  type: "transform";
-}
-
-export interface MergeNodeDefinition extends BaseNodeDefinition {
-  type: "merge";
-  strategy?: MergeStrategy;
-  inputs?: Record<string, ViewExpression>;
-  hook?: string;
-}
-
-export interface OutputDefinition {
-  [key: string]: ViewExpression;
-}
-
-export interface SubmitDefinition {
-  nodes?: string[];
-  [key: string]: unknown;
-}
 
 export interface ExecutionNode {
   id: string;
