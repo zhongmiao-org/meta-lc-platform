@@ -18,7 +18,7 @@
 - `bff` 加载 user/org/policy context 后传入 runtime execution。
 - `runtime` 在调用 query compiler 前执行 permission transform。
 - `query` 将 permission-transformed AST 编译为 SQL 与 params。
-- `contracts` 包含 API 边界共享的数据域 DTO。
+- `permission` 直接拥有 API 边界共享的数据域 DTO。
 - `audit` 可通过 BFF integration 记录 allow/deny 结果。
 
 ## 最小闭环

@@ -9,8 +9,9 @@
     "lint": "echo lint:kernel"
   },
   "dependencies": {
-    "@zhongmiao/meta-lc-contracts": "workspace:*",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "@zhongmiao/meta-lc-permission": "workspace:*",
+    "@zhongmiao/meta-lc-runtime": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

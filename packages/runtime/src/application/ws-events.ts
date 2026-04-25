@@ -2,7 +2,7 @@ import {
   createRuntimeManagerExecutedEvent,
   type RuntimeManagerExecutedEvent,
   type RuntimePageTopicRef
-} from "@zhongmiao/meta-lc-contracts";
+} from "../types";
 import type { RuntimeManagerExecutionResult } from "./manager-adapter";
 
 export interface CreateRuntimeManagerExecutionWsEventRequest {

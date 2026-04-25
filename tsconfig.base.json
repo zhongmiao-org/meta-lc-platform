@@ -29,14 +29,8 @@
       "@zhongmiao/meta-lc-audit": [
         "packages/audit/src"
       ],
-      "@zhongmiao/meta-lc-contracts": [
-        "packages/contracts/src"
-      ],
       "@zhongmiao/meta-lc-runtime": [
         "packages/runtime/src"
-      ],
-      "@zhongmiao/meta-lc-shared": [
-        "packages/shared/src"
       ],
       "@zhongmiao/meta-lc-bff": [
         "packages/bff/src"

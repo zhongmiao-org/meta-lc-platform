@@ -2,20 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const expectedAggregate = "@zhongmiao/meta-lc-platform";
 const expectedPrefix = "@zhongmiao/meta-lc-";
 const packageDirs = ["packages", "apps"];
 const violations = [];
-
-const aggregatePath = path.join(ROOT, "packages", "platform", "package.json");
-if (!fs.existsSync(aggregatePath)) {
-  violations.push("Missing aggregate package at packages/platform/package.json.");
-} else {
-  const aggregate = JSON.parse(fs.readFileSync(aggregatePath, "utf8"));
-  if (aggregate.name !== expectedAggregate) {
-    violations.push(`Aggregate package must be ${expectedAggregate}, received ${aggregate.name}.`);
-  }
-}
 
 for (const baseDir of packageDirs) {
   const base = path.join(ROOT, baseDir);

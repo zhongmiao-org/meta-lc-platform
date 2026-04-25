@@ -9,14 +9,14 @@ English | [中文文档](./README_zh.md)
 ## Responsibilities
 
 - Define audit log interfaces for mutation, migration, and access events.
-- Reuse `QueryAuditLog` from `contracts`.
+- Own `QueryAuditLog` and audit status contracts.
 - Provide `AuditService` with an injectable sink.
 - Provide non-blocking runtime observability event contracts for plan, node, permission, and datasource execution.
 - Default to a no-op sink when no persistence implementation is supplied.
 
 ## Relationship With Other Packages
 
-- Depends on `contracts` for query audit log shape.
+- Owns audit contracts directly; it does not depend on a transitional contracts package.
 - BFF can call audit service or equivalent integration after query/mutation outcomes.
 - Runtime can emit observability events through an optional `RuntimeAuditObserver`; observer failures must not affect execution semantics.
 - Migration orchestration can report migration audit records through this contract.

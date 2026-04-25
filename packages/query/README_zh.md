@@ -18,7 +18,7 @@
 - `runtime` 通过 query compiler adapter 在 datasource 执行前调用 query compiler。
 - `permission` 在最终 SQL 编译前 transform query AST。
 - `datasource` 执行编译后的 SQL；`query` 不依赖 `datasource`。
-- `contracts` 提供 V2 query node 形状，由 runtime 适配为 compiler input。
+- `runtime` 拥有 V2 query node 形状，并适配为 query compiler input。
 
 ## 最小闭环
 

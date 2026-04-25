@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildRuntimePageTopic,
   type RuntimePageDsl
-} from "@zhongmiao/meta-lc-contracts";
+} from "../src";
 import {
   orchestrateRuntimeEvent,
   parseRuntimePageDsl,

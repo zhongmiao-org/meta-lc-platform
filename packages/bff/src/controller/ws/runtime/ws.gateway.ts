@@ -13,7 +13,7 @@ import {
   buildRuntimePageTopic,
   RUNTIME_MANAGER_EXECUTED_EVENT,
   type RuntimeManagerExecutedEvent,
-} from "@zhongmiao/meta-lc-contracts";
+} from "@zhongmiao/meta-lc-runtime";
 import { InMemoryRuntimeWsReplayStore } from "./replay.store";
 import { InProcessRuntimeWsBroadcastBus } from "./broadcast.bus";
 import { RuntimeWsOperationsState } from "./operations.state";

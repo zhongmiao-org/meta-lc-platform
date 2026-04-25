@@ -4,7 +4,7 @@ import type {
   RuntimeNodeSchema,
   RuntimeRuleDefinition,
   RuntimePageDsl
-} from "@zhongmiao/meta-lc-contracts";
+} from "../../types";
 import { collectTemplateDependencies } from "./template-resolver";
 import {
   collectRuleStateDependencies,

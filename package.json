@@ -20,7 +20,7 @@
     "release:draft-notes": "node scripts/release/compose-draft-from-unreleased.mjs",
     "release:draft-notes:json": "node scripts/release/compose-draft-from-unreleased.mjs --json",
     "release:finalize-unreleased": "node scripts/release/finalize-unreleased-changelogs.mjs",
-    "release:next-version": "node -p \"require('./packages/platform/package.json').version\"",
+    "release:next-version": "node -p \"require('./package.json').version\"",
     "version:check": "node scripts/release/version-consistency.mjs",
     "changelog:gate": "node scripts/check-changelog-gate.mjs"
   },

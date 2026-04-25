@@ -1,8 +1,20 @@
-import type {
-  DatasourceDefinition,
-  PermissionPolicy,
-  ViewDefinition
-} from "@zhongmiao/meta-lc-contracts";
+import type { DataScopeType } from "@zhongmiao/meta-lc-permission";
+import type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";
+
+export interface DatasourceDefinition {
+  id: string;
+  type: string;
+  config?: Record<string, unknown>;
+  description?: string;
+}
+
+export interface PermissionPolicy {
+  id: string;
+  resource: string;
+  action: string;
+  roles: string[];
+  scope?: DataScopeType;
+}
 
 export type Primitive = string | number | boolean | null;
 
@@ -251,8 +263,4 @@ export interface MetaDefinitionDiff {
 export type LatestMetaDefinitionVersion<K extends MetaDefinitionKind = MetaDefinitionKind> =
   MetaDefinitionVersion<K>;
 
-export type {
-  DatasourceDefinition,
-  PermissionPolicy,
-  ViewDefinition
-} from "@zhongmiao/meta-lc-contracts";
+export type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";

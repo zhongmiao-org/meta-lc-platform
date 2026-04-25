@@ -12,6 +12,16 @@ const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/bff/src/infra/integration/postgres-query.service.ts',
   'packages/bff/src/bootstrap/migration-runner.ts'
 ]);
+const FORBIDDEN_PACKAGE_DIRS = [
+  'packages/contracts',
+  'packages/shared',
+  'packages/platform'
+];
+const FORBIDDEN_PACKAGE_REFS = [
+  '@zhongmiao/meta-lc-contracts',
+  '@zhongmiao/meta-lc-shared',
+  '@zhongmiao/meta-lc-platform'
+];
 const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-query',
@@ -64,9 +74,18 @@ const V2_CORE_CONTRACT_DECLARATIONS = [
 export function checkWorkspace(root = process.cwd()) {
   const packagesDir = path.join(root, 'packages');
   const violations = [];
+  checkForbiddenPackageDirs(root, violations);
   checkBffLayout(root, violations);
   walk(packagesDir, root, violations);
   return violations;
+}
+
+function checkForbiddenPackageDirs(root, violations) {
+  for (const forbidden of FORBIDDEN_PACKAGE_DIRS) {
+    if (fs.existsSync(path.join(root, forbidden))) {
+      violations.push(`${forbidden}: forbidden transitional package directory.`);
+    }
+  }
 }
 
 function checkBffLayout(root, violations) {
@@ -113,6 +132,7 @@ function sortedDirents(dir) {
 function checkSourceFile(file, root, violations) {
   const rel = normalizePath(path.relative(root, file));
   const content = fs.readFileSync(file, 'utf8');
+  checkForbiddenPackageRefs(rel, content, violations);
   checkBffSourceFile(rel, content, file, root, violations);
   checkV2CoreContractDefinitions(rel, content, violations);
 
@@ -196,13 +216,21 @@ function checkBffRuntimeImports(rel, content, violations) {
 }
 
 function checkV2CoreContractDefinitions(rel, content, violations) {
-  if (rel.startsWith('packages/contracts/src/')) return;
+  if (rel.startsWith('packages/runtime/src/')) return;
   if (!rel.endsWith('.ts')) return;
 
   for (const name of V2_CORE_CONTRACT_DECLARATIONS) {
     const declaration = new RegExp(`^\\s*export\\s+(?:interface|type)\\s+${name}\\b`, 'm');
     if (declaration.test(content)) {
-      violations.push(`${rel}: V2 core contract "${name}" must be defined in packages/contracts only.`);
+      violations.push(`${rel}: V2 core contract "${name}" must be defined in packages/runtime only.`);
+    }
+  }
+}
+
+function checkForbiddenPackageRefs(rel, content, violations) {
+  for (const ref of FORBIDDEN_PACKAGE_REFS) {
+    if (content.includes(ref)) {
+      violations.push(`${rel}: forbidden transitional package reference "${ref}".`);
     }
   }
 }
@@ -279,6 +307,9 @@ function checkPackageManifest(file, root, violations) {
   for (const blockName of dependencyBlocks) {
     const block = manifest[blockName] ?? {};
     for (const dependencyName of Object.keys(block)) {
+      if (FORBIDDEN_PACKAGE_REFS.includes(dependencyName)) {
+        violations.push(`${rel}: forbidden transitional dependency "${dependencyName}" in ${blockName}.`);
+      }
       if (!DB_DRIVER_DEPENDENCIES.has(dependencyName)) continue;
       if (!DB_DRIVER_PACKAGES.has(packageName)) {
         violations.push(

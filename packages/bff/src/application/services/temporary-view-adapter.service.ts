@@ -3,7 +3,7 @@ import {
   executeRuntimeView,
   type RuntimeContext,
 } from "@zhongmiao/meta-lc-runtime";
-import type { ViewDefinition } from "@zhongmiao/meta-lc-contracts";
+import type { ViewDefinition } from "@zhongmiao/meta-lc-runtime";
 import { MetaRegistryService } from "./meta-registry.service";
 import { OrgScopeService } from "../../infra/integration/org-scope.service";
 import { RuntimeViewDependenciesService } from "../../infra/integration/runtime-view-dependencies.service";

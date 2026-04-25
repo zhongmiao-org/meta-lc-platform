@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   RUNTIME_MANAGER_EXECUTED_EVENT,
   type RuntimeManagerExecutedEvent
-} from "@zhongmiao/meta-lc-contracts";
+} from "@zhongmiao/meta-lc-runtime";
 import {
   InProcessRuntimeWsBroadcastBus,
   parseRuntimeWsBroadcastBusMode,

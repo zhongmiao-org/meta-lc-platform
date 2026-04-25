@@ -1,4 +1,4 @@
-import type { RuntimeManagerExecutedEvent } from "@zhongmiao/meta-lc-contracts";
+import type { RuntimeManagerExecutedEvent } from "@zhongmiao/meta-lc-runtime";
 import { createClient } from "redis";
 import type {
   RedisRuntimeWsReplayClient,

@@ -2,7 +2,7 @@ import type {
   RuntimeActionStepDefinition,
   RuntimeDependencyTargetRef,
   RuntimeRefreshEvent
-} from "@zhongmiao/meta-lc-contracts";
+} from "../../types";
 import {
   createRefreshPlan,
   createRuntimeTargetRef,

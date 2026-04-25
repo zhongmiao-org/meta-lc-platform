@@ -1,7 +1,7 @@
 import type {
   RuntimeRuleEffectDefinition,
   RuntimeRuleValueDefinition
-} from "@zhongmiao/meta-lc-contracts";
+} from "../types";
 import {
   createEmptyRuleEffectsPlan,
   isSupportedRuleTrigger,

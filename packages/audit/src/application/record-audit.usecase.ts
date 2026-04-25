@@ -1,9 +1,9 @@
-import type { QueryAuditLog } from "@zhongmiao/meta-lc-contracts";
 import type {
   AccessAuditLog,
   AuditSink,
   MigrationAuditLog,
   MutationAuditLog,
+  QueryAuditLog,
   RuntimeAuditEvent
 } from "../domain/audit.entity";
 

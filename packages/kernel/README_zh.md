@@ -20,7 +20,7 @@
 - `migration` 复用 kernel 的 migration compile 与 safety helper。
 - `bff` 组合 kernel registry service 读取 meta definition，也可后续组合 kernel service 承载 migration orchestration。
 - `query`、`permission`、`datasource` 不能成为 kernel 依赖。
-- `platform` 后续可聚合 kernel 能力，但可运行 BFF 仍保持独立。
+- Kernel 直接拥有 datasource 与 permission policy definition contract；registry 消费由 `runtime` 拥有的 view definition。
 
 ## 最小闭环
 

@@ -1,12 +1,13 @@
-import { loadAggregatePackage, loadRootReleaseNotes, loadWorkspacePackages } from "./package-catalog.mjs";
+import fs from "node:fs";
+import { loadRootReleaseNotes, loadWorkspacePackages } from "./package-catalog.mjs";
 
 const args = process.argv.slice(2);
 const outputJson = args.includes("--json");
 const versionFlagIndex = args.indexOf("--version");
 const requestedVersion = versionFlagIndex >= 0 ? args[versionFlagIndex + 1] : "";
 
-const aggregate = loadAggregatePackage();
-const version = requestedVersion || aggregate.version;
+const rootPackage = JSON.parse(fs.readFileSync("package.json", "utf8"));
+const version = requestedVersion || rootPackage.version;
 const rootNotes = loadRootReleaseNotes();
 const packages = loadWorkspacePackages().filter((pkg) => pkg.unreleasedEn || pkg.unreleasedZh);
 
@@ -18,17 +19,16 @@ if (!rootNotes.unreleasedEn && !rootNotes.unreleasedZh && packages.length === 0)
 const catalog = loadWorkspacePackages();
 const metadata = {
   version,
-  aggregate: {
-    name: aggregate.name,
+  rootPackage: {
+    name: rootPackage.name,
     version,
-    packageJsonPath: aggregate.packageJsonPath
+    packageJsonPath: "package.json"
   },
   rootNotes,
   packages: packages.map((pkg) => ({
     name: pkg.name,
     version: pkg.version,
     dir: pkg.dir,
-    includedInAggregate: pkg.includedInAggregate,
     packageJsonPath: pkg.packageJsonPath,
     changelogPathEn: pkg.changelogPathEn,
     changelogPathZh: pkg.changelogPathZh,
@@ -43,14 +43,11 @@ if (outputJson) {
 }
 
 const lines = [
-  `# Release Draft: ${aggregate.name}@${version}`,
+  `# Release Draft: ${rootPackage.name}@${version}`,
   "",
-  "## Aggregate Package",
-  `- package: ${aggregate.name}@${version}`,
-  `- included dependencies: ${catalog
-    .filter((pkg) => pkg.includedInAggregate)
-    .map((pkg) => pkg.name)
-    .join(", ")}`,
+  "## Package Topology",
+  `- root package: ${rootPackage.name}@${version}`,
+  `- workspace packages: ${catalog.map((pkg) => pkg.name).join(", ")}`,
   ""
 ];
 

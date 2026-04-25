@@ -8,34 +8,28 @@
 
 ## 总体架构
 
-平台约束是所有前端与 runtime 数据访问必须经过 BFF。元数据通过 Meta Kernel 进入 `meta_db`；业务查询与变更通过 query、permission、datasource 访问 `business_db`；审计记录进入 `audit_db`。
+平台约束是所有前端与 runtime 数据访问必须经过 BFF。元数据通过 Meta Kernel 进入 `meta_db`；业务查询与变更通过 runtime、query、permission、datasource 访问 `business_db`；审计记录进入 `audit_db`。
 
 ```mermaid
 flowchart LR
-  Client["Runtime / Client"] --> BFF["packages/bff<br/>NestJS 编排层"]
-  BFF --> Kernel["packages/kernel<br/>MetaSchema、版本、diff、迁移计划"]
-  BFF --> Query["packages/query<br/>Query DSL -> SQL"]
-  BFF --> Permission["packages/permission<br/>RBAC + 数据域"]
-  BFF --> Datasource["packages/datasource<br/>Postgres adapter"]
-  BFF --> Audit["packages/audit<br/>审计 sink contract"]
-  BFF --> Runtime["packages/runtime<br/>DSL 编排 contract"]
+  Client["Runtime / Client"] --> BFF["packages/bff<br/>Gateway only"]
+  BFF --> Runtime["packages/runtime<br/>执行引擎 + runtime contract"]
+  BFF --> Kernel["packages/kernel<br/>Meta source of truth"]
+  Runtime --> Query["packages/query<br/>AST -> SQL"]
+  Runtime --> Permission["packages/permission<br/>AST transform + 数据域"]
+  Runtime --> Datasource["packages/datasource<br/>Datasource adapter"]
+  Runtime --> Audit["packages/audit<br/>观测事件"]
   Kernel --> MetaDb[("meta_db")]
   Query --> Datasource
   Permission --> Query
   Datasource --> BusinessDb[("business_db")]
   Audit --> AuditDb[("audit_db")]
-  Contracts["packages/contracts<br/>共享 API DTO"] --> BFF
-  Contracts --> Audit
-  Contracts --> Runtime
-  Shared["packages/shared<br/>SQL 工具"] --> BFF
 ```
 
 ## 子包索引
 
 | Package | 定位 | 文档 |
 | --- | --- | --- |
-| `packages/contracts` | 跨包 DTO、API contract、runtime event contract。 | [English](./packages/contracts/README.md) \| [中文文档](./packages/contracts/README_zh.md) |
-| `packages/shared` | SQL quoting 与参数格式化共享工具。 | [English](./packages/shared/README.md) \| [中文文档](./packages/shared/README_zh.md) |
 | `packages/kernel` | MetaSchema 校验、版本、diff、migration SQL、API/permission manifest 编译。 | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
 | `packages/query` | Query DSL 到 SQL 编译。 | [English](./packages/query/README.md) \| [中文文档](./packages/query/README_zh.md) |
 | `packages/permission` | RBAC 与组织数据域决策。 | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
@@ -44,21 +38,19 @@ flowchart LR
 | `packages/audit` | query、mutation、migration、access 审计服务 contract。 | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
 | `packages/runtime` | Runtime DSL parser、dependency graph、rule/function/orchestrator、WS event contract。 | [English](./packages/runtime/README.md) \| [中文文档](./packages/runtime/README_zh.md) |
 | `packages/bff` | NestJS BFF 编排层，串联 query、mutation、meta、cache、audit、websocket。 | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
-| `packages/platform` | 面向库消费者的聚合入口，不是可运行 BFF。 | [English](./packages/platform/README.md) \| [中文文档](./packages/platform/README_zh.md) |
 
 ## 依赖方向
 
-- `contracts` 和 `shared` 是底座包。
-- `kernel`、`query`、`permission`、`runtime`、`datasource`、`migration`、`audit` 提供聚焦的平台能力。
-- `bff` 把这些能力编排为 HTTP、WebSocket、query、mutation、meta、cache、audit 流程。
-- `platform` 是面向消费者的聚合包身份，不打包 `apps/bff-server`。
+- `runtime`、`kernel`、`query`、`permission`、`datasource`、`bff`、`audit` 是 7 个核心架构层包。
+- `migration` 保留为可选 schema lifecycle 包。
+- contract 由所属包拥有；`contracts`、`shared`、`platform` 包已被删除。
+- `bff` 只作为 gateway，不拥有 runtime orchestration。
 - 禁止 deep import，跨包引用必须通过 package entrypoint。
 
 ## 运行入口
 
 - `packages/bff`：NestJS BFF module 的库形态。
 - `apps/bff-server`：middleware 进程入口。
-- `packages/platform`：`@zhongmiao/meta-lc-platform` 聚合包入口。
 
 ## 常用命令
 

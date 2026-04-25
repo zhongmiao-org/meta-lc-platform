@@ -4,7 +4,7 @@ import {
   type RuntimePageTopicRef,
   type RuntimeRefreshEvent,
   type RuntimeRefreshPlan
-} from "@zhongmiao/meta-lc-contracts";
+} from "../../types";
 import { buildDependencyGraph, planRefresh } from "../../domain/graph/runtime-dependency-graph";
 import { createFunctionRegistry } from "../function-registry";
 import { evaluateRules } from "../rule-engine";

@@ -1,4 +1,4 @@
-import type { RoleDataPolicy } from "@zhongmiao/meta-lc-contracts";
+import type { RoleDataPolicy } from "@zhongmiao/meta-lc-permission";
 
 export type RolePolicyRow = {
   role_code: string;

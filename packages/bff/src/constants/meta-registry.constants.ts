@@ -2,7 +2,7 @@ import type {
   DatasourceDefinition,
   PermissionPolicy,
   ViewDefinition
-} from "@zhongmiao/meta-lc-contracts";
+} from "@zhongmiao/meta-lc-kernel";
 import type { InMemoryMetaDefinitionSeed } from "@zhongmiao/meta-lc-kernel";
 
 export const META_REGISTRY_UPDATED_AT = "2026-04-20T00:00:00.000Z";

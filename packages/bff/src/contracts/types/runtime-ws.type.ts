@@ -1,7 +1,7 @@
 import type {
   RuntimeManagerExecutedEvent,
   RuntimePageTopicRef
-} from "@zhongmiao/meta-lc-contracts";
+} from "@zhongmiao/meta-lc-runtime";
 
 export type RuntimeWsBroadcastMessage = {
   originId: string;
