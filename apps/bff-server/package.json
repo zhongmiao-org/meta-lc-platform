@@ -19,5 +19,8 @@
     "typescript": "^5.7.2"
   },
   "main": "dist/apps/bff-server/src/main.js",
-  "types": "dist/apps/bff-server/src/main.d.ts"
+  "types": "dist/apps/bff-server/src/main.d.ts",
+  "nx": {
+    "tags": ["layer:app"]
+  }
 }

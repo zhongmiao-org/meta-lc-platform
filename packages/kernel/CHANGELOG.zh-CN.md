@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 将 `DataScopeType` 作为本地结构字面量持有，移除 permission 包依赖，确保 kernel 不依赖任何 workspace package。
 - refactor(meta): 由 kernel 拥有 runtime gateway view lookup 使用的 demo meta registry seed。
 - refactor(contracts): 由 kernel 直接拥有 ViewDefinition 与 node 结构契约，并保持不依赖 runtime。
 - refactor(contracts): 由 kernel 直接拥有 datasource、permission policy、view 与 node 结构契约。

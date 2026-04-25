@@ -26,5 +26,8 @@
     "typescript": "^5.7.2"
   },
   "main": "dist/bff/src/index.js",
-  "types": "dist/bff/src/index.d.ts"
+  "types": "dist/bff/src/index.d.ts",
+  "nx": {
+    "tags": ["layer:bff"]
+  }
 }

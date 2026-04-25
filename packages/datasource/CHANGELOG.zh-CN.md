@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 新增最终 Nx layer tags，并禁止 datasource 依赖 workspace package。
 - chore(boundaries): 重命名 Postgres demo runtime adapters，显式标记 demo-orders 与 org-scope 边界。
 - feat(adapter): 新增 Postgres demo orders mutation 与 org-scope loader，让 runtime 拥有执行装配且 BFF 不再访问 DB。
 - feat(adapter): 新增稳定 datasource execution 契约与 Postgres adapter 结果归一化。

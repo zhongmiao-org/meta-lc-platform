@@ -19,8 +19,9 @@
 
 - Migration lifecycle scripts 在 infra 中复用 kernel 的 migration compile 与 safety helper。
 - `bff` 只能作为 thin gateway 读取 kernel registry definition，不承载 metadata orchestration。
-- `query`、`permission`、`datasource` 不能成为 kernel 依赖。
+- `query`、`permission`、`datasource`、`runtime`、`audit`、`bff` 不能成为 kernel 依赖。
 - Kernel 拥有结构契约；runtime 消费 view/node definition，只拥有执行契约。
+- `PermissionPolicy.scope` 是 kernel 本地结构字面量；permission 的 runtime data-scope DTO 留在 `permission`，两边只共享字符串语义。
 
 ## 最小闭环
 
@@ -45,5 +46,6 @@ pnpm --filter @zhongmiao/meta-lc-kernel test
 
 - Kernel 是元数据结构真源，必须独立于 BFF 编排。
 - 这里的 DB access 仅服务 meta-kernel persistence 与 migration audit。
+- Kernel 不依赖任何 workspace package；Postgres access 只允许用于 meta DB persistence。
 - 不在这里加入 HTTP、NestJS controller、runtime UI 或业务执行逻辑。
 - meta registry API 不执行 runtime plan；只负责 definition versioning。

@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(boundaries): add final Nx layer tags and lock query as a dependency-free AST/SQL compiler package.
 - docs(boundary): document runtime-owned query node contracts after package topology convergence.
 - feat(query-ast): support permission predicate shapes such as `IN`, `IS NULL`, and boolean literals.
 - feat(query-ast): add AST-first select query builder and SQL compiler while keeping the legacy request entrypoint.

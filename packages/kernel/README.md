@@ -19,8 +19,9 @@ English | [中文文档](./README_zh.md)
 
 - Migration lifecycle scripts reuse kernel migration compile and safety helpers from infra.
 - `bff` reads kernel registry definitions as a thin gateway and must not orchestrate metadata.
-- `query`, `permission`, and `datasource` must not become kernel dependencies.
+- `query`, `permission`, `datasource`, `runtime`, `audit`, and `bff` must not become kernel dependencies.
 - Kernel owns structure contracts; runtime consumes view/node definitions and owns only execution contracts.
+- `PermissionPolicy.scope` is a local structural literal; permission runtime data-scope DTOs live in `permission` and only share string semantics with kernel.
 
 ## Minimal Flow
 
@@ -45,5 +46,6 @@ pnpm --filter @zhongmiao/meta-lc-kernel test
 
 - Kernel is the metadata source of truth and must stay independent from BFF orchestration.
 - DB access here is limited to meta-kernel persistence and migration audit responsibilities.
+- Kernel has no workspace package dependencies; Postgres access is limited to meta DB persistence.
 - Do not add HTTP, NestJS controller, runtime UI, or business execution logic here.
 - Do not execute runtime plans from meta registry APIs; registry only versions definitions.

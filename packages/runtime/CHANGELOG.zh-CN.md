@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 新增最终 Nx layer tags，并保持 runtime 是唯一允许同时依赖 kernel/query/permission/datasource/audit 的执行包。
 - chore(boundaries): 将 runtime manager-event 测试命名改为 interaction-event，并明确 RuntimeExecutor 是唯一底层执行入口，view/interaction 位于 facade 层。
 - refactor(boundaries): 移除 manager-adapter 导出，并让 runtime gateway facade 接管 view lookup 与执行依赖装配。
 - refactor(executor): 将 manager event planning 收敛到 RuntimeExecutor，并移除 runtime orchestrator module。

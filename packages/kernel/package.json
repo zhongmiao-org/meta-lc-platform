@@ -9,8 +9,7 @@
     "lint": "echo lint:kernel"
   },
   "dependencies": {
-    "pg": "^8.13.1",
-    "@zhongmiao/meta-lc-permission": "workspace:*"
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
@@ -18,5 +17,8 @@
     "typescript": "^5.7.2"
   },
   "main": "dist/kernel/src/index.js",
-  "types": "dist/kernel/src/index.d.ts"
+  "types": "dist/kernel/src/index.d.ts",
+  "nx": {
+    "tags": ["layer:kernel"]
+  }
 }

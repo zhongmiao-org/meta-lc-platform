@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(boundaries): add final Nx layer tags and keep runtime as the only package allowed to depend on kernel/query/permission/datasource/audit together.
 - chore(boundaries): rename runtime manager-event tests to interaction-event tests and document RuntimeExecutor as the only bottom execution entry with view/interaction facades above it.
 - refactor(boundaries): remove the manager-adapter export and make the runtime gateway facade own view lookup plus execution dependency wiring.
 - refactor(executor): move manager event planning under RuntimeExecutor and remove the runtime orchestrator module.
