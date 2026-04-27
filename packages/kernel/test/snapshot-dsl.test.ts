@@ -9,7 +9,7 @@ import {
   validateSnapshotV1
 } from "../src/domain/snapshot-dsl";
 import { assertMigrationSafety } from "../src/domain/migration-safety";
-import type { MigrationDslV1, SnapshotV1 } from "../src/core/types";
+import type { MigrationDslV1, SnapshotV1 } from "../src/core/interfaces";
 
 function createSnapshot(version: string, tables: SnapshotV1["tables"]): SnapshotV1 {
   const payload = {

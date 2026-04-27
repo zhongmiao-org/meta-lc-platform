@@ -2,10 +2,10 @@ import type {
   DatasourceDefinition,
   MetaDefinitionByKind,
   MetaDefinitionDiff,
-  MetaDefinitionKind,
   PermissionPolicy,
   ViewDefinition
-} from "../core/types/shared.types";
+} from "../core/interfaces";
+import type { MetaDefinitionKind } from "../core/types";
 
 export function validateMetaDefinition<K extends MetaDefinitionKind>(
   kind: K,

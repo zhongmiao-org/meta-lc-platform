@@ -1,9 +1,4 @@
-export type DataScopeType =
-  | "SELF"
-  | "DEPT"
-  | "DEPT_AND_CHILDREN"
-  | "CUSTOM_ORG_SET"
-  | "TENANT_ALL";
+import type { DataScopeType } from "../types";
 
 export interface RoleDataPolicy {
   role: string;

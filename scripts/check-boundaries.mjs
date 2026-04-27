@@ -418,6 +418,9 @@ function checkCommonCoreFile(rel, content, file, root, violations) {
   if (rel.includes('/src/core/types/') && hasValueExportDeclaration(content)) {
     violations.push(`${rel}: core types files may not export runtime values.`);
   }
+  if (rel.includes('/src/core/types/') && /^\s*(?:export\s+)?interface\s+\w+/m.test(content)) {
+    violations.push(`${rel}: core types files may not export interface declarations.`);
+  }
 
   if (rel.includes('/src/core/interfaces/')) {
     if (hasExportedTypeDeclaration(content)) {
@@ -430,6 +433,10 @@ function checkCommonCoreFile(rel, content, file, root, violations) {
 }
 
 function checkCommonFileSemanticPurity(rel, content, file, root, violations) {
+  if (rel.endsWith('/shared.types.ts') || rel.endsWith('.types.ts')) {
+    violations.push(`${rel}: shared *.types.ts bucket files are forbidden; use *.type.ts or *.interface.ts.`);
+  }
+
   if (rel.endsWith('.entity.ts')) {
     if (/^\s*export\s+interface\s+\w+/m.test(content)) {
       violations.push(`${rel}: *.entity.ts files may not export interface declarations.`);

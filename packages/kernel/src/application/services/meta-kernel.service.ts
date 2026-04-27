@@ -9,7 +9,6 @@ import { validateSchema } from "../../core/utils";
 import type {
   DatasourceDefinition,
   MetaDefinitionDiff,
-  MetaDefinitionKind,
   MetaDefinitionPublishInput,
   MetaDefinitionVersion,
   MetaSchema,
@@ -17,7 +16,8 @@ import type {
   MigrationExecutionOptions,
   PermissionPolicy,
   ViewDefinition
-} from "../../core/types/shared.types";
+} from "../../core/interfaces";
+import type { MetaDefinitionKind } from "../../core/types";
 
 export class MetaKernelService {
   constructor(private readonly repository: MetaKernelRepositoryPort) {}

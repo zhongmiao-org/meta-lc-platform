@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
 import type {
   CompiledMigrationSql,
-  MigrationAction,
   MigrationDslV1,
   SnapshotV1
-} from "../core/types/shared.types";
+} from "../core/interfaces";
+import type { MigrationAction } from "../core/types";
 import { diffSchemas } from "./schema-diff";
 import { createTableSql, quoteIdentifier, toColumnDefinition, toSqlType } from "../utils/sql-utils";
 

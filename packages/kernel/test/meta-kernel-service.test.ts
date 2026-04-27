@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { InMemoryMetaKernelRepository, MetaKernelService } from "../src";
-import type { MetaVersion } from "../src/core/types";
+import type { MetaVersion } from "../src/core/interfaces";
 
 function createVersion(version: number, schema: MetaVersion["schema"]): MetaVersion {
   return {

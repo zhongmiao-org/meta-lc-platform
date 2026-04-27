@@ -1,4 +1,4 @@
-import type { MigrationGuardOptions, MigrationSafetyReport } from "../core/types";
+import type { MigrationGuardOptions, MigrationSafetyReport } from "../core/interfaces";
 
 const DESTRUCTIVE_PATTERNS: RegExp[] = [
   /\bDROP\s+TABLE\b/i,

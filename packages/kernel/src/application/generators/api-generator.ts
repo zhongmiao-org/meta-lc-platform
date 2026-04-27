@@ -1,10 +1,10 @@
 import type {
-  ApiRouteOperation,
   CompiledApiRoute,
   CompiledApiRouteManifest,
   MetaSchema,
   MetaTable
-} from "../../core/types/shared.types";
+} from "../../core/interfaces";
+import type { ApiRouteOperation } from "../../core/types";
 import { validateSchema } from "../../core/utils";
 import { quoteIdentifier } from "../../utils/sql-utils";
 

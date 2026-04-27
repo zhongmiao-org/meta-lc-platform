@@ -1,2 +1,1 @@
-export * from "./shared.types";
-export * from "./migration-safety.types";
+export type * from "./kernel.type";

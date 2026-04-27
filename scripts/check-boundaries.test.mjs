@@ -233,6 +233,8 @@ test('enforces common package file semantic purity', () => {
     'packages/audit/src/domain/audit.entity.ts': 'export interface AuditRecord {}\nexport type AuditStatus = "success";\nexport class AuditEntity {}\n',
     'packages/kernel/src/core/interfaces/bad.interface.ts': 'import { value } from "../utils";\nexport type Bad = {};\nexport const bad = value;\n',
     'packages/query/src/core/types/bad.type.ts': 'import { value } from "../utils";\nexport interface Bad {}\nexport function makeBad() {}\n',
+    'packages/permission/src/core/types/shared.types.ts': 'export type Bad = {};\n',
+    'packages/kernel/src/core/types/migration-safety.types.ts': 'export interface MigrationGuardOptions {}\n',
     'packages/runtime/src/domain/graph/bad.ts': 'import { x } from "../../core";\n',
     'packages/runtime/src/core/types/bad.ts': 'export const bad = true;\n',
     'packages/datasource/src/core/interfaces/bad.ts': 'export type Bad = {};\nexport class Bad {}\n'
@@ -248,10 +250,14 @@ test('enforces common package file semantic purity', () => {
     'packages/kernel/src/core/interfaces/bad.interface.ts: *.interface.ts files may only export interface declarations.',
     'packages/kernel/src/core/interfaces/bad.interface.ts: core interfaces files may not export type declarations.',
     'packages/kernel/src/core/interfaces/bad.interface.ts: core interfaces files may not export runtime values.',
+    'packages/kernel/src/core/types/migration-safety.types.ts: shared *.types.ts bucket files are forbidden; use *.type.ts or *.interface.ts.',
+    'packages/kernel/src/core/types/migration-safety.types.ts: core types files may not export interface declarations.',
+    'packages/permission/src/core/types/shared.types.ts: shared *.types.ts bucket files are forbidden; use *.type.ts or *.interface.ts.',
     'packages/query/src/core/types/bad.type.ts: *.type.ts files may only use import type declarations.',
     'packages/query/src/core/types/bad.type.ts: *.type.ts files may not export interface declarations.',
     'packages/query/src/core/types/bad.type.ts: *.type.ts files may only export type declarations.',
     'packages/query/src/core/types/bad.type.ts: core types files may not export runtime values.',
+    'packages/query/src/core/types/bad.type.ts: core types files may not export interface declarations.',
     'packages/runtime/src/core/types/bad.ts: core types files may not export runtime values.',
     'packages/runtime/src/domain/graph/bad.ts: package-internal source must not import the core root barrel (../../core).'
   ]);
@@ -296,7 +302,11 @@ test('rejects misplaced structure and execution contract definitions', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
+    'packages/kernel/src/core/types/shared.types.ts: shared *.types.ts bucket files are forbidden; use *.type.ts or *.interface.ts.',
+    'packages/kernel/src/core/types/shared.types.ts: core types files may not export interface declarations.',
     'packages/kernel/src/core/types/shared.types.ts: execution contract "ExecutionPlan" must be defined in packages/runtime only.',
+    'packages/runtime/src/core/types/shared.types.ts: shared *.types.ts bucket files are forbidden; use *.type.ts or *.interface.ts.',
+    'packages/runtime/src/core/types/shared.types.ts: core types files may not export interface declarations.',
     'packages/runtime/src/core/types/shared.types.ts: structure contract "ViewDefinition" must be defined in packages/kernel only.'
   ]);
 });

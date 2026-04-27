@@ -1,4 +1,4 @@
-import type { CompiledPermissionManifest, CompiledPermissionRule, SnapshotPermission } from "../../core/types/shared.types";
+import type { CompiledPermissionManifest, CompiledPermissionRule, SnapshotPermission } from "../../core/interfaces";
 
 export function compilePermissionManifest(permissions: SnapshotPermission[]): CompiledPermissionManifest {
   if (!Array.isArray(permissions)) {

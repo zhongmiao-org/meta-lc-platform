@@ -5,7 +5,7 @@ import {
   compileSelectAst,
   compileSelectQuery
 } from "../src/domain/query-compiler";
-import type { SelectQueryAst } from "../src/core/types";
+import type { SelectQueryAst } from "../src/core/interfaces";
 
 test("buildSelectQueryAst builds a select AST from legacy query request", () => {
   const ast = buildSelectQueryAst({

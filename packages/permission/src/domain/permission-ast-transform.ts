@@ -3,7 +3,7 @@ import type {
   DataScopeDecision,
   OrgScopeContext,
   PermissionContext
-} from "../core/types/shared.types";
+} from "../core/interfaces";
 import { resolveDataScope } from "./permission-engine";
 
 export interface PermissionAstTransformContext extends PermissionContext {

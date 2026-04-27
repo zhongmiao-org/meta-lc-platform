@@ -1,1 +1,1 @@
-export * from "./shared.types";
+export type * from "./permission.type";

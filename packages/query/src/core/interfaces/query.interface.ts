@@ -1,4 +1,8 @@
-export type QueryScalarValue = string | number | boolean;
+import type {
+  QueryComparisonOperator,
+  QueryPredicate,
+  QueryScalarValue
+} from "../types";
 
 export interface QueryRequest {
   table: string;
@@ -25,8 +29,6 @@ export interface QueryFieldRef {
 export interface QuerySelectItem extends QueryFieldRef {
   alias?: string;
 }
-
-export type QueryComparisonOperator = "eq" | "ilike";
 
 export interface QueryComparisonPredicate {
   type: "comparison";
@@ -56,13 +58,6 @@ export interface QueryLogicalPredicate {
   operator: "and" | "or";
   predicates: QueryPredicate[];
 }
-
-export type QueryPredicate =
-  | QueryComparisonPredicate
-  | QueryInPredicate
-  | QueryIsNullPredicate
-  | QueryLiteralPredicate
-  | QueryLogicalPredicate;
 
 export interface SelectQueryAst {
   type: "select";

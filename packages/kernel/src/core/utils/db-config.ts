@@ -1,4 +1,4 @@
-import type { DbConfig } from "../types/shared.types";
+import type { DbConfig } from "../interfaces";
 
 function readInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value);

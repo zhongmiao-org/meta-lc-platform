@@ -1,10 +1,10 @@
 import type {
-  MetaDefinitionKind,
   MetaDefinitionPublishInput,
   MetaDefinitionVersion,
   MetaSchema,
   MetaVersion
-} from "../../core/types/shared.types";
+} from "../../core/interfaces";
+import type { MetaDefinitionKind } from "../../core/types";
 
 export interface InMemoryMetaDefinitionSeed<K extends MetaDefinitionKind = MetaDefinitionKind> {
   appId: string;

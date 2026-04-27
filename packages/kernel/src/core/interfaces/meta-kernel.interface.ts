@@ -1,11 +1,13 @@
-import type { MigrationGuardOptions } from "../types";
+import type { MigrationGuardOptions } from "./migration-safety.interface";
 import type {
-  MetaDefinitionKind,
   MetaDefinitionPublishInput,
   MetaDefinitionVersion,
   MetaSchema,
   MetaVersion
-} from "../types/shared.types";
+} from "./kernel.interface";
+import type {
+  MetaDefinitionKind,
+} from "../types";
 
 export interface MetaKernelMigrationExecutionContext {
   appId: string;

@@ -7,7 +7,7 @@ import type {
   MetaTenant,
   SnapshotPermission,
   SnapshotRelation
-} from "../types/shared.types";
+} from "../interfaces";
 import { REQUIRED_ROOT_KEYS } from "../constants";
 
 export function validateSchema(schema: MetaSchema): void {
