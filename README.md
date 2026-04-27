@@ -30,7 +30,6 @@ flowchart LR
   Client --> BFFServer
   BFFServer --> BFF
   BFF --> Runtime
-  BFF --> Kernel
   Runtime --> Kernel
   Runtime --> Permission
   Runtime --> Query
@@ -56,18 +55,19 @@ flowchart LR
 | `packages/permission` | RBAC and organization data-scope decisions. | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
 | `packages/datasource` | Postgres datasource configuration and execution adapter. | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
 | `packages/audit` | Audit contracts and optional non-blocking runtime observability sinks. | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
-| `packages/bff` | NestJS IO Gateway for HTTP/WS DTOs and thin runtime/kernel controller entrypoints. | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
+| `packages/bff` | NestJS IO Gateway for HTTP/WS DTOs, runtime controller entrypoints, request-id, and error mapping. | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
 
 ## Dependency Direction
 
 - `runtime`, `kernel`, `query`, `permission`, `datasource`, `bff`, and `audit` are the seven final architecture packages.
 - Migration lifecycle scripts live under `infra/`; `packages/migration` is intentionally removed.
 - Contracts live in the owning package; `contracts`, `shared`, `platform`, and `migration` packages are intentionally removed.
-- Final workspace dependencies are locked as: app -> bff; bff -> runtime/kernel; runtime -> kernel/query/permission/datasource/audit; permission -> query.
+- Final workspace dependencies are locked as: app -> bff; bff -> runtime; runtime -> kernel/query/permission/datasource/audit; permission -> query.
 - `kernel`, `query`, `datasource`, and `audit` must not depend on any workspace package.
 - `runtime -> kernel` is allowed so runtime can read structure definitions; `kernel -> runtime` and `kernel -> permission` are forbidden.
 - `query` compiles AST to SQL and must not depend on `datasource`, `runtime`, or `permission`.
 - `bff` remains a gateway and must not own runtime orchestration, datasource wiring, permission decisions, audit wiring, or DB access.
+- `bff` must not depend on `kernel`; `/meta/*` may use an injected meta registry provider, and any kernel-backed provider must be composed outside the BFF package.
 - Deep cross-package imports are forbidden; import through package entrypoints.
 
 ### Compiler / Execution Boundaries

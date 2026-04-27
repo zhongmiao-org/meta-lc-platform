@@ -254,6 +254,7 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
     'packages/bff/package.json': packageJson({
       dependencies: {
         '@zhongmiao/meta-lc-datasource': 'workspace:*',
+        '@zhongmiao/meta-lc-kernel': 'workspace:*',
         '@zhongmiao/meta-lc-permission': 'workspace:*',
         '@zhongmiao/meta-lc-query': 'workspace:*',
         '@zhongmiao/meta-lc-audit': 'workspace:*',
@@ -275,6 +276,7 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-datasource" is forbidden in dependencies.',
+    'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-kernel" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-query" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-audit" is forbidden in dependencies.',
@@ -309,16 +311,17 @@ test('allows gateway-only BFF config and rejects data config keywords', () => {
   ]);
 });
 
-test('keeps BFF meta registry as a kernel-only gateway', () => {
+test('keeps BFF meta registry provider-only without workspace imports', () => {
   const workspace = createWorkspace({
     'packages/bff/src/infra/integration/meta-registry.service.ts': [
-      'import { executeRuntimeGatewayView } from "@zhongmiao/meta-lc-runtime";',
+      'import { MetaKernelService } from "@zhongmiao/meta-lc-kernel";',
       'export class MetaRegistryService {}'
     ].join('\n')
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/bff/src/infra/integration/meta-registry.service.ts: BFF meta registry gateway may only depend on kernel.'
+    'packages/bff/src/infra/integration/meta-registry.service.ts: BFF meta registry gateway must use injected providers and must not import workspace packages.',
+    'packages/bff/src/infra/integration/meta-registry.service.ts: BFF cannot depend on @zhongmiao/meta-lc-kernel.'
   ]);
 });
 

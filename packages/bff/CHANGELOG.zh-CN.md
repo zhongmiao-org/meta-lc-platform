@@ -2,13 +2,14 @@
 
 ## [Unreleased]
 
+- fix(boundaries): 移除 BFF 残留 kernel 依赖，并将 meta registry 读取收紧为 provider-only。
 - refactor(gateway): 支持注入 runtime runner 与 meta registry provider，让 orders demo wiring 留在核心 BFF 包之外。
 - docs(readme): 在最终 gateway-only 拓扑中补充 BFF 上下游关系说明。
 - fix(ci): 在 clean runner 的 BFF package-local test 前先构建 workspace 依赖。
-- chore(boundaries): 新增最终 Nx layer tags，并将 BFF 依赖守护锁定为只能依赖 runtime/kernel。
+- chore(boundaries): 新增最终 Nx layer tags，并将 BFF 依赖守护锁定为只能依赖 runtime。
 - chore(boundaries): 删除 mapper/repository/interface 残留，新增 gateway-only config，并收紧依赖守护，封板 BFF gateway-only 目录。
 - refactor(boundaries): 删除 BFF contracts 与数据执行依赖，让 view controller 只调用 runtime gateway facade。
-- refactor(gateway): 删除 BFF application 层，让 controller 只作为 thin runtime/kernel gateway，并仅保留 infra wiring。
+- refactor(gateway): 删除 BFF application 层，让 controller 只作为 thin runtime gateway，并仅保留 provider wiring。
 - refactor(contracts): BFF 改为消费 runtime、kernel、permission 所属 contract，不再依赖过渡 contracts 包。
 - feat(observability): 通过 BFF infra observer 持久化 runtime audit event，且不阻塞 view execution。
 - refactor(meta): 通过可注入的 Kernel-backed registry provider 读取 view、datasource 与 permission definition。

@@ -27,7 +27,6 @@ flowchart TD
   query["@zhongmiao/meta-lc-query<br/>packages/query"]
   runtime["@zhongmiao/meta-lc-runtime<br/>packages/runtime"]
 
-  bff --> kernel
   bff --> runtime
   bff_server --> bff
   permission --> query
@@ -40,7 +39,7 @@ flowchart TD
 
 ## Source Import 拓扑
 
-这张图表示当前生产源码真实 import 关系。它可能比 manifest 图更窄，例如 `bff` manifest 允许依赖 `kernel`，但当前 `packages/bff/src/**/*.ts` 没有直接 import `kernel`。
+这张图表示当前生产源码真实 import 关系。封板口径要求 `bff` 不直接 import `kernel`；`/meta/*` 如需 kernel-backed 数据，必须通过 BFF 包外注入的 meta registry provider 装配。
 
 ```mermaid
 flowchart TD
@@ -113,8 +112,8 @@ flowchart TD
 
 1. `@zhongmiao/meta-lc-bff-server`
 2. `@zhongmiao/meta-lc-bff`
-3. `@zhongmiao/meta-lc-runtime`, `@zhongmiao/meta-lc-kernel`
-4. `@zhongmiao/meta-lc-permission`, `@zhongmiao/meta-lc-datasource`, `@zhongmiao/meta-lc-audit`
+3. `@zhongmiao/meta-lc-runtime`
+4. `@zhongmiao/meta-lc-kernel`, `@zhongmiao/meta-lc-permission`, `@zhongmiao/meta-lc-datasource`, `@zhongmiao/meta-lc-audit`
 5. `@zhongmiao/meta-lc-query`
 
 当前生产源码包 import 图没有发现环。
@@ -123,8 +122,9 @@ flowchart TD
 
 - `runtime` 是唯一执行核心，持有 `ExecutionPlan`、`ExecutionNode`、`Expression`、`RuntimeContext` 等执行契约。
 - `kernel` 是结构真源，持有 `MetaSchema`、`ViewDefinition`、`NodeDefinition`、`DatasourceDefinition`、`PermissionPolicy`。
-- `bff` 是 IO Gateway，只持有 HTTP/WS DTO、controller、bootstrap wiring、gateway config、gateway cache 与 thin Kernel integration。
-- `bff` 只能依赖 `runtime` 与 `kernel`；不得直接依赖 `query`、`permission`、`datasource` 或 `pg`。
+- `bff` 是 IO Gateway，只持有 HTTP/WS DTO、controller、bootstrap wiring、gateway config、gateway cache 与 provider-backed meta registry integration。
+- `bff` 只能依赖 `runtime`；不得直接依赖 `kernel`、`query`、`permission`、`datasource`、`audit` 或 `pg`。
+- `/meta/*` 保留只读 HTTP envelope，但必须通过注入的 meta registry provider 读取数据；kernel-backed provider 只能在 BFF package 外部装配。
 - `datasource` 与 `audit` 不得反向依赖 `runtime`；`query` 不得依赖 `datasource`。
 - `kernel`、`query`、`datasource`、`audit` 禁止依赖任何 workspace package；`kernel` 可持有 meta DB persistence，但不得依赖 `runtime`、`query`、`permission`、`datasource`、`audit` 或 `bff`。
 - `permission` 只能 type-only 依赖 `query` 的 AST/types；禁止 value import query compiler，禁止编译 SQL 或执行 datasource。
