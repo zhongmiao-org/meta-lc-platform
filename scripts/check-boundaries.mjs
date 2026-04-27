@@ -142,6 +142,14 @@ const RUNTIME_EXECUTION_CONTRACT_DECLARATIONS = [
   'Expression',
   'RuntimeContext'
 ];
+const COMMON_LAYER_PACKAGES = new Set([
+  'kernel',
+  'query',
+  'permission',
+  'datasource',
+  'audit',
+  'runtime'
+]);
 
 export function checkWorkspace(root = process.cwd()) {
   const packagesDir = path.join(root, 'packages');
@@ -240,6 +248,7 @@ function checkSourceFile(file, root, violations) {
   checkForbiddenPackageRefs(rel, content, violations);
   checkPackageSourceDemoArtifacts(rel, content, violations);
   checkPackageDoesNotImportExamples(rel, content, file, root, violations);
+  checkCommonPackageSourceLayout(rel, content, violations);
   checkBffSourceFile(rel, content, file, root, violations);
   checkContractDefinitions(rel, content, violations);
 
@@ -365,6 +374,38 @@ function checkPackageDoesNotImportExamples(rel, content, file, root, violations)
     if (targetRel === 'examples' || targetRel.startsWith('examples/')) {
       violations.push(`${rel}: packages/apps must not import examples (${specifier}).`);
     }
+  }
+}
+
+function checkCommonPackageSourceLayout(rel, content, violations) {
+  const packageName = getPackageName(rel);
+  if (!COMMON_LAYER_PACKAGES.has(packageName) || !rel.startsWith(`packages/${packageName}/src/`)) return;
+
+  if (rel.includes('/src/interface/')) {
+    checkCommonInterfaceFile(rel, content, violations);
+  }
+
+  if (/^\s*export\s+class\s+\w*Service\b/m.test(content) && !rel.includes('/src/services/')) {
+    violations.push(`${rel}: service classes must live under src/services.`);
+  }
+}
+
+function checkCommonInterfaceFile(rel, content, violations) {
+  const basename = path.posix.basename(rel);
+  const hasForbiddenDeclaration =
+    /^\s*(?:export\s+)?type\s+\w+\s*=/m.test(content) ||
+    /^\s*(?:export\s+)?(?:class|const|let|var|function|enum)\s+\w+\b/m.test(content) ||
+    /^\s*interface\s+\w+/m.test(content) ||
+    /^\s*export\s+default\b/m.test(content) ||
+    /^\s*export\s+\{(?!\s*\}\s*;?\s*$)/m.test(content);
+
+  if (hasForbiddenDeclaration) {
+    violations.push(`${rel}: src/interface files may only export interface declarations.`);
+    return;
+  }
+
+  if (basename !== 'index.ts' && /^\s*export\s+\*/m.test(content)) {
+    violations.push(`${rel}: src/interface re-exports are only allowed from index.ts.`);
   }
 }
 

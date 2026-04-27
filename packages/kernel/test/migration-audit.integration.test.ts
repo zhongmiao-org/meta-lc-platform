@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MetaKernelService } from "../src/interface/meta-kernel-service";
+import { MetaKernelService } from "../src";
 import { PostgresMetaKernelRepository } from "../src/infra/persistence/postgres-meta-kernel-repository";
 
 const runIntegration = process.env.RUN_DB_INTEGRATION === "true";

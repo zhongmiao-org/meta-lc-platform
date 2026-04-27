@@ -163,6 +163,31 @@ test('rejects unsupported BFF infra directories', () => {
   ]);
 });
 
+test('enforces common package interface and services semantics while allowing BFF services', () => {
+  const allowed = createWorkspace({
+    'packages/kernel/src/interface/meta-kernel.interface.ts': 'export interface MetaKernelRepositoryPort {}\n',
+    'packages/kernel/src/interface/index.ts': 'export * from "./meta-kernel.interface";\n',
+    'packages/kernel/src/services/meta-kernel.service.ts': 'export class MetaKernelService {}\n',
+    'packages/query/src/interface/index.ts': 'export {};\n',
+    'packages/bff/src/infra/cache/cache.service.ts': 'export class CacheService {}\n'
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/audit/src/application/audit.service.ts': 'export class AuditService {}\n',
+    'packages/kernel/src/interface/bad.interface.ts': 'export type Bad = {};\n',
+    'packages/kernel/src/interface/reexport.interface.ts': 'export * from "./bad.interface";\n',
+    'packages/runtime/src/domain/runtime.service.ts': 'export class RuntimeService {}\n'
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/audit/src/application/audit.service.ts: service classes must live under src/services.',
+    'packages/kernel/src/interface/bad.interface.ts: src/interface files may only export interface declarations.',
+    'packages/kernel/src/interface/reexport.interface.ts: src/interface re-exports are only allowed from index.ts.',
+    'packages/runtime/src/domain/runtime.service.ts: service classes must live under src/services.'
+  ]);
+});
+
 test('rejects legacy BFF query/mutation orchestration surfaces', () => {
   const workspace = createWorkspace({
     'packages/bff/src/controller/http/query.controller.ts': [

@@ -1,6 +1,11 @@
-import { validateSchema } from "../types/contracts";
 import { createMigrationSafetyReport } from "../application/migration-safety";
-import { PostgresMetaKernelRepository } from "../infra/persistence/postgres-meta-kernel-repository";
+import { diffMetaDefinitions, validateMetaDefinition } from "../domain/meta-definition-registry";
+import { diffSchemas, generateMigrationSql, type SchemaDiff } from "../domain/schema-diff";
+import type {
+  MetaKernelRepositoryPort,
+  MigrationExecutionResult
+} from "../interface";
+import { validateSchema } from "../types/contracts";
 import type {
   DatasourceDefinition,
   MetaDefinitionDiff,
@@ -13,32 +18,9 @@ import type {
   PermissionPolicy,
   ViewDefinition
 } from "../types/shared.types";
-import { diffSchemas, generateMigrationSql, type SchemaDiff } from "../domain/schema-diff";
-import { diffMetaDefinitions, validateMetaDefinition } from "../domain/meta-definition-registry";
-
-type KernelRepository = Pick<
-  PostgresMetaKernelRepository,
-  | "init"
-  | "createVersion"
-  | "getVersion"
-  | "executeMigration"
-  | "createDefinitionVersion"
-  | "getDefinitionVersion"
-  | "getLatestDefinitionVersion"
-  | "listLatestDefinitionVersions"
->;
-
-export interface MigrationExecutionResult {
-  fromVersion: number;
-  toVersion: number;
-  statements: string[];
-  applied: boolean;
-  destructiveStatements: string[];
-  auditCount: number;
-}
 
 export class MetaKernelService {
-  constructor(private readonly repository: KernelRepository) {}
+  constructor(private readonly repository: MetaKernelRepositoryPort) {}
 
   async init(): Promise<void> {
     await this.repository.init();

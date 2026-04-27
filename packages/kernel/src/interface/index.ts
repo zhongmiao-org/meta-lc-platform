@@ -1,1 +1,1 @@
-export * from "./meta-kernel-service";
+export * from "./meta-kernel.interface";
