@@ -4,7 +4,7 @@ import {
   createRecordingRuntimeInteractionPort,
   executeRuntimeInteractionPlan,
   type RuntimeManagerPlan
-} from "../src";
+} from "./runtime-test-api";
 
 function createPlan(): RuntimeManagerPlan {
   return {

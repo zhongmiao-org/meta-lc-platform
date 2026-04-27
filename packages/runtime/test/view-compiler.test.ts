@@ -4,7 +4,7 @@ import {
   compileViewDefinition,
   type ExecutionPlan,
   ViewCompilerError
-} from "../src";
+} from "./runtime-test-api";
 import type { ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 
 test("compileViewDefinition compiles a single query node into a stable plan", () => {

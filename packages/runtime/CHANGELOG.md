@@ -3,6 +3,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 ## [Unreleased]
 
 - refactor(gateway): remove default orders demo seeds and mutation adapter wiring from the runtime gateway facade; demo wiring is now injected by `examples/orders-demo`.
+- refactor(public-api): narrow the runtime package root to core contracts and the runtime view facade.
 - chore(package): align runtime package output to `dist/index.js` and `dist/index.d.ts`.
 - docs(readme): add runtime upstream/downstream notes for the final execution-engine topology.
 - fix(ci): build runtime workspace dependencies before package-local tests on clean runners.

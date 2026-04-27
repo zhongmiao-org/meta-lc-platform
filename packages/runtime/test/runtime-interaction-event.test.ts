@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import {
   buildRuntimePageTopic,
   type RuntimePageDsl
-} from "../src";
+} from "./runtime-test-api";
 import {
   planRuntimeManagerEvent,
   parseRuntimePageDsl,
   RuntimeDependencyGraphError,
   RuntimeRuleEngineError
-} from "../src";
+} from "./runtime-test-api";
 
 function createRuntimeDsl(): RuntimePageDsl {
   return {

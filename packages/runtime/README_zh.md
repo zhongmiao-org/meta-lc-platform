@@ -57,3 +57,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - Runtime query execution 不能注入 SQL permission clause；必须在 SQL 编译前调用 permission AST transform。
 - Runtime audit observer 必须保持可选、非阻塞；observer 失败不得影响 plan execution。
 - 不要把默认业务 demo wiring 加回 runtime facade。
+- 包根入口只暴露 `core` 契约/错误/常量与 runtime view facade；compiler、executor、service 模块属于实现面。

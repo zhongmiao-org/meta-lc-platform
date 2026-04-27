@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { collectTemplateDependencies, resolveTemplateString, resolveTemplateValue } from "../src";
+import { collectTemplateDependencies, resolveTemplateString, resolveTemplateValue } from "./runtime-test-api";
 
 test("collectTemplateDependencies extracts state references from nested values", () => {
   const dependencies = collectTemplateDependencies({

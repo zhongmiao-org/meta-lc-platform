@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - refactor(gateway): 从 runtime gateway facade 移除默认 orders demo seeds 与 mutation adapter wiring，demo wiring 改由 `examples/orders-demo` 注入。
+- refactor(public-api): 将 runtime 包根入口收窄到 core contract 与 runtime view facade。
 - chore(package): 将 runtime 包输出对齐到 `dist/index.js` 与 `dist/index.d.ts`。
 - docs(readme): 补充最终执行引擎拓扑中的 runtime 上下游关系说明。
 - fix(ci): 在 clean runner 的 runtime package-local test 前先构建 workspace 依赖。

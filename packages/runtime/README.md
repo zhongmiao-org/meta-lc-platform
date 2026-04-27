@@ -57,3 +57,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - Runtime query execution must not inject SQL permission clauses; it calls the permission AST transform before SQL compilation.
 - Runtime audit observers are optional and non-blocking; observer failures must not affect plan execution.
 - Do not add default business demo wiring to the runtime facade.
+- The package root only exposes `core` contracts/errors/constants and the runtime view facade; compiler, executor, and service modules are implementation surfaces.

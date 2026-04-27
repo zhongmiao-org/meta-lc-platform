@@ -9,7 +9,7 @@ import {
   type ExecutionPlan,
   type NodeExecutorDependencies,
   type RuntimeContext
-} from "../src";
+} from "./runtime-test-api";
 
 const executor = new RuntimeExecutor();
 

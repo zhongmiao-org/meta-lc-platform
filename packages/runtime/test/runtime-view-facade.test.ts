@@ -9,7 +9,7 @@ import {
   RuntimeViewNotFoundError,
   executeRuntimeGatewayView,
   executeRuntimeView
-} from "../src";
+} from "./runtime-test-api";
 
 test("executeRuntimeView compiles a view and executes through the runtime entrypoint", async () => {
   const view: ViewDefinition = {

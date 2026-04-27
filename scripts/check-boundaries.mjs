@@ -28,34 +28,39 @@ const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-datasource',
-  '@zhongmiao/meta-lc-audit'
+  '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_QUERY_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-bff',
-  '@zhongmiao/meta-lc-audit'
+  '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_PERMISSION_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-bff',
-  '@zhongmiao/meta-lc-audit'
+  '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_DATASOURCE_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-bff',
-  '@zhongmiao/meta-lc-audit'
+  '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_AUDIT_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-permission',
-  '@zhongmiao/meta-lc-datasource'
+  '@zhongmiao/meta-lc-datasource',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-kernel',
@@ -63,8 +68,12 @@ const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence',
   'pg',
   '@types/pg'
+];
+const FORBIDDEN_RUNTIME_DEPS = [
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_INFRA_PERSISTENCE_DEPS = [
   '@zhongmiao/meta-lc-runtime',
@@ -75,7 +84,7 @@ const FORBIDDEN_INFRA_PERSISTENCE_DEPS = [
   '@zhongmiao/meta-lc-audit'
 ];
 const ALLOWED_APP_DEPS = {
-  'bff-server': new Set(['@zhongmiao/meta-lc-bff'])
+  'bff-server': new Set(['@zhongmiao/meta-lc-bff', '@zhongmiao/meta-lc-infra-persistence'])
 };
 const BFF_TOP_LEVEL_DIRS = new Set([
   'bootstrap',
@@ -334,6 +343,13 @@ function checkSourceFile(file, root, violations) {
     }
     if (rel.includes('manager-adapter')) {
       violations.push(`${rel}: runtime manager-adapter references are forbidden.`);
+    }
+  }
+  if (rel.startsWith('packages/runtime/')) {
+    for (const dep of FORBIDDEN_RUNTIME_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: runtime cannot depend on ${dep}.`);
+      }
     }
   }
   if (rel.startsWith('packages/runtime/') && rel.includes('manager-adapter')) {
@@ -822,6 +838,9 @@ function checkPackageManifest(file, root, violations) {
       }
       if (packageName === 'bff' && FORBIDDEN_BFF_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: BFF dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
+      if (packageName === 'runtime' && FORBIDDEN_RUNTIME_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: runtime dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
       if (packageName === 'query' && FORBIDDEN_QUERY_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: query dependency "${dependencyName}" is forbidden in ${blockName}.`);

@@ -6,7 +6,7 @@ import {
   type ExecutionPlan,
   type RuntimeContext,
   type RuntimePageDsl
-} from "../src";
+} from "./runtime-test-api";
 
 test("runtime owns execution, runtime context, DSL, and websocket event contracts", () => {
   const context: RuntimeContext = {

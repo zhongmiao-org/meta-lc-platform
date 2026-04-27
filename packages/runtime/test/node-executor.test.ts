@@ -7,7 +7,7 @@ import {
   NodeExecutorError,
   type RuntimeContext,
   type RuntimeStateStore
-} from "../src";
+} from "./runtime-test-api";
 
 function createNode(type: "query" | "mutation" | "merge" | "transform", definition: Record<string, unknown>) {
   return {

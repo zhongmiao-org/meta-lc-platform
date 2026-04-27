@@ -559,6 +559,84 @@ test('rejects final app and package dependency direction violations', () => {
   ]);
 });
 
+test('keeps infra-persistence composition-only for packages while allowing apps', () => {
+  const allowed = createWorkspace({
+    'apps/bff-server/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-bff': 'workspace:*',
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+      }
+    }),
+    'apps/bff-server/src/main.ts': [
+      'import { startBffServer } from "@zhongmiao/meta-lc-bff";',
+      'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";'
+    ].join('\n')
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const workspace = createWorkspace({
+    'packages/kernel/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+      }
+    }),
+    'packages/kernel/src/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/runtime/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+      }
+    }),
+    'packages/runtime/src/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/bff/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+      }
+    }),
+    'packages/bff/src/controller/http/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/query/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+      }
+    }),
+    'packages/query/src/domain/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/permission/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+      }
+    }),
+    'packages/permission/src/domain/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/datasource/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+      }
+    }),
+    'packages/datasource/src/infra/adapters/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/audit/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+      }
+    }),
+    'packages/audit/src/application/services/bad.service.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace).sort(), [
+    'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
+    'packages/audit/src/application/services/bad.service.ts: audit cannot depend on @zhongmiao/meta-lc-infra-persistence.',
+    'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
+    'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-infra-persistence.',
+    'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
+    'packages/datasource/src/infra/adapters/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-infra-persistence.',
+    'packages/kernel/package.json: kernel dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
+    'packages/kernel/src/bad.ts: kernel cannot depend on @zhongmiao/meta-lc-infra-persistence.',
+    'packages/permission/package.json: permission dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
+    'packages/permission/src/domain/bad.ts: permission cannot depend on @zhongmiao/meta-lc-infra-persistence.',
+    'packages/query/package.json: query dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
+    'packages/query/src/domain/bad.ts: query cannot depend on @zhongmiao/meta-lc-infra-persistence.',
+    'packages/runtime/package.json: runtime dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
+    'packages/runtime/src/bad.ts: runtime cannot depend on @zhongmiao/meta-lc-infra-persistence.'
+  ].sort());
+});
+
 test('rejects datasource and audit reverse workspace dependencies', () => {
   const workspace = createWorkspace({
     'packages/datasource/package.json': packageJson({

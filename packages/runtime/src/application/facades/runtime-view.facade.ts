@@ -20,20 +20,7 @@ import type { RuntimeContext } from "../../core/types";
 import type { TransformNodeDefinition, ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 import type { OrgScopeContext } from "@zhongmiao/meta-lc-permission";
 import { compileViewDefinition } from "../compiler/view-compiler";
-
-export class RuntimeViewNotFoundError extends Error {
-  constructor(viewName: string) {
-    super(`view "${viewName}" not found`);
-    this.name = "RuntimeViewNotFoundError";
-  }
-}
-
-export class RuntimeGatewayRequestError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "RuntimeGatewayRequestError";
-  }
-}
+import { RuntimeGatewayRequestError, RuntimeViewNotFoundError } from "../../core/errors";
 
 export async function executeRuntimeGatewayView(
   viewName: string,

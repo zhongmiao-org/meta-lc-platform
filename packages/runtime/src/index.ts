@@ -1,3 +1,2 @@
 export * from "./core";
-export * from "./domain";
-export * from "./application";
+export { executeRuntimeGatewayView, executeRuntimeView } from "./application/facades/runtime-view.facade";
