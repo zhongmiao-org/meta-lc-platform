@@ -21,7 +21,9 @@
 - `query` 生成 datasource adapter 可执行的 SQL。
 - `permission` 影响执行前加入的约束。
 - `kernel` 保持独立；metadata versioning 不属于本包职责。
-- `postgres-demo-orders-mutation.adapter.ts` 与 `postgres-org-scope.adapter.ts` 是 Runtime 消费的 Postgres demo adapter，不代表 datasource 可以承载业务编排。
+- `PostgresOrgScopeAdapter` 是 runtime permission context 装配使用的平台 data-scope adapter。
+- orders 专用 demo mutation 逻辑只放在 `examples/orders-demo`。
+- 核心 datasource 只保留 generic Postgres execution 与 org-scope loading 等平台 adapter 边界。
 
 ## 最小闭环
 
@@ -45,7 +47,7 @@ pnpm --filter @zhongmiao/meta-lc-datasource test
 - adapter 代码只关注数据库执行与生命周期。
 - 接收 compiled request 或 SQL command；不在此包编译 Query AST。
 - 不依赖 `query`、`permission` 或 `runtime`。
-- demo business mutation 与 org-scope 读取属于这里的 Postgres adapter 边界，不属于 BFF。
-- demo adapter 必须显式使用 `postgres-demo-*` 或 `postgres-org-scope*` 命名，避免业务 adapter 语义隐式滑向 datasource 编排。
+- 业务 demo adapter 必须放在 `examples/*`，不能进入本包。
+- 平台 adapter 必须保持通用；业务语义不能隐式滑向 datasource 编排。
 - 不在这里加入 HTTP controller 或 runtime orchestration。
 - 不在这里读取 BFF 专用 request object。

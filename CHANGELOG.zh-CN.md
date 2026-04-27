@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(examples): 将 orders demo metadata、SQL seed 与 mutation adapter 从核心包抽离到 `examples/orders-demo`。
 - docs(readme): 同步最终架构协作流、子包上下游关系与编译/执行边界口径。
 - fix(ci): 在 package-local test 前先构建 workspace 依赖，确保 clean CI runner 能解析各包入口。
 - chore(boundaries): 通过 Nx module-boundary tags、全仓 ESLint 与硬边界检查锁死最终依赖规则，防止 kernel/query/datasource/audit 引入 workspace 依赖。

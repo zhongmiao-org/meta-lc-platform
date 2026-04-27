@@ -6,7 +6,6 @@ const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'kernel']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/infra/postgres/postgres.adapter.ts',
-  'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts',
   'packages/datasource/src/infra/postgres/postgres-org-scope.adapter.ts',
   'packages/kernel/src/infra/persistence/postgres-meta-kernel-repository.ts',
   'packages/audit/src/infra/postgres-runtime-audit.sink.ts'
@@ -121,6 +120,11 @@ const FORBIDDEN_BFF_RUNTIME_IMPORTS = [
 const RUNTIME_FORBIDDEN_SOURCE_DIRS = [
   'packages/runtime/src/application/orchestrator'
 ];
+const FORBIDDEN_DEMO_ARTIFACT_PATHS = [
+  'packages/kernel/src/domain/demo-meta-registry.ts',
+  'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts',
+  'infra/sql/001_orders_demo.sql'
+];
 const KERNEL_STRUCTURE_CONTRACT_DECLARATIONS = [
   'ViewDefinition',
   'NodeDefinition',
@@ -143,6 +147,7 @@ export function checkWorkspace(root = process.cwd()) {
   const appsDir = path.join(root, 'apps');
   const violations = [];
   checkForbiddenPackageDirs(root, violations);
+  checkForbiddenDemoArtifacts(root, violations);
   checkBffLayout(root, violations);
   checkRuntimeLayout(root, violations);
   walk(packagesDir, root, violations);
@@ -154,6 +159,14 @@ function checkForbiddenPackageDirs(root, violations) {
   for (const forbidden of FORBIDDEN_PACKAGE_DIRS) {
     if (fs.existsSync(path.join(root, forbidden))) {
       violations.push(`${forbidden}: forbidden transitional package directory.`);
+    }
+  }
+}
+
+function checkForbiddenDemoArtifacts(root, violations) {
+  for (const forbidden of FORBIDDEN_DEMO_ARTIFACT_PATHS) {
+    if (fs.existsSync(path.join(root, forbidden))) {
+      violations.push(`${forbidden}: demo artifacts must live under examples/orders-demo.`);
     }
   }
 }
@@ -224,6 +237,8 @@ function checkSourceFile(file, root, violations) {
   const rel = normalizePath(path.relative(root, file));
   const content = fs.readFileSync(file, 'utf8');
   checkForbiddenPackageRefs(rel, content, violations);
+  checkPackageSourceDemoArtifacts(rel, content, violations);
+  checkPackageDoesNotImportExamples(rel, content, file, root, violations);
   checkBffSourceFile(rel, content, file, root, violations);
   checkContractDefinitions(rel, content, violations);
 
@@ -307,6 +322,47 @@ function checkSourceFile(file, root, violations) {
       if (content.includes(dep)) {
         violations.push(`${rel}: bff-server app can only depend on @zhongmiao/meta-lc-bff.`);
       }
+    }
+  }
+}
+
+function checkPackageSourceDemoArtifacts(rel, content, violations) {
+  if (!rel.startsWith('packages/') || !rel.includes('/src/')) return;
+  const basename = path.posix.basename(rel);
+  if (
+    /^demo[-\w]*\.ts$/.test(basename) ||
+    rel.includes('demo-meta-registry') ||
+    rel.includes('postgres-demo-') ||
+    rel.includes('orders-demo') ||
+    rel.includes('001_orders_demo.sql')
+  ) {
+    violations.push(`${rel}: demo source must live under examples/orders-demo.`);
+  }
+  if (
+    /\bdemo\b/i.test(content) ||
+    content.includes('demo-meta-registry') ||
+    content.includes('postgres-demo-') ||
+    content.includes('orders-demo') ||
+    content.includes('001_orders_demo.sql')
+  ) {
+    violations.push(`${rel}: core package source must not reference demo-owned artifacts.`);
+  }
+  if (rel.startsWith('packages/datasource/src/') && /\borders\b/i.test(content)) {
+    violations.push(`${rel}: datasource source must stay business-generic and must not reference orders.`);
+  }
+}
+
+function checkPackageDoesNotImportExamples(rel, content, file, root, violations) {
+  if (!rel.startsWith('packages/') && !rel.startsWith('apps/')) return;
+  for (const specifier of findImportSpecifiers(content)) {
+    if (specifier.startsWith('examples/') || specifier.includes('/examples/')) {
+      violations.push(`${rel}: packages/apps must not import examples (${specifier}).`);
+      continue;
+    }
+    if (!specifier.startsWith('.')) continue;
+    const targetRel = normalizePath(path.relative(root, path.resolve(path.dirname(file), specifier)));
+    if (targetRel === 'examples' || targetRel.startsWith('examples/')) {
+      violations.push(`${rel}: packages/apps must not import examples (${specifier}).`);
     }
   }
 }

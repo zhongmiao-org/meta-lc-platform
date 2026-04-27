@@ -27,6 +27,7 @@
 - 前端 runtime adapter 消费本包 contract，但不直连数据库或业务 API。
 - Query node 通过 `query` 构建 AST，经过 `permission` AST transform 后编译 SQL，并通过共享 `datasource` adapter 契约执行。
 - Runtime 负责装配页面执行所需的具体依赖；BFF 不构造 datasource、permission、org-scope 或 audit dependency。
+- demo 专属 view seeds 与 mutation adapter 从 `examples/*` 注入；runtime 默认实现保持平台能力纯净。
 - Runtime 可以在 plan、node、permission、datasource 边界发出可选 audit observability event，但不改变执行语义。
 - `src/infra/adapter/**` 放的是 runtime 消费的 adapter contract/port，不是 runtime 自己的 infra implementation。
 
@@ -55,3 +56,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - 保持 `runtime-executor.ts`、`runtime-view-executor.ts`、`runtime-interaction-executor.ts` 三层命名：executor 是引擎，view/interaction 是 facade。
 - Runtime query execution 不能注入 SQL permission clause；必须在 SQL 编译前调用 permission AST transform。
 - Runtime audit observer 必须保持可选、非阻塞；observer 失败不得影响 plan execution。
+- 不要把默认业务 demo wiring 加回 runtime facade。

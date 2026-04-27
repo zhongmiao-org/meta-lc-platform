@@ -6,3 +6,8 @@ export type MetaRegistryItem = {
   updatedAt: string;
   [key: string]: unknown;
 };
+
+export type MetaRegistryProvider = {
+  list(kind: MetaResourceKind): Promise<MetaRegistryItem[]>;
+  listKinds(): MetaResourceKind[];
+};

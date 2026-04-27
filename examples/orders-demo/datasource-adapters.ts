@@ -1,30 +1,30 @@
 import { Pool, type PoolClient } from "pg";
-import type { DbConfig } from "../../types/shared.types";
+import type { DbConfig } from "@zhongmiao/meta-lc-datasource";
 
-export type PostgresDemoOrdersMutationOperation = "create" | "update" | "delete";
+export type OrdersDemoMutationOperation = "create" | "update" | "delete";
 
-export interface PostgresDemoOrdersMutationCommand {
+export interface OrdersDemoMutationCommand {
   model: string;
-  operation: PostgresDemoOrdersMutationOperation;
+  operation: OrdersDemoMutationOperation;
   payload: Record<string, unknown>;
   context: Record<string, unknown>;
 }
 
-export interface PostgresDemoOrdersMutationResult {
+export interface OrdersDemoMutationResult {
   rowCount: number;
   row: Record<string, unknown> | null;
   beforeData: Record<string, unknown> | null;
   afterData: Record<string, unknown> | null;
 }
 
-export class PostgresDemoOrdersMutationAdapter {
+export class OrdersDemoMutationAdapter {
   private readonly pool: Pool;
 
   constructor(config: DbConfig, pool?: Pool) {
     this.pool = pool ?? createPool(config);
   }
 
-  async execute(command: PostgresDemoOrdersMutationCommand): Promise<PostgresDemoOrdersMutationResult> {
+  async execute(command: OrdersDemoMutationCommand): Promise<OrdersDemoMutationResult> {
     if (command.model !== "orders") {
       throw new Error(`unsupported mutation model "${command.model}"`);
     }
@@ -77,7 +77,7 @@ export class PostgresDemoOrdersMutationAdapter {
 async function executeOrderMutation(
   client: PoolClient,
   command: {
-    operation: PostgresDemoOrdersMutationOperation;
+    operation: OrdersDemoMutationOperation;
     tenantId: string;
     userId: string;
     orgId: string | null;
@@ -90,7 +90,7 @@ async function executeOrderMutation(
       status?: string;
     };
   }
-): Promise<PostgresDemoOrdersMutationResult> {
+): Promise<OrdersDemoMutationResult> {
   if (command.operation === "create") {
     const created = await client.query<Record<string, unknown>>(
       `INSERT INTO orders (id, owner, channel, priority, status, tenant_id, created_by, org_id)

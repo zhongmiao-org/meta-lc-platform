@@ -51,3 +51,4 @@ pnpm --filter @zhongmiao/meta-lc-kernel test
 - Kernel has no workspace package dependencies; Postgres access is limited to meta DB persistence.
 - Do not add HTTP, NestJS controller, runtime UI, or business execution logic here.
 - Do not execute runtime plans from meta registry APIs; registry only versions definitions.
+- Do not keep business demo registry seeds here; examples own their own seed metadata under `examples/*`.

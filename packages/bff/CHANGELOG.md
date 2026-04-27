@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(gateway): allow injecting runtime runners and meta registry providers so orders demo wiring lives outside the core BFF package.
 - docs(readme): document BFF upstream/downstream relationships in the final gateway-only topology.
 - fix(ci): build BFF workspace dependencies before package-local tests on clean runners.
 - chore(boundaries): add final Nx layer tags and lock BFF dependency gates to runtime/kernel only.
@@ -10,7 +11,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - refactor(gateway): remove the BFF application layer so controllers act as thin runtime/kernel gateways with infra wiring only.
 - refactor(contracts): consume runtime, kernel, and permission-owned contracts instead of a transitional contracts package.
 - feat(observability): persist runtime audit events through a BFF infra observer without blocking view execution.
-- refactor(meta): read demo view, datasource, and permission definitions from the Kernel-backed registry.
+- refactor(meta): read view, datasource, and permission definitions through an injectable Kernel-backed registry provider.
 - test(permission): assert BFF view gateway context flows into runtime Permission AST Transform.
 - refactor(datasource): route BFF runtime view query execution through the datasource package adapter.
 - fix(boundaries): remove legacy `/query` and `/mutation` orchestration surfaces so BFF only acts as a runtime gateway.

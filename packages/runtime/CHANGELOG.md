@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(gateway): remove default orders demo seeds and mutation adapter wiring from the runtime gateway facade; demo wiring is now injected by `examples/orders-demo`.
 - docs(readme): add runtime upstream/downstream notes for the final execution-engine topology.
 - fix(ci): build runtime workspace dependencies before package-local tests on clean runners.
 - chore(boundaries): add final Nx layer tags and keep runtime as the only package allowed to depend on kernel/query/permission/datasource/audit together.
