@@ -193,6 +193,48 @@ const COMMON_LAYER_PACKAGES = new Set([
   'audit',
   'runtime'
 ]);
+const ROOT_PUBLIC_API_RULES = {
+  runtime: {
+    starExports: new Set(['./core']),
+    namedExports: new Map([
+      ['executeRuntimeGatewayView', './application/facades/runtime-view.facade'],
+      ['executeRuntimeView', './application/facades/runtime-view.facade'],
+      ['executeRuntimeInteractionPlan', './application/facades/runtime-interaction.facade'],
+      ['createRecordingRuntimeInteractionPort', './application/facades/runtime-interaction.facade']
+    ])
+  },
+  kernel: {
+    starExports: new Set(['./core']),
+    namedExports: new Map([
+      ['MetaKernelService', './application/services/meta-kernel.service'],
+      ['createInMemoryMetaKernelService', './application/factories/in-memory-meta-kernel.factory'],
+      ['compileApiRoutes', './application/generators/api-generator'],
+      ['compilePermissionManifest', './application/generators/permission-generator'],
+      ['compileSchemaSql', './application/generators/sql-generator'],
+      ['assertMigrationSafety', './domain/migration-safety'],
+      ['createMigrationSafetyReport', './domain/migration-safety']
+    ])
+  },
+  query: {
+    starExports: new Set(['./core']),
+    namedExports: new Map([
+      ['buildSelectQueryAst', './domain/query-compiler'],
+      ['compileSelectAst', './domain/query-compiler'],
+      ['compileSelectQuery', './domain/query-compiler']
+    ])
+  },
+  permission: {
+    starExports: new Set(['./core']),
+    namedExports: new Map([
+      ['buildDataScopeFilter', './domain/permission-engine'],
+      ['buildRowLevelFilter', './domain/permission-engine'],
+      ['canAccessOrg', './domain/permission-engine'],
+      ['injectPermissionClause', './domain/permission-engine'],
+      ['resolveDataScope', './domain/permission-engine'],
+      ['transformSelectQueryAstWithPermission', './domain/permission-ast-transform']
+    ])
+  }
+};
 
 export function checkWorkspace(root = process.cwd()) {
   const packagesDir = path.join(root, 'packages');
@@ -372,8 +414,8 @@ function checkSourceFile(file, root, violations) {
   if (rel.startsWith('packages/runtime/src/')) {
     checkRuntimeDatasourceImports(rel, content, violations);
   }
-  if (rel === 'packages/runtime/src/index.ts') {
-    checkRuntimeRootPublicApi(rel, content, violations);
+  if (rel.match(/^packages\/(?:kernel|query|permission|runtime)\/src\/index\.ts$/)) {
+    checkPackageRootPublicApi(rel, content, violations);
   }
   if (rel.startsWith('packages/infra-persistence/')) {
     for (const dep of FORBIDDEN_INFRA_PERSISTENCE_DEPS) {
@@ -777,31 +819,29 @@ function exportsPostgres(content) {
   return /^\s*export\s+\*\s+from\s+["']\.\/postgres(?:\/index)?["'];?/m.test(content);
 }
 
-function checkRuntimeRootPublicApi(rel, content, violations) {
-  const allowedNamedExports = new Map([
-    ['executeRuntimeGatewayView', './application/facades/runtime-view.facade'],
-    ['executeRuntimeView', './application/facades/runtime-view.facade'],
-    ['executeRuntimeInteractionPlan', './application/facades/runtime-interaction.facade'],
-    ['createRecordingRuntimeInteractionPort', './application/facades/runtime-interaction.facade']
-  ]);
-
+function checkPackageRootPublicApi(rel, content, violations) {
+  const packageName = getPackageName(rel);
+  const rule = ROOT_PUBLIC_API_RULES[packageName];
+  if (!rule) return;
   const starExportPattern = /^\s*export\s+\*\s+from\s+["']([^"']+)["'];?/gm;
   let starMatch;
   while ((starMatch = starExportPattern.exec(content)) !== null) {
-    if (starMatch[1] !== './core') {
-      violations.push(`${rel}: runtime root may only export-star ./core.`);
+    if (!rule.starExports.has(starMatch[1])) {
+      violations.push(`${rel}: ${packageName} root may only export-star ./core.`);
     }
   }
 
-  const namedExportPattern = /^\s*export\s+\{([\s\S]*?)\}\s+from\s+["']([^"']+)["'];?/gm;
+  const namedExportPattern = /^\s*export\s+(?:type\s+)?\{([\s\S]*?)\}\s+from\s+["']([^"']+)["'];?/gm;
   let namedMatch;
   while ((namedMatch = namedExportPattern.exec(content)) !== null) {
     const source = namedMatch[2];
     for (const rawName of namedMatch[1].split(',')) {
-      const exportedName = rawName.trim().split(/\s+as\s+/)[0]?.trim();
+      const cleanedName = rawName.trim().replace(/^type\s+/, '');
+      const [importedName, aliasName] = cleanedName.split(/\s+as\s+/);
+      const exportedName = (aliasName ?? importedName)?.trim();
       if (!exportedName) continue;
-      if (allowedNamedExports.get(exportedName) !== source) {
-        violations.push(`${rel}: runtime root export "${exportedName}" is not public API.`);
+      if (rule.namedExports.get(exportedName) !== source || importedName.trim() !== exportedName) {
+        violations.push(`${rel}: ${packageName} root export "${exportedName}" is not public API.`);
       }
     }
   }

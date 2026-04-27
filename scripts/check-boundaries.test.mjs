@@ -264,6 +264,7 @@ test('enforces common package core/domain/application boundaries', () => {
     'packages/kernel/src/core/types/bad.ts: core files must not import domain/application/infra (../../domain/schema-diff).',
     'packages/kernel/src/domain/schema-diff.ts: implementation files must not export interface declarations.',
     'packages/kernel/src/index.ts: package root must not export infra.',
+    'packages/kernel/src/index.ts: kernel root may only export-star ./core.',
     'packages/query/src/domain/bad.ts: domain files must not depend on @zhongmiao/meta-lc-runtime.',
     'packages/query/src/domain/bad.ts: domain files must not import infra (../infra/query.adapter).',
     'packages/query/src/domain/bad.ts: query cannot depend on @zhongmiao/meta-lc-runtime.',
@@ -294,6 +295,57 @@ test('keeps BFF root public API narrow', () => {
     'packages/bff/src/index.ts: BFF root must not export types.',
     'packages/bff/src/index.ts: BFF root must not use export-star barrels.',
     'packages/bff/src/index.ts: BFF root export "InternalThing" is not public API.'
+  ]);
+});
+
+test('keeps kernel query and permission root public APIs narrow', () => {
+  const allowed = createWorkspace({
+    'packages/kernel/src/index.ts': [
+      'export * from "./core";',
+      'export { MetaKernelService } from "./application/services/meta-kernel.service";',
+      'export { createInMemoryMetaKernelService } from "./application/factories/in-memory-meta-kernel.factory";',
+      'export { compileApiRoutes } from "./application/generators/api-generator";',
+      'export { compilePermissionManifest } from "./application/generators/permission-generator";',
+      'export { compileSchemaSql } from "./application/generators/sql-generator";',
+      'export { assertMigrationSafety, createMigrationSafetyReport } from "./domain/migration-safety";'
+    ].join('\n'),
+    'packages/query/src/index.ts': [
+      'export * from "./core";',
+      'export { buildSelectQueryAst, compileSelectAst, compileSelectQuery } from "./domain/query-compiler";'
+    ].join('\n'),
+    'packages/permission/src/index.ts': [
+      'export * from "./core";',
+      'export { buildDataScopeFilter, buildRowLevelFilter, canAccessOrg, injectPermissionClause, resolveDataScope } from "./domain/permission-engine";',
+      'export { transformSelectQueryAstWithPermission } from "./domain/permission-ast-transform";'
+    ].join('\n')
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/kernel/src/index.ts': [
+      'export * from "./core";',
+      'export * from "./domain";',
+      'export { validateSchema } from "./core/utils";'
+    ].join('\n'),
+    'packages/query/src/index.ts': [
+      'export * from "./core";',
+      'export * from "./utils";',
+      'export { parseCondition } from "./domain/query-compiler";'
+    ].join('\n'),
+    'packages/permission/src/index.ts': [
+      'export * from "./core";',
+      'export * from "./domain";',
+      'export { buildPermissionAst } from "./domain/permission-ast-transform";'
+    ].join('\n')
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/kernel/src/index.ts: kernel root may only export-star ./core.',
+    'packages/kernel/src/index.ts: kernel root export "validateSchema" is not public API.',
+    'packages/permission/src/index.ts: permission root may only export-star ./core.',
+    'packages/permission/src/index.ts: permission root export "buildPermissionAst" is not public API.',
+    'packages/query/src/index.ts: query root may only export-star ./core.',
+    'packages/query/src/index.ts: query root export "parseCondition" is not public API.'
   ]);
 });
 
