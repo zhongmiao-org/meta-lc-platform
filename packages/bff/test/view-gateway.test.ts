@@ -3,7 +3,7 @@ import test from "node:test";
 import { BadRequestException, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { RuntimeGatewayRequestError, RuntimeViewNotFoundError } from "@zhongmiao/meta-lc-runtime";
 import { ViewController } from "../src/controller/http/view.controller";
-import type { ViewApiRequest } from "../src/controller/http/view.type";
+import type { ViewApiRequest } from "../src/types/view.type";
 
 test("view controller delegates execution to the runtime gateway facade", async () => {
   const headers: Record<string, string> = {};

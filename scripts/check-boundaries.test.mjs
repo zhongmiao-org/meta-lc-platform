@@ -125,13 +125,11 @@ test('rejects demo artifacts in core packages and infra SQL', () => {
   ]);
 });
 
-test('rejects legacy BFF application/interface/types directories and unsupported top-level dirs', () => {
+test('rejects legacy BFF application directories and unsupported top-level dirs', () => {
   const workspace = createWorkspace({
     'packages/bff/src/application/services/.gitkeep': '',
     'packages/bff/src/domain/.gitkeep': '',
     'packages/bff/src/mapper/.gitkeep': '',
-    'packages/bff/src/interface/.gitkeep': '',
-    'packages/bff/src/types/.gitkeep': '',
     'packages/bff/src/infra/repository/.gitkeep': '',
     'packages/bff/src/infra/interfaces/.gitkeep': '',
     'packages/bff/src/gateway/query.controller.ts': 'export class QueryController {}\n'
@@ -143,8 +141,6 @@ test('rejects legacy BFF application/interface/types directories and unsupported
     'packages/bff/src/mapper: forbidden BFF source directory.',
     'packages/bff/src/infra/interfaces: forbidden BFF source directory.',
     'packages/bff/src/infra/repository: forbidden BFF source directory.',
-    'packages/bff/src/interface: forbidden BFF source directory.',
-    'packages/bff/src/types: forbidden BFF source directory.',
     'packages/bff/src/gateway: unsupported BFF top-level source directory.',
     'packages/bff/src/infra/interfaces: unsupported BFF infra directory.',
     'packages/bff/src/infra/repository: unsupported BFF infra directory.'
@@ -160,6 +156,27 @@ test('rejects unsupported BFF infra directories', () => {
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/bff/src/infra/datasource: unsupported BFF infra directory.'
+  ]);
+});
+
+test('allows BFF root interface/types/services and rejects controller-owned contracts or services', () => {
+  const allowed = createWorkspace({
+    'packages/bff/src/interface/view.interface.ts': 'export interface ViewRequestLike {}\n',
+    'packages/bff/src/types/view.type.ts': 'export type ViewApiRequest = {};\n',
+    'packages/bff/src/services/view.service.ts': 'export class ViewService {}\n'
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/bff/src/controller/http/view.interface.ts': 'export interface ViewRequestLike {}\n',
+    'packages/bff/src/controller/http/view.type.ts': 'export type ViewApiRequest = {};\n',
+    'packages/bff/src/controller/http/view.service.ts': 'export class ViewService {}\n'
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/bff/src/controller/http/view.interface.ts: BFF controller type/interface files must live under src/interface or src/types.',
+    'packages/bff/src/controller/http/view.service.ts: BFF controller service files must live under src/services.',
+    'packages/bff/src/controller/http/view.type.ts: BFF controller type/interface files must live under src/interface or src/types.'
   ]);
 });
 
@@ -207,6 +224,7 @@ test('rejects legacy BFF query/mutation orchestration surfaces', () => {
     'packages/bff/src/controller/http/bad.service.ts: legacy BFF orchestrator symbol "QueryOrchestrator" is forbidden.',
     'packages/bff/src/controller/http/bad.service.ts: legacy BFF orchestrator symbol "QueryOrchestratorService" is forbidden.',
     'packages/bff/src/controller/http/bad.service.ts: legacy BFF orchestrator symbol "TemporaryViewAdapter" is forbidden.',
+    'packages/bff/src/controller/http/bad.service.ts: BFF controller service files must live under src/services.',
     'packages/bff/src/controller/http/bad.service.ts: BFF must call runtime facade instead of importing compileViewDefinition.',
     'packages/bff/src/controller/http/bad.service.ts: BFF must call runtime facade instead of importing executeQueryNode.',
     'packages/bff/src/controller/http/query.controller.ts: legacy /query and /mutation endpoints are forbidden.'
@@ -253,8 +271,11 @@ test('rejects BFF type/interface mixing and implementation-local declarations', 
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/bff/src/dto: unsupported BFF top-level source directory.',
+    'packages/bff/src/controller/http/bad.interface.ts: BFF controller type/interface files must live under src/interface or src/types.',
     'packages/bff/src/controller/http/bad.interface.ts: *.interface.ts files may not export type declarations.',
+    'packages/bff/src/controller/http/bad.service.ts: BFF controller service files must live under src/services.',
     'packages/bff/src/controller/http/bad.service.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
+    'packages/bff/src/controller/http/bad.type.ts: BFF controller type/interface files must live under src/interface or src/types.',
     'packages/bff/src/controller/http/bad.type.ts: *.type.ts files may not export interface declarations.',
     'packages/bff/src/dto/bad.dto.ts: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.',
     'packages/bff/src/dto/bad.dto.ts: BFF dto files must be class-only.'

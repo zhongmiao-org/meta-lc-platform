@@ -1,6 +1,6 @@
-import type { MetaRegistryItem } from "../../infra/integration/meta-registry.type";
+import type { MetaRegistryItem } from "../infra/integration/meta-registry.type";
 
-export type { MetaRegistryItem, MetaResourceKind } from "../../infra/integration/meta-registry.type";
+export type { MetaRegistryItem, MetaResourceKind } from "../infra/integration/meta-registry.type";
 
 export type MetaListEnvelope<TItem = Record<string, unknown>> = {
   items: TItem[];

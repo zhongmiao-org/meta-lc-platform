@@ -5,4 +5,4 @@ export type {
   MetaRegistryProvider,
   MetaResourceKind
 } from "./infra/integration/meta-registry.type";
-export type { RuntimeGatewayRunner } from "./controller/http/view.type";
+export type { RuntimeGatewayRunner } from "./types/view.type";

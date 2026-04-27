@@ -32,6 +32,9 @@ bff/src/
 ├── infra/
 │   ├── cache/
 │   └── integration/
+├── interface/
+├── services/
+├── types/
 └── index.ts
 ```
 
@@ -41,6 +44,9 @@ bff/src/
 - `controller/ws/**` 是 WebSocket 入口层。Runtime WebSocket 文件必须固定在 `controller/ws/runtime/**`。
 - `infra/cache/**` 只放 gateway cache。
 - `infra/integration/**` 只放 provider-backed metadata registry integration。
+- `interface/**` 只放 `export interface` 行为契约/结构抽象。
+- `types/**` 只放 `export type` 数据形状/结构组合。
+- `services/**` 只放从入口层拆出的 BFF service 实现。
 - `config/**` 只放 gateway 协议层配置：HTTP/CORS/request-id/timeout、WebSocket path/replay、gateway cache、provider token 与 log level。
 - `common/constants/**` 放包级常量和 provider token。
 - `common/**` 只放少量框架级 helper 和异常工具。
@@ -52,6 +58,7 @@ bff/src/
 - `*.type.ts` = 数据形状/结构组合，只允许 `export type`。
 - 禁止在 `*.interface.ts` 中混写 `export type`。
 - 禁止在 `*.type.ts` 中混写 `export interface`。
+- 禁止在 `controller/**` 下放 `*.interface.ts`、`*.type.ts` 或 `*.service.ts`。
 - 禁止在 controller/service/infra implementation 文件中声明 TypeScript `type` 或 `interface`。
 - 禁止新增 `types/index.ts` 或 `interfaces/index.ts` 聚合类型入口。
 

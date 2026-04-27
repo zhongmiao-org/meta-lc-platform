@@ -3,12 +3,12 @@ import { resolveRequestId } from "../../common/request-id";
 import { readGatewayRequestIdHeader } from "../../config/gateway.config";
 import { CacheService } from "../../infra/cache/cache.service";
 import { MetaRegistryService } from "../../infra/integration/meta-registry.service";
-import type { MetaRequestLike, MetaResponseLike } from "./meta.interface";
-import type { MetaListEnvelope, MetaSummary, MetaSummaryEnvelope } from "./meta.type";
+import type { MetaRequestLike, MetaResponseLike } from "../../interface/meta.interface";
+import type { MetaListEnvelope, MetaSummary, MetaSummaryEnvelope } from "../../types/meta.type";
 import type {
   MetaRegistryItem,
   MetaResourceKind
-} from "./meta.type";
+} from "../../types/meta.type";
 
 @Controller("meta")
 export class MetaController {

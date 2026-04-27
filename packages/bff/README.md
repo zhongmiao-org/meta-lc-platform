@@ -32,6 +32,9 @@ bff/src/
 ├── infra/
 │   ├── cache/
 │   └── integration/
+├── interface/
+├── services/
+├── types/
 └── index.ts
 ```
 
@@ -41,6 +44,9 @@ bff/src/
 - `controller/ws/**` is the WebSocket entry layer. Runtime WebSocket files must stay under `controller/ws/runtime/**`.
 - `infra/cache/**` owns gateway cache only.
 - `infra/integration/**` owns provider-backed metadata registry integration only.
+- `interface/**` owns `export interface` behavior contracts and structural abstractions only.
+- `types/**` owns `export type` data shapes and structural composition only.
+- `services/**` owns BFF service implementations split out from entry layers.
 - `config/**` owns gateway protocol configuration only: HTTP/CORS/request-id/timeout, WebSocket path/replay, gateway cache, provider token, and log-level knobs.
 - `common/constants/**` owns package-level constants and provider tokens.
 - `common/**` owns small framework-level helpers and exception utilities only.
@@ -52,6 +58,7 @@ bff/src/
 - `*.type.ts` means data shapes or structural composition and may only export `type`.
 - Do not mix `export type` inside `*.interface.ts`.
 - Do not mix `export interface` inside `*.type.ts`.
+- Do not place `*.interface.ts`, `*.type.ts`, or `*.service.ts` under `controller/**`.
 - Do not declare TypeScript `type` or `interface` in controller/service/infra implementation files.
 - Do not add `types/index.ts` or `interfaces/index.ts` aggregators.
 

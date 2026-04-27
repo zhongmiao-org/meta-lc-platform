@@ -74,7 +74,10 @@ const BFF_TOP_LEVEL_DIRS = new Set([
   'common',
   'config',
   'controller',
-  'infra'
+  'infra',
+  'interface',
+  'services',
+  'types'
 ]);
 const BFF_FORBIDDEN_SOURCE_DIRS = [
   'packages/bff/src/application',
@@ -83,9 +86,7 @@ const BFF_FORBIDDEN_SOURCE_DIRS = [
   'packages/bff/src/domain',
   'packages/bff/src/mapper',
   'packages/bff/src/infra/interfaces',
-  'packages/bff/src/infra/repository',
-  'packages/bff/src/interface',
-  'packages/bff/src/types'
+  'packages/bff/src/infra/repository'
 ];
 const BFF_INFRA_ALLOWED_DIRS = new Set(['cache', 'integration']);
 const BFF_GATEWAY_CONFIG_FORBIDDEN_PATTERNS = [
@@ -420,6 +421,12 @@ function checkBffSourceFile(rel, content, file, root, violations) {
 
   if (rel.startsWith('packages/bff/src/controller/') && /@Post\(\s*["'](?:query|mutation)["']\s*\)/.test(content)) {
     violations.push(`${rel}: legacy /query and /mutation endpoints are forbidden.`);
+  }
+  if (rel.startsWith('packages/bff/src/controller/') && /\.(?:interface|type)\.ts$/.test(rel)) {
+    violations.push(`${rel}: BFF controller type/interface files must live under src/interface or src/types.`);
+  }
+  if (rel.startsWith('packages/bff/src/controller/') && rel.endsWith('.service.ts')) {
+    violations.push(`${rel}: BFF controller service files must live under src/services.`);
   }
 
   checkBffRuntimeImports(rel, content, violations);
