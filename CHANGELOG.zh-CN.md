@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- fix(ci): 在收窄 package public export 后，让 orders demo query gate 改为使用已构建的包入口运行。
+- chore(public-api): 将 kernel、query、permission package root export 收窄为明确的 SDK-facing 符号。
 - docs(topology): 在 package dependency topology 旁补充 runtime execution handoff 图。
 - fix(boundaries): 移除 BFF 残留 kernel package 依赖，并明确 meta registry 只能通过 provider 注入访问。
 - docs(topology): 基于 manifest 与生产源码 import 重新生成 package dependency topology。
