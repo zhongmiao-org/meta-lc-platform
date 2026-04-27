@@ -30,7 +30,6 @@ flowchart LR
   Client --> BFFServer
   BFFServer --> BFF
   BFF --> Runtime
-  BFF --> Kernel
   Runtime --> Kernel
   Runtime --> Permission
   Runtime --> Query
@@ -56,18 +55,19 @@ flowchart LR
 | `packages/permission` | RBAC 与组织数据域决策。 | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
 | `packages/datasource` | Postgres datasource 配置与执行 adapter。 | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
 | `packages/audit` | 审计契约与可选、非阻塞 runtime observability sink。 | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
-| `packages/bff` | NestJS IO Gateway，持有 HTTP/WS DTO 与 thin runtime/kernel controller 入口。 | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
+| `packages/bff` | NestJS IO Gateway，持有 HTTP/WS DTO、runtime controller 入口、request-id 与错误映射。 | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
 
 ## 依赖方向
 
 - `runtime`、`kernel`、`query`、`permission`、`datasource`、`bff`、`audit` 是最终 7 个架构层包。
 - migration lifecycle scripts 下沉到 `infra/`；`packages/migration` 已被删除。
 - contract 由所属包拥有；`contracts`、`shared`、`platform`、`migration` 包已被删除。
-- 最终 workspace 依赖锁定为：app -> bff；bff -> runtime/kernel；runtime -> kernel/query/permission/datasource/audit；permission -> query。
+- 最终 workspace 依赖锁定为：app -> bff；bff -> runtime；runtime -> kernel/query/permission/datasource/audit；permission -> query。
 - `kernel`、`query`、`datasource`、`audit` 禁止依赖任何 workspace package。
 - 允许 `runtime -> kernel` 读取结构定义；禁止 `kernel -> runtime` 与 `kernel -> permission`。
 - `query` 只负责 AST 到 SQL 编译，禁止依赖 `datasource`、`runtime` 或 `permission`。
 - `bff` 只作为 gateway，不拥有 runtime orchestration、datasource wiring、permission decision、audit wiring 或 DB access。
+- `bff` 禁止依赖 `kernel`；`/meta/*` 可以使用注入的 meta registry provider，任何 kernel-backed provider 都必须在 BFF package 外部装配。
 - 禁止 deep import，跨包引用必须通过 package entrypoint。
 
 ### 编译 / 执行边界

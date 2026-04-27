@@ -15,7 +15,6 @@
     "@nestjs/platform-express": "^10.4.22",
     "@nestjs/platform-socket.io": "^10.4.22",
     "@nestjs/websockets": "^10.4.22",
-    "@zhongmiao/meta-lc-kernel": "workspace:*",
     "@zhongmiao/meta-lc-runtime": "workspace:*",
     "redis": "^4.7.1",
     "reflect-metadata": "^0.2.2",

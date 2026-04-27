@@ -58,6 +58,7 @@ const FORBIDDEN_AUDIT_DEPS = [
   '@zhongmiao/meta-lc-datasource'
 ];
 const FORBIDDEN_BFF_DEPS = [
+  '@zhongmiao/meta-lc-kernel',
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-query',
@@ -427,9 +428,9 @@ function checkBffGatewayConfig(rel, content, violations) {
 function checkBffMetaRegistryGateway(rel, content, violations) {
   if (rel !== 'packages/bff/src/infra/integration/meta-registry.service.ts') return;
 
-  for (const dep of ['@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-query', '@zhongmiao/meta-lc-datasource', '@zhongmiao/meta-lc-permission', '@zhongmiao/meta-lc-audit', 'pg']) {
+  for (const dep of ['@zhongmiao/meta-lc-kernel', '@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-query', '@zhongmiao/meta-lc-datasource', '@zhongmiao/meta-lc-permission', '@zhongmiao/meta-lc-audit', 'pg']) {
     if (content.includes(dep)) {
-      violations.push(`${rel}: BFF meta registry gateway may only depend on kernel.`);
+      violations.push(`${rel}: BFF meta registry gateway must use injected providers and must not import workspace packages.`);
     }
   }
 }

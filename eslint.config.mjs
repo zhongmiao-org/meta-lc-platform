@@ -42,7 +42,7 @@ export default [
             },
             {
               sourceTag: "layer:bff",
-              onlyDependOnLibsWithTags: ["layer:runtime", "layer:kernel"]
+              onlyDependOnLibsWithTags: ["layer:runtime"]
             },
             {
               sourceTag: "layer:runtime",
@@ -96,7 +96,7 @@ export default [
                 "@types/pg"
               ],
               message:
-                "BFF is gateway-only. It must only call runtime/kernel and must not import query, permission, datasource, audit, or pg."
+                "BFF is gateway-only. It must only call runtime and must not import kernel, query, permission, datasource, audit, or pg."
             }
           ]
         }

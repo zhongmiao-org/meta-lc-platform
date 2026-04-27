@@ -2,13 +2,14 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- fix(boundaries): remove the stale kernel dependency from BFF and make meta registry reads provider-only.
 - refactor(gateway): allow injecting runtime runners and meta registry providers so orders demo wiring lives outside the core BFF package.
 - docs(readme): document BFF upstream/downstream relationships in the final gateway-only topology.
 - fix(ci): build BFF workspace dependencies before package-local tests on clean runners.
-- chore(boundaries): add final Nx layer tags and lock BFF dependency gates to runtime/kernel only.
+- chore(boundaries): add final Nx layer tags and lock BFF dependency gates to runtime only.
 - chore(boundaries): seal the gateway-only layout by removing mapper/repository/interface remnants, adding gateway-only config, and tightening dependency guards.
 - refactor(boundaries): remove BFF contracts and data execution dependencies so view controllers only call the runtime gateway facade.
-- refactor(gateway): remove the BFF application layer so controllers act as thin runtime/kernel gateways with infra wiring only.
+- refactor(gateway): remove the BFF application layer so controllers act as thin runtime gateways with provider wiring only.
 - refactor(contracts): consume runtime, kernel, and permission-owned contracts instead of a transitional contracts package.
 - feat(observability): persist runtime audit events through a BFF infra observer without blocking view execution.
 - refactor(meta): read view, datasource, and permission definitions through an injectable Kernel-backed registry provider.

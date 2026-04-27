@@ -8,7 +8,7 @@
 
 BFF 对页面执行只调用 Runtime gateway facade。Runtime 负责 view lookup、execution context 构建、datasource wiring、permission context resolution、audit observation 与 `RuntimeExecutor` 执行。
 
-`/meta/*` 保留为只读的 thin Kernel gateway。它只返回 HTTP envelope，不发布 metadata、不执行 registry migration，也不参与页面执行。
+`/meta/*` 保留为只读 HTTP envelope，并由注入的 meta registry provider 提供数据。BFF 禁止 import `kernel`；任何 kernel-backed provider 都必须在 BFF package 外部装配。
 
 Nest module 可以为 examples 接收注入的 runtime runner 与 meta registry provider，但默认核心 BFF module 不内置 demo。
 
@@ -40,7 +40,7 @@ bff/src/
 - `controller/http/**` 是 HTTP API 入口层。
 - `controller/ws/**` 是 WebSocket 入口层。Runtime WebSocket 文件必须固定在 `controller/ws/runtime/**`。
 - `infra/cache/**` 只放 gateway cache。
-- `infra/integration/**` 只放 thin Kernel metadata registry integration。
+- `infra/integration/**` 只放 provider-backed metadata registry integration。
 - `config/**` 只放 gateway 协议层配置：HTTP/CORS/request-id/timeout、WebSocket path/replay、gateway cache、provider token 与 log level。
 - `common/constants/**` 放包级常量和 provider token。
 - `common/**` 只放少量框架级 helper 和异常工具。
@@ -58,11 +58,12 @@ bff/src/
 ## 依赖方向
 
 - 上游：`apps/bff-server` 与 client 协议入口。
-- 下游：`runtime` 负责页面执行，`kernel` 负责 thin metadata reads。
+- 下游 package 依赖：仅 `runtime`。
+- Meta 读取：`/meta/*` 使用注入的 meta registry provider；kernel-backed provider 在本包外部装配。
 
 ```text
 controller/http -> runtime facade
-controller/http -> kernel registry
+controller/http -> injected meta registry provider
 controller/ws -> runtime WS contracts
 ```
 
@@ -74,7 +75,7 @@ controller/ws -> runtime WS contracts
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
   Entry --> Runtime["Runtime gateway facade"]
-  Entry --> Kernel["Thin Kernel meta gateway"]
+  Entry --> MetaProvider["Injected meta registry provider"]
   Entry --> Response["HTTP response / WS event"]
 ```
 
@@ -95,4 +96,4 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - Runtime datasource、permission、audit 与 org-scope wiring 必须留在 runtime 或所属包内。
 - demo runtime runner 与 metadata provider 必须放在 `examples/*`，不能进入 BFF source。
 - 禁止恢复 `/query`、`/mutation` 旧入口；页面级数据请求必须走 `POST /view/:name`。
-- 禁止新增 `application/**`、`contracts/**`、`domain/**`、`mapper/**`、`infra/repository/**` 或 `infra/interfaces/**`；BFF 只能作为 Gateway 调用 Runtime 并暴露 thin Kernel metadata reads。
+- 禁止新增 `application/**`、`contracts/**`、`domain/**`、`mapper/**`、`infra/repository/**` 或 `infra/interfaces/**`；BFF 只能作为 Gateway 调用 Runtime 并暴露 provider-backed metadata reads。

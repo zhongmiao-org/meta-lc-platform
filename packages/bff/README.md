@@ -8,7 +8,7 @@ English | [中文文档](./README_zh.md)
 
 BFF invokes the Runtime gateway facade for page execution. Runtime performs view lookup, execution context construction, datasource wiring, permission context resolution, audit observation, and `RuntimeExecutor` execution.
 
-`/meta/*` remains a thin read-only Kernel gateway. It returns HTTP envelopes only and does not publish metadata, execute registry migrations, or participate in page execution.
+`/meta/*` remains a read-only HTTP envelope backed by an injected meta registry provider. BFF must not import `kernel`; any kernel-backed provider must be composed outside the BFF package.
 
 The Nest module can accept injected runtime runners and meta registry providers for examples, but the default core BFF module stays demo-free.
 
@@ -40,7 +40,7 @@ bff/src/
 - `controller/http/**` is the HTTP API entry layer.
 - `controller/ws/**` is the WebSocket entry layer. Runtime WebSocket files must stay under `controller/ws/runtime/**`.
 - `infra/cache/**` owns gateway cache only.
-- `infra/integration/**` owns thin Kernel metadata registry integration only.
+- `infra/integration/**` owns provider-backed metadata registry integration only.
 - `config/**` owns gateway protocol configuration only: HTTP/CORS/request-id/timeout, WebSocket path/replay, gateway cache, provider token, and log-level knobs.
 - `common/constants/**` owns package-level constants and provider tokens.
 - `common/**` owns small framework-level helpers and exception utilities only.
@@ -58,11 +58,12 @@ bff/src/
 ## Dependency Direction
 
 - Upstream: `apps/bff-server` and client protocol entrypoints.
-- Downstream: `runtime` for page execution and `kernel` for thin metadata reads.
+- Downstream package dependency: `runtime` only.
+- Meta reads: `/meta/*` uses an injected meta registry provider; kernel-backed providers are composed outside this package.
 
 ```text
 controller/http -> runtime facade
-controller/http -> kernel registry
+controller/http -> injected meta registry provider
 controller/ws -> runtime WS contracts
 ```
 
@@ -74,7 +75,7 @@ controller/ws -> runtime WS contracts
 flowchart LR
   Http["HTTP / WS / CLI request"] --> Entry["controller/*"]
   Entry --> Runtime["Runtime gateway facade"]
-  Entry --> Kernel["Thin Kernel meta gateway"]
+  Entry --> MetaProvider["Injected meta registry provider"]
   Entry --> Response["HTTP response / WS event"]
 ```
 
@@ -95,4 +96,4 @@ pnpm --filter @zhongmiao/meta-lc-bff start
 - Runtime datasource, permission, audit, and org-scope wiring must stay inside runtime or the owning packages.
 - Demo runtime runners and metadata providers belong in `examples/*`, not in BFF source.
 - Do not restore legacy `/query` or `/mutation` endpoints; page data requests must use `POST /view/:name`.
-- Do not add `application/**`, `contracts/**`, `domain/**`, `mapper/**`, `infra/repository/**`, or `infra/interfaces/**`; BFF is only a Gateway invoking Runtime and exposing thin Kernel metadata reads.
+- Do not add `application/**`, `contracts/**`, `domain/**`, `mapper/**`, `infra/repository/**`, or `infra/interfaces/**`; BFF is only a Gateway invoking Runtime and exposing provider-backed metadata reads.
