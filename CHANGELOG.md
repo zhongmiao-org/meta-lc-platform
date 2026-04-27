@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(sdk): make Postgres support an optional peer for audit and datasource secondary entries.
 - fix(ci): run the orders demo query gate against built package entrypoints after tightening package public exports.
 - chore(public-api): narrow kernel, query, and permission package root exports to explicit SDK-facing symbols.
 - docs(topology): add a runtime execution handoff diagram beside package dependency topology.

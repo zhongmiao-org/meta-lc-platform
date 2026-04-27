@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'infra-persistence']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
+const POSTGRES_SECONDARY_ENTRY_PACKAGES = new Set(['audit', 'datasource']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/postgres/postgres.adapter.ts',
   'packages/datasource/src/postgres/postgres-org-scope.adapter.ts',
@@ -959,6 +960,13 @@ function checkPackageManifest(file, root, violations) {
       if (packageName === 'infra-persistence' && FORBIDDEN_INFRA_PERSISTENCE_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: infra-persistence dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
+      if (
+        POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName) &&
+        blockName === 'dependencies' &&
+        dependencyName === 'pg'
+      ) {
+        violations.push(`${rel}: pg must be an optional peerDependency for postgres secondary entries, not a dependency.`);
+      }
       if (ALLOWED_APP_DEPS[packageName] && dependencyName.startsWith('@zhongmiao/meta-lc-') && !ALLOWED_APP_DEPS[packageName].has(dependencyName)) {
         violations.push(`${rel}: app dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
@@ -968,6 +976,15 @@ function checkPackageManifest(file, root, violations) {
           `${rel}: ${dependencyName} is forbidden in ${blockName} outside audit/datasource/infra-persistence packages.`
         );
       }
+    }
+  }
+
+  if (POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName)) {
+    if (!manifest.peerDependencies?.pg) {
+      violations.push(`${rel}: postgres secondary entry packages must declare pg in peerDependencies.`);
+    }
+    if (manifest.peerDependenciesMeta?.pg?.optional !== true) {
+      violations.push(`${rel}: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.`);
     }
   }
 }

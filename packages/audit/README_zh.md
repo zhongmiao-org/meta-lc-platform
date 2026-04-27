@@ -41,6 +41,10 @@ pnpm --filter @zhongmiao/meta-lc-audit build
 pnpm --filter @zhongmiao/meta-lc-audit test
 ```
 
+## Postgres Secondary Entry
+
+包根入口默认不安装也不暴露 Postgres persistence。消费者只有在导入 `@zhongmiao/meta-lc-audit/postgres` 时，才需要在 composition root 中安装兼容版本的 `pg`。
+
 ## 边界约束
 
 - 通过 `AuditSink` 保持 audit persistence 可插拔。

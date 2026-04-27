@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(sdk): 将 Postgres adapter secondary entry 使用的 `pg` 调整为可选 peer dependency。
 - refactor(public-api): 将 Postgres adapter 移到 `@zhongmiao/meta-lc-datasource/postgres` secondary entry，并保持包根只导出 contract。
 - refactor(adapter): 从 datasource 移除 orders demo mutation adapter，并将业务 demo wiring 迁入 `examples/orders-demo`。
 - docs(readme): 明确 datasource 上下游关系与仅负责物理执行的边界。

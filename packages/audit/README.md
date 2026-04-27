@@ -41,6 +41,10 @@ pnpm --filter @zhongmiao/meta-lc-audit build
 pnpm --filter @zhongmiao/meta-lc-audit test
 ```
 
+## Postgres Secondary Entry
+
+The package root does not install or expose Postgres persistence by default. Consumers that import `@zhongmiao/meta-lc-audit/postgres` must install a compatible `pg` version in their composition root.
+
 ## Boundary Notes
 
 - Keep audit persistence pluggable through `AuditSink`.

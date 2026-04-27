@@ -8,8 +8,14 @@ import { checkWorkspace } from './check-boundaries.mjs';
 test('allows current explicit pg edge files', () => {
   const workspace = createWorkspace({
     'packages/datasource/package.json': packageJson({
-      dependencies: { pg: '^8.13.1' },
-      devDependencies: { '@types/pg': '^8.11.10' }
+      devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
+    }),
+    'packages/audit/package.json': packageJson({
+      devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
     'packages/datasource/src/postgres/postgres.adapter.ts': 'import { Pool } from "pg";\n',
     'packages/datasource/src/postgres/postgres-org-scope.adapter.ts': 'import { Pool } from "pg";\n',
@@ -30,6 +36,26 @@ test('rejects pg declarations in non-db-boundary package manifests', () => {
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/query/package.json: pg is forbidden in dependencies outside audit/datasource/infra-persistence packages.',
     'packages/query/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/infra-persistence packages.'
+  ]);
+});
+
+test('keeps audit and datasource pg dependencies as optional peers', () => {
+  const workspace = createWorkspace({
+    'packages/datasource/package.json': packageJson({
+      dependencies: { pg: '^8.13.1' },
+      devDependencies: { '@types/pg': '^8.11.10' }
+    }),
+    'packages/audit/package.json': packageJson({
+      devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
+      peerDependencies: { pg: '^8.13.1' }
+    })
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/audit/package.json: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.',
+    'packages/datasource/package.json: pg must be an optional peerDependency for postgres secondary entries, not a dependency.',
+    'packages/datasource/package.json: postgres secondary entry packages must declare pg in peerDependencies.',
+    'packages/datasource/package.json: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.'
   ]);
 });
 
@@ -679,13 +705,17 @@ test('keeps infra-persistence composition-only for packages while allowing apps'
     'packages/datasource/package.json': packageJson({
       dependencies: {
         '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
-      }
+      },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
     'packages/datasource/src/infra/adapters/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
     'packages/audit/package.json': packageJson({
       dependencies: {
         '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
-      }
+      },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
     'packages/audit/src/application/services/bad.service.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n'
   });
@@ -717,7 +747,9 @@ test('rejects datasource and audit reverse workspace dependencies', () => {
         '@zhongmiao/meta-lc-permission': 'workspace:*',
         '@zhongmiao/meta-lc-bff': 'workspace:*',
         '@zhongmiao/meta-lc-audit': 'workspace:*'
-      }
+      },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
     'packages/datasource/src/bad.ts': [
       'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";',
@@ -733,7 +765,9 @@ test('rejects datasource and audit reverse workspace dependencies', () => {
         '@zhongmiao/meta-lc-query': 'workspace:*',
         '@zhongmiao/meta-lc-permission': 'workspace:*',
         '@zhongmiao/meta-lc-datasource': 'workspace:*'
-      }
+      },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
     'packages/audit/src/bad.ts': [
       'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";',

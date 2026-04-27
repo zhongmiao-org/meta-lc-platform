@@ -43,6 +43,10 @@ pnpm --filter @zhongmiao/meta-lc-datasource build
 pnpm --filter @zhongmiao/meta-lc-datasource test
 ```
 
+## Postgres Secondary Entry
+
+The package root is contract-only and does not force Postgres driver installation. Consumers that import `@zhongmiao/meta-lc-datasource/postgres` must install a compatible `pg` version in their composition root.
+
 ## Boundary Notes
 
 - Keep adapter code focused on database execution and lifecycle.

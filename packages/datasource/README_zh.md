@@ -43,6 +43,10 @@ pnpm --filter @zhongmiao/meta-lc-datasource build
 pnpm --filter @zhongmiao/meta-lc-datasource test
 ```
 
+## Postgres Secondary Entry
+
+包根入口只暴露 contract，不强制安装 Postgres driver。消费者只有在导入 `@zhongmiao/meta-lc-datasource/postgres` 时，才需要在 composition root 中安装兼容版本的 `pg`。
+
 ## 边界约束
 
 - adapter 代码只关注数据库执行与生命周期。
