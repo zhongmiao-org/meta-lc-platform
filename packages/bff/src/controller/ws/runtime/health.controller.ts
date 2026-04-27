@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import { RuntimeWsOperationsState } from "./operations.state";
-import type { RuntimeWsOperationsSnapshot } from "../../../types/runtime-ws.type";
+import type { RuntimeWsOperationsSnapshot } from "./runtime-ws-event.type";
 
 @Controller()
 export class RuntimeWsHealthController {

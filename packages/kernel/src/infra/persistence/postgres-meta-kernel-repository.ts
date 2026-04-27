@@ -1,6 +1,7 @@
 import { Pool } from "pg";
-import { createMigrationSafetyReport, type MigrationGuardOptions } from "../../application/migration-safety";
+import { createMigrationSafetyReport } from "../../domain/migration-safety";
 import { randomUUID } from "node:crypto";
+import type { MigrationGuardOptions } from "../../core/types";
 import type {
   DbConfig,
   MetaDefinitionKind,
@@ -9,7 +10,7 @@ import type {
   MetaSchema,
   MetaVersion,
   MigrationAuditRecord
-} from "../../types/shared.types";
+} from "../../core/types/shared.types";
 
 interface MigrationExecutionContext {
   appId: string;

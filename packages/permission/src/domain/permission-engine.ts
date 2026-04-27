@@ -5,7 +5,7 @@ import type {
   PermissionContext,
   PermissionFilter,
   RoleDataPolicy
-} from "../types/shared.types";
+} from "../core/types/shared.types";
 
 const SCOPE_PRIORITY: Record<DataScopeType, number> = {
   SELF: 10,

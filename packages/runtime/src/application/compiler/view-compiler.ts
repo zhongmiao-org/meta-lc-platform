@@ -1,7 +1,7 @@
 import {
   type ExecutionPlan,
   ViewCompilerError
-} from "../../types";
+} from "../../core/types";
 import type { ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 import { buildExecutionPlan } from "./plan-builder";
 

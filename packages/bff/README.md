@@ -22,19 +22,31 @@ bff/src/
 ├── config/
 ├── controller/
 │   ├── http/
+│   │   ├── view.controller.ts
+│   │   ├── view.request.type.ts
+│   │   ├── view.response.type.ts
+│   │   ├── view.gateway.interface.ts
+│   │   ├── meta.controller.ts
+│   │   ├── meta.response.type.ts
+│   │   └── meta.gateway.interface.ts
 │   ├── ws/
 │   │   └── runtime/
 │   │       ├── ws.gateway.ts
+│   │       ├── runtime-ws-event.type.ts
+│   │       ├── runtime-ws-client.type.ts
+│   │       ├── runtime-ws.gateway.interface.ts
 │   │       ├── broadcast.bus.ts
 │   │       ├── health.controller.ts
 │   │       ├── operations.state.ts
 │   │       └── replay.store.ts
 ├── infra/
 │   ├── cache/
+│   │   ├── cache.service.ts
+│   │   └── cache-entry.type.ts
 │   └── integration/
-├── interface/
-├── services/
-├── types/
+│       ├── meta-registry.service.ts
+│       ├── meta-registry-response.type.ts
+│       └── meta-registry-client.interface.ts
 └── index.ts
 ```
 
@@ -44,9 +56,6 @@ bff/src/
 - `controller/ws/**` is the WebSocket entry layer. Runtime WebSocket files must stay under `controller/ws/runtime/**`.
 - `infra/cache/**` owns gateway cache only.
 - `infra/integration/**` owns provider-backed metadata registry integration only.
-- `interface/**` owns `export interface` behavior contracts and structural abstractions only.
-- `types/**` owns `export type` data shapes and structural composition only.
-- `services/**` owns BFF service implementations split out from entry layers.
 - `config/**` owns gateway protocol configuration only: HTTP/CORS/request-id/timeout, WebSocket path/replay, gateway cache, provider token, and log-level knobs.
 - `common/constants/**` owns package-level constants and provider tokens.
 - `common/**` owns small framework-level helpers and exception utilities only.
@@ -58,9 +67,10 @@ bff/src/
 - `*.type.ts` means data shapes or structural composition and may only export `type`.
 - Do not mix `export type` inside `*.interface.ts`.
 - Do not mix `export interface` inside `*.type.ts`.
-- Do not place `*.interface.ts`, `*.type.ts`, or `*.service.ts` under `controller/**`.
+- Local `*.interface.ts` and `*.type.ts` files are allowed under `controller/**` and `infra/**`.
+- Do not place `*.service.ts` under `controller/**`.
 - Do not declare TypeScript `type` or `interface` in controller/service/infra implementation files.
-- Do not add `types/index.ts` or `interfaces/index.ts` aggregators.
+- Do not add top-level `core/**`, `domain/**`, `application/**`, `interface/**`, `types/**`, or `services/**`.
 
 ## Dependency Direction
 

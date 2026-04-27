@@ -5,7 +5,7 @@ import {
   type MutationExecutionResult,
   type RuntimeContext,
   type RuntimeExecutionResult
-} from "../../types";
+} from "../../core/types";
 import { RuntimeExecutor, type RuntimeExecutorDependencies } from "./runtime-executor";
 
 export interface SubmitExecutionResult extends RuntimeExecutionResult {

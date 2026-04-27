@@ -8,7 +8,7 @@ import {
   QueryExecutorError,
   type RuntimeContext,
   type RuntimeStateStore
-} from "../../types";
+} from "../../core/types";
 import type { QueryNodeDefinition, ViewExpression } from "@zhongmiao/meta-lc-kernel";
 import {
   createQueryCompilerAdapter,
@@ -16,7 +16,7 @@ import {
   type QueryCompilerAdapter,
   type QueryDatasourceAdapter,
   type QueryPermissionAdapter
-} from "../../infra/adapter/query.adapter";
+} from "../../infra/adapters/query.adapter";
 import {
   createRuntimeAuditDispatchContext,
   emitRuntimeAuditEvent,

@@ -1,6 +1,3 @@
+export * from "./core";
 export * from "./domain";
-export * from "./application";
-export * from "./infra";
-export * from "./interface";
-export * from "./types";
 export * from "./utils";

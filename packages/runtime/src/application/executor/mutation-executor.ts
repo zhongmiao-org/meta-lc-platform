@@ -5,10 +5,10 @@ import type {
   MutationExecutionResult,
   RuntimeContext,
   RuntimeStateStore
-} from "../../types";
+} from "../../core/types";
 import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
-import { NodeExecutorError } from "../../types";
-import type { MutationDatasourceAdapter } from "../../infra/adapter/mutation.adapter";
+import { NodeExecutorError } from "../../core/types";
+import type { MutationDatasourceAdapter } from "../../infra/adapters/mutation.adapter";
 
 export interface MutationExecutorDependencies {
   adapter: MutationDatasourceAdapter;

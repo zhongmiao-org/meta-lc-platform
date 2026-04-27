@@ -1,7 +1,7 @@
 import {
   type DagEdges,
   DagSchedulerError
-} from "../../types";
+} from "../../core/types";
 import { buildDagDependencyGraph } from "./dependency-graph";
 import { detectCycle } from "./topo-sort";
 

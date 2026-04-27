@@ -29,7 +29,7 @@
 - Runtime 负责装配页面执行所需的具体依赖；BFF 不构造 datasource、permission、org-scope 或 audit dependency。
 - demo 专属 view seeds 与 mutation adapter 从 `examples/*` 注入；runtime 默认实现保持平台能力纯净。
 - Runtime 可以在 plan、node、permission、datasource 边界发出可选 audit observability event，但不改变执行语义。
-- `src/infra/adapter/**` 放的是 runtime 消费的 adapter contract/port，不是 runtime 自己的 infra implementation。
+- `src/infra/adapters/**` 放的是 runtime 消费的 adapter contract/port，不是 runtime 自己的 infra implementation。
 
 ## 最小闭环
 

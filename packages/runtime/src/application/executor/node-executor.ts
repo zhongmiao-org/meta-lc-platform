@@ -3,7 +3,7 @@ import {
   type RuntimeContext,
   type RuntimeStateStore,
   NodeExecutorError
-} from "../../types";
+} from "../../core/types";
 import type {
   MergeNodeDefinition,
   MutationNodeDefinition,

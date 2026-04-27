@@ -21,15 +21,15 @@ import { executeSubmitPlan, type SubmitExecutionResult } from "./submit-executor
 import type {
   RuntimeContext,
   RuntimeStateStore
-} from "../../types";
+} from "../../core/types";
 import type { TransformNodeDefinition, ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-permission";
 import type {
   QueryCompilerAdapter,
   QueryDatasourceAdapter,
   QueryPermissionAdapter
-} from "../../infra/adapter/query.adapter";
-import type { MutationDatasourceAdapter } from "../../infra/adapter/mutation.adapter";
+} from "../../infra/adapters/query.adapter";
+import type { MutationDatasourceAdapter } from "../../infra/adapters/mutation.adapter";
 import { compileViewDefinition } from "../compiler/view-compiler";
 
 export interface RuntimeGatewayViewRequest {

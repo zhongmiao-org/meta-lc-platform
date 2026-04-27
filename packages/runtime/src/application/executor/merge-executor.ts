@@ -3,7 +3,7 @@ import {
   MergeExecutorError,
   type RuntimeContext,
   type RuntimeStateStore
-} from "../../types";
+} from "../../core/types";
 import type { MergeNodeDefinition, MergeStrategy } from "@zhongmiao/meta-lc-kernel";
 
 export type MergeExecutorResult = unknown;

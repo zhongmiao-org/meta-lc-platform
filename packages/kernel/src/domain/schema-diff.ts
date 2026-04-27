@@ -1,4 +1,4 @@
-import type { MetaField, MetaSchema, MetaTable } from "../types/shared.types";
+import type { MetaField, MetaSchema, MetaTable } from "../core/types/shared.types";
 import { createTableSql, quoteIdentifier, toSqlType } from "../utils/sql-utils";
 
 export interface FieldChange {

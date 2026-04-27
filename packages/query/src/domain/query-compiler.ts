@@ -12,7 +12,7 @@ import type {
   QuerySelectItem,
   QueryTableRef,
   SelectQueryAst
-} from "../types/shared.types";
+} from "../core/types/shared.types";
 
 const DEFAULT_LIMIT = 100;
 const KEYWORD_SEARCH_FIELDS = ["id", "owner"] as const;

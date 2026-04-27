@@ -5,7 +5,7 @@ import type {
   MetaDefinitionKind,
   PermissionPolicy,
   ViewDefinition
-} from "../types/shared.types";
+} from "../core/types/shared.types";
 
 export function validateMetaDefinition<K extends MetaDefinitionKind>(
   kind: K,

@@ -74,19 +74,20 @@ const BFF_TOP_LEVEL_DIRS = new Set([
   'common',
   'config',
   'controller',
-  'infra',
-  'interface',
-  'services',
-  'types'
+  'infra'
 ]);
 const BFF_FORBIDDEN_SOURCE_DIRS = [
   'packages/bff/src/application',
   'packages/bff/src/application/orchestrator',
   'packages/bff/src/contracts',
+  'packages/bff/src/core',
   'packages/bff/src/domain',
+  'packages/bff/src/interface',
   'packages/bff/src/mapper',
   'packages/bff/src/infra/interfaces',
-  'packages/bff/src/infra/repository'
+  'packages/bff/src/infra/repository',
+  'packages/bff/src/services',
+  'packages/bff/src/types'
 ];
 const BFF_INFRA_ALLOWED_DIRS = new Set(['cache', 'integration']);
 const BFF_GATEWAY_CONFIG_FORBIDDEN_PATTERNS = [
@@ -249,7 +250,7 @@ function checkSourceFile(file, root, violations) {
   checkForbiddenPackageRefs(rel, content, violations);
   checkPackageSourceDemoArtifacts(rel, content, violations);
   checkPackageDoesNotImportExamples(rel, content, file, root, violations);
-  checkCommonPackageSourceLayout(rel, content, violations);
+  checkCommonPackageSourceLayout(rel, content, file, root, violations);
   checkBffSourceFile(rel, content, file, root, violations);
   checkContractDefinitions(rel, content, violations);
 
@@ -378,35 +379,67 @@ function checkPackageDoesNotImportExamples(rel, content, file, root, violations)
   }
 }
 
-function checkCommonPackageSourceLayout(rel, content, violations) {
+function checkCommonPackageSourceLayout(rel, content, file, root, violations) {
   const packageName = getPackageName(rel);
   if (!COMMON_LAYER_PACKAGES.has(packageName) || !rel.startsWith(`packages/${packageName}/src/`)) return;
 
-  if (rel.includes('/src/interface/')) {
-    checkCommonInterfaceFile(rel, content, violations);
+  if (rel.includes('/src/core/')) {
+    checkCommonCoreFile(rel, content, file, root, violations);
   }
 
-  if (/^\s*export\s+class\s+\w*Service\b/m.test(content) && !rel.includes('/src/services/')) {
-    violations.push(`${rel}: service classes must live under src/services.`);
+  if (rel.includes('/src/domain/')) {
+    checkCommonDomainFile(rel, content, file, root, violations);
+  }
+
+  if (rel.includes('/src/application/')) {
+    checkCommonApplicationFile(rel, content, violations);
+  }
+
+  if (/^\s*export\s+class\s+\w*Service\b/m.test(content) && !rel.includes('/src/application/services/')) {
+    violations.push(`${rel}: service classes must live under src/application/services.`);
   }
 }
 
-function checkCommonInterfaceFile(rel, content, violations) {
-  const basename = path.posix.basename(rel);
-  const hasForbiddenDeclaration =
-    /^\s*(?:export\s+)?type\s+\w+\s*=/m.test(content) ||
-    /^\s*(?:export\s+)?(?:class|const|let|var|function|enum)\s+\w+\b/m.test(content) ||
-    /^\s*interface\s+\w+/m.test(content) ||
-    /^\s*export\s+default\b/m.test(content) ||
-    /^\s*export\s+\{(?!\s*\}\s*;?\s*$)/m.test(content);
+function checkCommonCoreFile(rel, content, file, root, violations) {
+  for (const specifier of findImportSpecifiers(content)) {
+    if (!specifier.startsWith('.')) continue;
+    const targetRel = normalizePath(path.relative(root, path.resolve(path.dirname(file), specifier)));
+    if (
+      targetRel.includes('/src/domain/') ||
+      targetRel.includes('/src/application/') ||
+      targetRel.includes('/src/infra/')
+    ) {
+      violations.push(`${rel}: core files must not import domain/application/infra (${specifier}).`);
+    }
+  }
+}
 
-  if (hasForbiddenDeclaration) {
-    violations.push(`${rel}: src/interface files may only export interface declarations.`);
-    return;
+function checkCommonDomainFile(rel, content, file, root, violations) {
+  for (const dep of ['@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-datasource']) {
+    if (content.includes(dep)) {
+      violations.push(`${rel}: domain files must not depend on ${dep}.`);
+    }
   }
 
-  if (basename !== 'index.ts' && /^\s*export\s+\*/m.test(content)) {
-    violations.push(`${rel}: src/interface re-exports are only allowed from index.ts.`);
+  for (const specifier of findImportSpecifiers(content)) {
+    if (!specifier.startsWith('.')) continue;
+    const targetRel = normalizePath(path.relative(root, path.resolve(path.dirname(file), specifier)));
+    if (targetRel.includes('/src/infra/')) {
+      violations.push(`${rel}: domain files must not import infra (${specifier}).`);
+    }
+  }
+}
+
+function checkCommonApplicationFile(rel, content, violations) {
+  if (importsPg(content)) {
+    violations.push(`${rel}: application files must not import pg directly.`);
+  }
+  if (
+    rel.includes('/src/application/adapters/') ||
+    rel.includes('/src/application/persistence/') ||
+    rel.endsWith('.adapter.ts')
+  ) {
+    violations.push(`${rel}: adapters and persistence implementations must live under src/infra.`);
   }
 }
 
@@ -422,11 +455,8 @@ function checkBffSourceFile(rel, content, file, root, violations) {
   if (rel.startsWith('packages/bff/src/controller/') && /@Post\(\s*["'](?:query|mutation)["']\s*\)/.test(content)) {
     violations.push(`${rel}: legacy /query and /mutation endpoints are forbidden.`);
   }
-  if (rel.startsWith('packages/bff/src/controller/') && /\.(?:interface|type)\.ts$/.test(rel)) {
-    violations.push(`${rel}: BFF controller type/interface files must live under src/interface or src/types.`);
-  }
   if (rel.startsWith('packages/bff/src/controller/') && rel.endsWith('.service.ts')) {
-    violations.push(`${rel}: BFF controller service files must live under src/services.`);
+    violations.push(`${rel}: BFF controller service files must live under infra-owned gateway services.`);
   }
 
   checkBffRuntimeImports(rel, content, violations);

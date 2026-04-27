@@ -3,7 +3,7 @@ import {
   type DagEdges,
   type DagGraphNode,
   DagSchedulerError
-} from "../../types";
+} from "../../core/types";
 
 export function buildDagDependencyGraph(edges: DagEdges): DagDependencyGraph {
   const normalizedEdges = normalizeDagEdges(edges);

@@ -2,7 +2,7 @@ import type {
   RuntimeWsOperationError,
   RuntimeWsOperationsSnapshot,
   RuntimeWsOperationsStateOptions
-} from "../../../types/runtime-ws.type";
+} from "./runtime-ws-event.type";
 
 export class RuntimeWsOperationsState {
   private readonly connectedClientIds = new Set<string>();

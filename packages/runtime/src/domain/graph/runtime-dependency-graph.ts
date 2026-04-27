@@ -2,7 +2,7 @@ import type {
   RuntimeActionStepDefinition,
   RuntimeDependencyTargetRef,
   RuntimeRefreshEvent
-} from "../../types";
+} from "../../core/types";
 import {
   createRefreshPlan,
   createRuntimeTargetRef,
@@ -15,7 +15,7 @@ import {
   type RuntimeDependencyGraph,
   type RuntimeDependencyGraphNode,
   toStableTargetOrder
-} from "../../types";
+} from "../../core/types";
 
 export function buildDependencyGraph(parsedDsl: ParsedRuntimePageDsl): RuntimeDependencyGraph {
   const stateKeys = [...parsedDsl.stateKeys];

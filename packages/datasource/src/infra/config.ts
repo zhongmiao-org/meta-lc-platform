@@ -1,4 +1,4 @@
-import type { DbConfig } from "../types/shared.types";
+import type { DbConfig } from "../core/types/shared.types";
 
 function toPort(value: string | undefined, fallback: number): number {
   const parsed = Number(value);

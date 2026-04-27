@@ -69,8 +69,8 @@ flowchart TD
   - value: `packages/bff/src/controller/http/view.controller.ts`
   - type-only: `packages/bff/src/controller/ws/runtime/broadcast.bus.ts`
   - type-only: `packages/bff/src/controller/ws/runtime/replay.store.ts`
-  - type-only: `packages/bff/src/controller/ws/runtime/runtime-ws.interface.ts`
-  - type-only: `packages/bff/src/controller/ws/runtime/runtime-ws.type.ts`
+  - type-only: `packages/bff/src/controller/ws/runtime/runtime-ws-event.type.ts`
+  - type-only: `packages/bff/src/controller/ws/runtime/runtime-ws.gateway.interface.ts`
   - value: `packages/bff/src/controller/ws/runtime/ws.gateway.ts`
 - `@zhongmiao/meta-lc-bff-server` -> `@zhongmiao/meta-lc-bff`
   - value: `apps/bff-server/src/main.ts`
@@ -81,13 +81,13 @@ flowchart TD
   - type-only: `packages/runtime/src/application/executor/runtime-audit.ts`
   - type-only: `packages/runtime/src/application/executor/runtime-executor.ts`
   - type-only: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - type-only: `packages/runtime/src/types/shared.types.ts`
+  - type-only: `packages/runtime/src/core/types/shared.types.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-datasource`
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
   - type-only: `packages/runtime/src/application/executor/runtime-executor.ts`
   - value: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - type-only: `packages/runtime/src/infra/adapter/query.adapter.ts`
-  - type-only: `packages/runtime/src/types/shared.types.ts`
+  - type-only: `packages/runtime/src/core/types/shared.types.ts`
+  - type-only: `packages/runtime/src/infra/adapters/query.adapter.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-kernel`
   - type-only: `packages/runtime/src/application/compiler/plan-builder.ts`
   - type-only: `packages/runtime/src/application/compiler/view-compiler.ts`
@@ -97,14 +97,14 @@ flowchart TD
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
   - value: `packages/runtime/src/application/executor/runtime-view-executor.ts`
   - type-only: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - type-only: `packages/runtime/src/types/shared.types.ts`
+  - type-only: `packages/runtime/src/core/types/shared.types.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-permission`
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
   - type-only: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - value: `packages/runtime/src/infra/adapter/query.adapter.ts`
+  - value: `packages/runtime/src/infra/adapters/query.adapter.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-query`
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
-  - value: `packages/runtime/src/infra/adapter/query.adapter.ts`
+  - value: `packages/runtime/src/infra/adapters/query.adapter.ts`
 
 ## Runtime 执行流 / Execution Handoff
 

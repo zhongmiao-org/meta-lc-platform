@@ -1,2 +1,2 @@
-export * from "./adapter/query.adapter";
-export * from "./adapter/mutation.adapter";
+export * from "./adapters/query.adapter";
+export * from "./adapters/mutation.adapter";

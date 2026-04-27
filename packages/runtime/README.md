@@ -29,7 +29,7 @@ English | [中文文档](./README_zh.md)
 - Runtime wires concrete execution dependencies for page execution; BFF does not construct datasource, permission, org-scope, or audit dependencies.
 - Demo-specific view seeds and mutation adapters are injected from `examples/*`; runtime defaults stay platform-only.
 - Runtime can emit optional audit observability events for plan, node, permission, and datasource boundaries without changing execution semantics.
-- `src/infra/adapter/**` contains runtime-consumed adapter contracts/ports, not package-owned infrastructure implementations.
+- `src/infra/adapters/**` contains runtime-consumed adapter contracts/ports, not package-owned infrastructure implementations.
 
 ## Minimal Flow
 

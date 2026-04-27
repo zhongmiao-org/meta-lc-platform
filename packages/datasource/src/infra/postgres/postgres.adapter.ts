@@ -7,7 +7,7 @@ import {
   type DatasourceParamValue,
   type DbConfig,
   type QueryResultRow
-} from "../../types/shared.types";
+} from "../../core/types/shared.types";
 
 interface PostgresPoolLike {
   query(

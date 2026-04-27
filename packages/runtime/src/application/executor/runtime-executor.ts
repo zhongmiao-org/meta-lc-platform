@@ -3,8 +3,8 @@ import { resolveExpression } from "../../domain/dsl/expression";
 import { parseRuntimePageDsl } from "../../domain/dsl/runtime-dsl-parser";
 import { resolveExecutionOrder } from "../../domain/graph/dep-resolver";
 import { buildDependencyGraph, planRefresh } from "../../domain/graph/runtime-dependency-graph";
-import { createFunctionRegistry } from "../function-registry";
-import { evaluateRules } from "../rule-engine";
+import { createFunctionRegistry } from "../services/function-registry";
+import { evaluateRules } from "../services/rule-engine";
 import { executeNode, type NodeExecutorDependencies } from "./node-executor";
 import {
   createRuntimeAuditDispatchContext,
@@ -31,7 +31,7 @@ import {
   type RuntimeRefreshEvent,
   type RuntimeRefreshPlan,
   type RuntimeRuleEffectsPlan
-} from "../../types";
+} from "../../core/types";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 
 export interface RuntimeExecutorDependencies {

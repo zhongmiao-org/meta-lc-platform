@@ -1,4 +1,4 @@
-import type { RuntimeTemplateDependency } from "../../types";
+import type { RuntimeTemplateDependency } from "../../core/types";
 
 const STATE_TEMPLATE_PATTERN = /\{\{\s*state\.([a-zA-Z0-9_]+)\s*\}\}/g;
 

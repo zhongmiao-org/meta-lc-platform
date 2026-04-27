@@ -3,7 +3,7 @@ import {
   type ExecutionPlan,
   type ViewCompilerDependency,
   ViewCompilerError
-} from "../../types";
+} from "../../core/types";
 import type { NodeDefinition, OutputDefinition, SubmitDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const EXPRESSION_PATTERN = /\{\{\s*([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*)\s*\}\}/g;

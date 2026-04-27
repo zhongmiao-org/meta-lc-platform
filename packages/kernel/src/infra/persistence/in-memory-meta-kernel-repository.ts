@@ -4,7 +4,7 @@ import type {
   MetaDefinitionVersion,
   MetaSchema,
   MetaVersion
-} from "../../types/shared.types";
+} from "../../core/types/shared.types";
 
 export interface InMemoryMetaDefinitionSeed<K extends MetaDefinitionKind = MetaDefinitionKind> {
   appId: string;

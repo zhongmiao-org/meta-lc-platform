@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   assertMigrationSafety,
   createMigrationSafetyReport
-} from "../src/application/migration-safety";
+} from "../src/domain/migration-safety";
 
 test("createMigrationSafetyReport detects destructive statements", () => {
   const report = createMigrationSafetyReport([

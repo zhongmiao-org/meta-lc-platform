@@ -2,7 +2,7 @@ import {
   type DagCycleResult,
   type DagEdges,
   DagSchedulerError
-} from "../../types";
+} from "../../core/types";
 import { buildDagDependencyGraph } from "./dependency-graph";
 
 export function topoSort(edges: DagEdges): string[] {

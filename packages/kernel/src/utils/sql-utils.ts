@@ -1,4 +1,4 @@
-import type { MetaField } from "../types/shared.types";
+import type { MetaField } from "../core/types/shared.types";
 
 export function quoteIdentifier(value: string): string {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {

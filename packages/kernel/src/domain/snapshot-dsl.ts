@@ -4,7 +4,7 @@ import type {
   MigrationAction,
   MigrationDslV1,
   SnapshotV1
-} from "../types/shared.types";
+} from "../core/types/shared.types";
 import { diffSchemas } from "./schema-diff";
 import { createTableSql, quoteIdentifier, toColumnDefinition, toSqlType } from "../utils/sql-utils";
 

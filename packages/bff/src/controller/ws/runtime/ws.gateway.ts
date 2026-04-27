@@ -24,15 +24,14 @@ import {
 } from "../../../common/constants/runtime-ws.constant";
 import type {
   RuntimeWsBroadcastBus,
-  RuntimeWsReplayStore,
-  WsClientLike,
-  WsServerLike
-} from "../../../interface/runtime-ws.interface";
+  RuntimeWsReplayStore
+} from "./runtime-ws.gateway.interface";
+import type { WsClientLike, WsServerLike } from "./runtime-ws-client.type";
 import type {
   PageSubscribedEvent,
   RuntimeWsBroadcastMessage,
   SubscribePageMessage
-} from "../../../types/runtime-ws.type";
+} from "./runtime-ws-event.type";
 
 @WebSocketGateway({ namespace: "runtime" })
 export class RuntimeWsGateway

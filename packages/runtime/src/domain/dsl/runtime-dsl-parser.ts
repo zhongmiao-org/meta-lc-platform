@@ -4,7 +4,7 @@ import type {
   RuntimeNodeSchema,
   RuntimeRuleDefinition,
   RuntimePageDsl
-} from "../../types";
+} from "../../core/types";
 import { collectTemplateDependencies } from "./template-resolver";
 import {
   collectRuleStateDependencies,
@@ -15,7 +15,7 @@ import {
   type ParsedRuntimeRuleDefinition,
   RuntimeDslParseError,
   type RuntimeDslValidationIssue
-} from "../../types";
+} from "../../core/types";
 
 export function parseRuntimePageDsl(input: RuntimePageDsl): ParsedRuntimePageDsl {
   const issues = validateRuntimePageDsl(input);
