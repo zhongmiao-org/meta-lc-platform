@@ -1,24 +1,6 @@
 import type { MetaField, MetaSchema, MetaTable } from "../core/interfaces";
+import type { FieldChange, SchemaDiff, TableDiff } from "../core/interfaces";
 import { createTableSql, quoteIdentifier, toSqlType } from "../utils/sql-utils";
-
-export interface FieldChange {
-  field: string;
-  fromType: string;
-  toType: string;
-}
-
-export interface TableDiff {
-  table: string;
-  addedFields: MetaField[];
-  removedFields: MetaField[];
-  changedFields: FieldChange[];
-}
-
-export interface SchemaDiff {
-  addedTables: MetaTable[];
-  removedTables: MetaTable[];
-  changedTables: TableDiff[];
-}
 
 export function diffSchemas(from: MetaSchema, to: MetaSchema): SchemaDiff {
   const fromMap = new Map(from.tables.map((table) => [table.name, table]));

@@ -1,15 +1,10 @@
 import type { QueryFieldRef, QueryPredicate, SelectQueryAst } from "@zhongmiao/meta-lc-query";
 import type {
-  DataScopeDecision,
   OrgScopeContext,
+  PermissionAstTransformContext,
   PermissionContext
 } from "../core/interfaces";
 import { resolveDataScope } from "./permission-engine";
-
-export interface PermissionAstTransformContext extends PermissionContext {
-  orgScope?: OrgScopeContext;
-  dataScopeDecision?: DataScopeDecision;
-}
 
 export function transformSelectQueryAstWithPermission(
   ast: SelectQueryAst,

@@ -1,9 +1,10 @@
 import { createMigrationSafetyReport } from "../../domain/migration-safety";
 import { diffMetaDefinitions, validateMetaDefinition } from "../../domain/meta-definition-registry";
-import { diffSchemas, generateMigrationSql, type SchemaDiff } from "../../domain/schema-diff";
+import { diffSchemas, generateMigrationSql } from "../../domain/schema-diff";
 import type {
   MetaKernelRepositoryPort,
-  MigrationExecutionResult
+  MigrationExecutionResult,
+  SchemaDiff
 } from "../../core/interfaces";
 import { validateSchema } from "../../core/utils";
 import type {

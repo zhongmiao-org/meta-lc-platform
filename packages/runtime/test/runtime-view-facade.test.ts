@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  InMemoryMetaKernelRepository,
+  createInMemoryMetaKernelService,
   MetaKernelService,
   type ViewDefinition
 } from "@zhongmiao/meta-lc-kernel";
@@ -226,42 +226,40 @@ test("executeRuntimeGatewayView rejects unknown views before creating execution 
 });
 
 function createTestMetaKernel(): MetaKernelService {
-  return new MetaKernelService(
-    new InMemoryMetaKernelRepository({
-      definitions: [
-        {
-          appId: "runtime-test-app",
-          kind: "view",
-          id: "orders-workbench",
-          definition: {
-            name: "orders-workbench",
-            nodes: {
-              orders: {
-                type: "query",
-                table: "orders",
-                fields: ["id", "owner", "channel", "priority", "status"],
-                filters: {
-                  tenant_id: "{{context.tenantId}}",
-                  owner: "{{input.owner}}",
-                  created_by: "{{context.userId}}"
-                },
-                limit: "{{input.limit}}"
-              }
-            },
-            output: {
-              requestId: "{{context.requestId}}",
-              tenantId: "{{context.tenantId}}",
-              owner: "{{input.owner}}",
-              rows: "{{orders.rows}}"
+  return createInMemoryMetaKernelService({
+    definitions: [
+      {
+        appId: "runtime-test-app",
+        kind: "view",
+        id: "orders-workbench",
+        definition: {
+          name: "orders-workbench",
+          nodes: {
+            orders: {
+              type: "query",
+              table: "orders",
+              fields: ["id", "owner", "channel", "priority", "status"],
+              filters: {
+                tenant_id: "{{context.tenantId}}",
+                owner: "{{input.owner}}",
+                created_by: "{{context.userId}}"
+              },
+              limit: "{{input.limit}}"
             }
           },
-          metadata: {
-            author: "runtime-test",
-            message: "Seed runtime facade test view",
-            createdAt: "2026-04-20T00:00:00.000Z"
+          output: {
+            requestId: "{{context.requestId}}",
+            tenantId: "{{context.tenantId}}",
+            owner: "{{input.owner}}",
+            rows: "{{orders.rows}}"
           }
+        },
+        metadata: {
+          author: "runtime-test",
+          message: "Seed runtime facade test view",
+          createdAt: "2026-04-20T00:00:00.000Z"
         }
-      ]
-    })
-  );
+      }
+    ]
+  });
 }

@@ -3,16 +3,12 @@ import type {
   MutationAdapterCommand,
   MutationAdapterResult,
   MutationExecutionResult,
+  MutationExecutorDependencies,
   RuntimeStateStore
 } from "../../core/interfaces";
 import type { RuntimeContext } from "../../core/types";
 import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 import { NodeExecutorError } from "../../core/errors";
-import type { MutationDatasourceAdapter } from "../../infra/adapters/mutation.adapter";
-
-export interface MutationExecutorDependencies {
-  adapter: MutationDatasourceAdapter;
-}
 
 export async function executeMutationNode(
   node: MutationNodeDefinition,

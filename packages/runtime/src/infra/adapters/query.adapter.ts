@@ -11,21 +11,10 @@ import {
   type PermissionAstTransformContext
 } from "@zhongmiao/meta-lc-permission";
 import type {
-  DatasourceAdapter,
-  DatasourceExecutionResult
-} from "@zhongmiao/meta-lc-datasource";
-
-export interface QueryCompilerAdapter {
-  buildAst(request: QueryRequest): SelectQueryAst;
-  compileAst(ast: SelectQueryAst): CompiledQuery;
-  compile(request: QueryRequest): CompiledQuery;
-}
-
-export interface QueryPermissionAdapter {
-  transform(ast: SelectQueryAst, context: PermissionAstTransformContext): SelectQueryAst;
-}
-
-export interface QueryDatasourceAdapter extends DatasourceAdapter {}
+  QueryCompilerAdapter,
+  QueryDatasourceAdapter,
+  QueryPermissionAdapter
+} from "../../core/interfaces";
 
 export function createQueryCompilerAdapter(
   compile: (request: QueryRequest) => CompiledQuery = compileSelectQuery
@@ -51,5 +40,3 @@ export function createQueryDatasourceAdapter(
 ): QueryDatasourceAdapter {
   return datasource;
 }
-
-export type QueryDatasourceExecutionResult = DatasourceExecutionResult;

@@ -5,19 +5,22 @@ import { resolveExecutionOrder } from "../../domain/graph/dep-resolver";
 import { buildDependencyGraph, planRefresh } from "../../domain/graph/runtime-dependency-graph";
 import { createFunctionRegistry } from "../services/function-registry";
 import { evaluateRules } from "../services/rule-engine";
-import { executeNode, type NodeExecutorDependencies } from "./node-executor";
+import { executeNode } from "./node-executor";
 import {
   createRuntimeAuditDispatchContext,
   emitRuntimeAuditEvent,
-  getErrorMessage,
-  type RuntimeAuditDispatchContext
+  getErrorMessage
 } from "./runtime-audit";
 import type {
   ExecutionNode,
   ExecutionPlan,
   ParsedRuntimePageDsl,
+  RuntimeAuditDispatchContext,
   RuntimeExecutionResult,
+  RuntimeExecutorDependencies,
   RuntimeFunctionRegistry,
+  RuntimeManagerEventRequest,
+  RuntimeManagerPlan,
   RuntimePageDsl,
   RuntimePageTopicRef,
   RuntimeQueryNodeResult,
@@ -29,47 +32,11 @@ import type {
 import type {
   RuntimeContext,
   RuntimeExecutionStage,
-  RuntimeNodeResult,
-  RuntimeRefreshEvent
+  RuntimeManagerCommand,
+  RuntimeNodeResult
 } from "../../core/types";
 import { RuntimeExecutionError } from "../../core/errors";
 import { buildRuntimePageTopic } from "../../core/utils";
-import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
-
-export interface RuntimeExecutorDependencies {
-  executors: NodeExecutorDependencies;
-  auditObserver?: RuntimeAuditObserver;
-}
-
-export type RuntimeManagerCommand =
-  | {
-      type: "patchState";
-      patch: Record<string, unknown>;
-    }
-  | {
-      type: "refreshDatasource";
-      datasourceId: string;
-    }
-  | {
-      type: "runAction";
-      actionId: string;
-    };
-
-export interface RuntimeManagerEventRequest {
-  dsl: RuntimePageDsl | ParsedRuntimePageDsl;
-  state: Record<string, unknown>;
-  event: RuntimeRefreshEvent;
-  functionRegistry?: RuntimeFunctionRegistry;
-  pageInstance?: RuntimePageTopicRef;
-}
-
-export interface RuntimeManagerPlan {
-  refreshPlan: RuntimeRefreshPlan;
-  ruleEffects: RuntimeRuleEffectsPlan;
-  nextState: Record<string, unknown>;
-  managerCommands: RuntimeManagerCommand[];
-  wsTopics: string[];
-}
 
 export class RuntimeExecutor {
   async execute(

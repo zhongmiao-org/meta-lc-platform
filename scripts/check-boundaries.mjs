@@ -385,6 +385,10 @@ function checkCommonPackageSourceLayout(rel, content, file, root, violations) {
 
   checkCommonFileSemanticPurity(rel, content, file, root, violations);
 
+  if (rel === `packages/${packageName}/src/index.ts` && exportsInfra(content)) {
+    violations.push(`${rel}: package root must not export infra.`);
+  }
+
   if (rel.includes('/src/core/')) {
     checkCommonCoreFile(rel, content, file, root, violations);
   }
@@ -395,6 +399,14 @@ function checkCommonPackageSourceLayout(rel, content, file, root, violations) {
 
   if (rel.includes('/src/application/')) {
     checkCommonApplicationFile(rel, content, violations);
+  }
+
+  if (
+    rel.includes('/src/domain/') ||
+    rel.includes('/src/application/') ||
+    rel.includes('/src/infra/')
+  ) {
+    checkCommonImplementationFile(rel, content, violations);
   }
 
   if (/^\s*export\s+class\s+\w*Service\b/m.test(content) && !rel.includes('/src/application/services/')) {
@@ -518,8 +530,22 @@ function checkCommonApplicationFile(rel, content, violations) {
   }
 }
 
+function checkCommonImplementationFile(rel, content, violations) {
+  if (rel.endsWith('.entity.ts')) return;
+  if (/^\s*export\s+interface\s+\w+/m.test(content)) {
+    violations.push(`${rel}: implementation files must not export interface declarations.`);
+  }
+  if (hasExportedTypeDeclaration(content)) {
+    violations.push(`${rel}: implementation files must not export type declarations.`);
+  }
+}
+
 function checkBffSourceFile(rel, content, file, root, violations) {
   if (!rel.startsWith('packages/bff/src/')) return;
+
+  if (rel === 'packages/bff/src/index.ts') {
+    checkBffRootExports(rel, content, violations);
+  }
 
   for (const symbol of FORBIDDEN_BFF_SYMBOLS) {
     if (content.includes(symbol)) {
@@ -555,6 +581,27 @@ function checkBffSourceFile(rel, content, file, root, violations) {
   }
 
   checkBffDependencyDirection(rel, content, file, root, violations);
+}
+
+function checkBffRootExports(rel, content, violations) {
+  const allowed = new Set(['AppModule', 'createBffGatewayModule', 'startBffServer']);
+  if (/^\s*export\s+type\b/m.test(content)) {
+    violations.push(`${rel}: BFF root must not export types.`);
+  }
+  if (/^\s*export\s+\*/m.test(content)) {
+    violations.push(`${rel}: BFF root must not use export-star barrels.`);
+  }
+
+  const exportPattern = /^\s*export\s+\{([^}]+)\}/gm;
+  let match;
+  while ((match = exportPattern.exec(content)) !== null) {
+    for (const rawName of match[1].split(',')) {
+      const exportedName = rawName.trim().split(/\s+as\s+/).pop()?.trim();
+      if (exportedName && !allowed.has(exportedName)) {
+        violations.push(`${rel}: BFF root export "${exportedName}" is not public API.`);
+      }
+    }
+  }
 }
 
 function checkBffGatewayConfig(rel, content, violations) {
@@ -643,6 +690,10 @@ function hasValueExportDeclaration(content) {
 
 function hasNonTypeImport(content) {
   return /^\s*import\s+(?!type\b)/m.test(content);
+}
+
+function exportsInfra(content) {
+  return /^\s*export\s+\*\s+from\s+["']\.\/infra(?:\/index)?["'];?/m.test(content);
 }
 
 function checkBffDependencyDirection(rel, content, file, root, violations) {

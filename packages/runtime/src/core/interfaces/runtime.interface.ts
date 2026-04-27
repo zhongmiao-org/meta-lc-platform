@@ -5,11 +5,9 @@ import type {
   SubmitDefinition
 } from "@zhongmiao/meta-lc-kernel";
 import type {
-  ExpressionStateSource,
   MutationOperation,
   RuntimeContext,
   RuntimeDependencyTargetKind,
-  RuntimeExecutionStage,
   RuntimeFunctionHandler,
   RuntimeManagerExecutedEventType,
   RuntimeNodeResult,

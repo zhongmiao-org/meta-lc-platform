@@ -1,43 +1,13 @@
-import type { RuntimeManagerCommand, RuntimeManagerPlan } from "./executor/runtime-executor";
-
-export interface RuntimeInteractionPort {
-  patchState?(patch: Record<string, unknown>, context: RuntimeInteractionContext): void | Promise<void>;
-  refreshDatasource?(datasourceId: string, context: RuntimeInteractionContext): unknown | Promise<unknown>;
-  runAction?(actionId: string, context: RuntimeInteractionContext): unknown | Promise<unknown>;
-}
-
-export interface RuntimeInteractionContext {
-  state: Record<string, unknown>;
-  commandIndex: number;
-  plan: RuntimeManagerPlan;
-}
-
-export type RuntimeInteractionCommandResult =
-  | {
-      type: "patchState";
-      patch: Record<string, unknown>;
-    }
-  | {
-      type: "refreshDatasource";
-      datasourceId: string;
-      result: unknown;
-    }
-  | {
-      type: "runAction";
-      actionId: string;
-      result: unknown;
-    };
-
-export interface RuntimeInteractionExecutionRequest {
-  plan: RuntimeManagerPlan;
-  port: RuntimeInteractionPort;
-}
-
-export interface RuntimeInteractionExecutionResult {
-  nextState: Record<string, unknown>;
-  commandResults: RuntimeInteractionCommandResult[];
-  wsTopics: string[];
-}
+import type {
+  RecordingRuntimeInteractionPort,
+  RuntimeInteractionContext,
+  RuntimeInteractionExecutionRequest,
+  RuntimeInteractionExecutionResult
+} from "../../core/interfaces";
+import type {
+  RuntimeInteractionCommandResult,
+  RuntimeManagerCommand
+} from "../../core/types";
 
 export async function executeRuntimeInteractionPlan(
   request: RuntimeInteractionExecutionRequest
@@ -88,10 +58,6 @@ export async function executeRuntimeInteractionPlan(
     commandResults,
     wsTopics: [...request.plan.wsTopics]
   };
-}
-
-export interface RecordingRuntimeInteractionPort extends RuntimeInteractionPort {
-  readonly calls: RuntimeManagerCommand[];
 }
 
 export function createRecordingRuntimeInteractionPort(): RecordingRuntimeInteractionPort {

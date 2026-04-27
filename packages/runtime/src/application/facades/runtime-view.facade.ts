@@ -1,58 +1,38 @@
 import { resolveExpression } from "../../domain/dsl/expression";
 import {
-  InMemoryMetaKernelRepository,
+  createInMemoryMetaKernelService,
   MetaKernelService
 } from "@zhongmiao/meta-lc-kernel";
 import {
-  type MergeExecutorDependencies,
   executeMergeNode
-} from "./merge-executor";
-import { executeMutationNode } from "./mutation-executor";
-import { executeQueryNode } from "./query-executor";
-import type { RuntimeExecutorDependencies } from "./runtime-executor";
+} from "../executor/merge-executor";
+import { executeMutationNode } from "../executor/mutation-executor";
+import { executeQueryNode } from "../executor/query-executor";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import {
-  PostgresDatasourceAdapter,
-  PostgresOrgScopeAdapter,
+  createPostgresDatasourceAdapter,
+  createPostgresOrgScopeResolver,
   type DbConfig,
   type PostgresOrgScopeData
 } from "@zhongmiao/meta-lc-datasource";
-import { executeSubmitPlan, type SubmitExecutionResult } from "./submit-executor";
-import type { RuntimeStateStore } from "../../core/interfaces";
+import { executeSubmitPlan } from "../executor/submit-executor";
+import type {
+  ClosableResource,
+  MutationDatasourceAdapter,
+  RuntimeExecutorDependencies,
+  RuntimeGatewayViewOptions,
+  RuntimeGatewayViewRequest,
+  RuntimeOrgScopeResolver,
+  RuntimeStateStore,
+  RuntimeViewExecutorDependencies,
+  SubmitExecutionResult
+} from "../../core/interfaces";
 import type { RuntimeContext } from "../../core/types";
 import type { TransformNodeDefinition, ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-permission";
-import type {
-  QueryCompilerAdapter,
-  QueryDatasourceAdapter,
-  QueryPermissionAdapter
-} from "../../infra/adapters/query.adapter";
-import type { MutationDatasourceAdapter } from "../../infra/adapters/mutation.adapter";
 import { compileViewDefinition } from "../compiler/view-compiler";
 
-export interface RuntimeGatewayViewRequest {
-  tenantId: string;
-  userId: string;
-  roles: string[];
-  input?: Record<string, unknown>;
-  context?: Record<string, unknown>;
-}
-
-export interface RuntimeGatewayViewOptions {
-  appId?: string;
-  metaKernel?: Pick<MetaKernelService, "getViewDefinition">;
-  queryDatasource?: QueryDatasourceAdapter & ClosableResource;
-  mutationDatasource?: MutationDatasourceAdapter & ClosableResource;
-  orgScopeResolver?: RuntimeOrgScopeResolver & ClosableResource;
-  auditObserver?: RuntimeAuditObserver & ClosableResource;
-  businessDbConfig?: DbConfig;
-}
-
 const DEFAULT_RUNTIME_APP_ID = "default-app";
-
-export interface RuntimeOrgScopeResolver {
-  resolve(input: { tenantId: string; userId: string; roles: string[] }): Promise<OrgScopeContext>;
-}
 
 export class RuntimeViewNotFoundError extends Error {
   constructor(viewName: string) {
@@ -66,19 +46,6 @@ export class RuntimeGatewayRequestError extends Error {
     super(message);
     this.name = "RuntimeGatewayRequestError";
   }
-}
-
-export interface RuntimeViewExecutorDependencies {
-  queryCompiler?: QueryCompilerAdapter;
-  queryPermission?: QueryPermissionAdapter;
-  queryDatasource: QueryDatasourceAdapter;
-  mutationDatasource?: MutationDatasourceAdapter;
-  merge?: MergeExecutorDependencies;
-  auditObserver?: RuntimeAuditObserver;
-}
-
-interface ClosableResource {
-  close?(): Promise<void>;
 }
 
 export async function executeRuntimeGatewayView(
@@ -99,7 +66,7 @@ export async function executeRuntimeGatewayView(
       ? undefined
       : options.businessDbConfig ?? loadRuntimeDbConfig("business");
   const queryDatasource =
-    options.queryDatasource ?? track(resources, new PostgresDatasourceAdapter(readBusinessConfig(businessConfig)));
+    options.queryDatasource ?? track(resources, createPostgresDatasourceAdapter(readBusinessConfig(businessConfig)));
   const mutationDatasource = options.mutationDatasource;
   const orgScopeResolver =
     options.orgScopeResolver ?? track(resources, createDefaultOrgScopeResolver(readBusinessConfig(businessConfig)));
@@ -201,11 +168,7 @@ function isRecordLike(value: unknown): value is Record<string, unknown> {
 }
 
 function createDefaultMetaKernel(): MetaKernelService {
-  return new MetaKernelService(
-    new InMemoryMetaKernelRepository({
-      definitions: []
-    })
-  );
+  return createInMemoryMetaKernelService({ definitions: [] });
 }
 
 function createUnavailableMutationDatasourceAdapter(): MutationDatasourceAdapter {
@@ -225,7 +188,7 @@ function createNoopRuntimeAuditObserver(): RuntimeAuditObserver {
 }
 
 function createDefaultOrgScopeResolver(config: DbConfig): RuntimeOrgScopeResolver & ClosableResource {
-  const adapter = new PostgresOrgScopeAdapter(config);
+  const adapter = createPostgresOrgScopeResolver(config);
   return {
     async resolve(input) {
       try {

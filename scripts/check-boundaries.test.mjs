@@ -202,7 +202,10 @@ test('enforces common package core/domain/application boundaries', () => {
 
   const rejected = createWorkspace({
     'packages/audit/src/application/audit.service.ts': 'export class AuditService {}\n',
+    'packages/kernel/src/index.ts': 'export * from "./core";\nexport * from "./infra";\n',
+    'packages/kernel/src/domain/schema-diff.ts': 'export interface SchemaDiff {}\n',
     'packages/kernel/src/core/types/bad.ts': 'import { x } from "../../domain/schema-diff";\n',
+    'packages/runtime/src/application/executor/bad.ts': 'export type Bad = {};\n',
     'packages/query/src/domain/bad.ts': 'import { x } from "../infra/query.adapter";\nimport { y } from "@zhongmiao/meta-lc-runtime";\n',
     'packages/runtime/src/application/bad.adapter.ts': 'export const x = 1;\n',
     'packages/runtime/src/domain/runtime.service.ts': 'export class RuntimeService {}\n'
@@ -211,11 +214,38 @@ test('enforces common package core/domain/application boundaries', () => {
   assert.deepEqual(checkWorkspace(rejected), [
     'packages/audit/src/application/audit.service.ts: service classes must live under src/application/services.',
     'packages/kernel/src/core/types/bad.ts: core files must not import domain/application/infra (../../domain/schema-diff).',
+    'packages/kernel/src/domain/schema-diff.ts: implementation files must not export interface declarations.',
+    'packages/kernel/src/index.ts: package root must not export infra.',
     'packages/query/src/domain/bad.ts: domain files must not depend on @zhongmiao/meta-lc-runtime.',
     'packages/query/src/domain/bad.ts: domain files must not import infra (../infra/query.adapter).',
     'packages/query/src/domain/bad.ts: query cannot depend on @zhongmiao/meta-lc-runtime.',
     'packages/runtime/src/application/bad.adapter.ts: adapters and persistence implementations must live under src/infra.',
+    'packages/runtime/src/application/executor/bad.ts: implementation files must not export type declarations.',
     'packages/runtime/src/domain/runtime.service.ts: service classes must live under src/application/services.'
+  ]);
+});
+
+test('keeps BFF root public API narrow', () => {
+  const allowed = createWorkspace({
+    'packages/bff/src/index.ts': [
+      'export { AppModule, createBffGatewayModule } from "./bootstrap/app.module";',
+      'export { startBffServer } from "./bootstrap/main";'
+    ].join('\n')
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/bff/src/index.ts': [
+      'export { AppModule, createBffGatewayModule, InternalThing } from "./bootstrap/app.module";',
+      'export type { RuntimeGatewayRunner } from "./controller/http/view.gateway.interface";',
+      'export * from "./infra";'
+    ].join('\n')
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/bff/src/index.ts: BFF root must not export types.',
+    'packages/bff/src/index.ts: BFF root must not use export-star barrels.',
+    'packages/bff/src/index.ts: BFF root export "InternalThing" is not public API.'
   ]);
 });
 

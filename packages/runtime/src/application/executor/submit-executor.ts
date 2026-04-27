@@ -2,18 +2,13 @@ import type {
   ExecutionNode,
   ExecutionPlan,
   MutationExecutionResult,
-  RuntimeExecutionResult
+  RuntimeExecutionResult,
+  RuntimeExecutorDependencies,
+  SubmitExecutionResult
 } from "../../core/interfaces";
 import type { RuntimeContext } from "../../core/types";
 import { RuntimeExecutionError } from "../../core/errors";
-import { RuntimeExecutor, type RuntimeExecutorDependencies } from "./runtime-executor";
-
-export interface SubmitExecutionResult extends RuntimeExecutionResult {
-  submittedNodeIds: string[];
-  executedNodeIds: string[];
-  skippedNodeIds: string[];
-  mutationResults: Record<string, MutationExecutionResult>;
-}
+import { RuntimeExecutor } from "./runtime-executor";
 
 export async function executeSubmitPlan(
   plan: ExecutionPlan,

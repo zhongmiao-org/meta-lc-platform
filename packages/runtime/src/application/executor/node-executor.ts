@@ -1,8 +1,14 @@
 import type {
   ExecutionNode,
+  NodeExecutionMetadata,
+  NodeExecutorDependencies,
   RuntimeStateStore
 } from "../../core/interfaces";
-import type { RuntimeContext } from "../../core/types";
+import type {
+  NodeExecutionResult,
+  NodeTypeExecutor,
+  RuntimeContext
+} from "../../core/types";
 import { NodeExecutorError } from "../../core/errors";
 import type {
   MergeNodeDefinition,
@@ -11,27 +17,6 @@ import type {
   QueryNodeDefinition,
   TransformNodeDefinition
 } from "@zhongmiao/meta-lc-kernel";
-
-export type NodeExecutionResult = unknown;
-
-export interface NodeExecutionMetadata {
-  nodeId: string;
-  nodeType: ExecutionNode["type"];
-}
-
-export type NodeTypeExecutor<TNode extends NodeDefinition = NodeDefinition> = (
-  node: TNode,
-  state: RuntimeStateStore,
-  context: RuntimeContext,
-  metadata?: NodeExecutionMetadata
-) => NodeExecutionResult | Promise<NodeExecutionResult>;
-
-export interface NodeExecutorDependencies {
-  query: NodeTypeExecutor<QueryNodeDefinition>;
-  mutation: NodeTypeExecutor<MutationNodeDefinition>;
-  merge: NodeTypeExecutor<MergeNodeDefinition>;
-  transform: NodeTypeExecutor<TransformNodeDefinition>;
-}
 
 export async function executeNode(
   node: ExecutionNode,

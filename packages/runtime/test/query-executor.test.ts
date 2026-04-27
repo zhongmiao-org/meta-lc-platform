@@ -7,7 +7,8 @@ import {
   type SelectQueryAst
 } from "@zhongmiao/meta-lc-query";
 import type { QueryNodeDefinition } from "@zhongmiao/meta-lc-kernel";
-import { createQueryCompilerAdapter, executeQueryNode, QueryExecutorError, type RuntimeContext, type RuntimeStateStore } from "../src";
+import { executeQueryNode, QueryExecutorError, type RuntimeContext, type RuntimeStateStore } from "../src";
+import { createQueryCompilerAdapter } from "../src/infra/adapters/query.adapter";
 import type { RuntimeAuditEvent } from "../src";
 
 const runtimeState: RuntimeStateStore = {

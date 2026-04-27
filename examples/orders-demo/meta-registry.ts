@@ -1,5 +1,5 @@
 import {
-  InMemoryMetaKernelRepository,
+  createInMemoryMetaKernelService,
   MetaKernelService,
   type DatasourceDefinition,
   type MetaDefinitionKind,
@@ -7,11 +7,20 @@ import {
   type PermissionPolicy,
   type ViewDefinition
 } from "../../packages/kernel/dist/src/index.js";
-import type {
-  MetaRegistryItem,
-  MetaRegistryProvider,
-  MetaResourceKind
-} from "@zhongmiao/meta-lc-bff";
+
+type MetaResourceKind = "tables" | "pages" | "datasources" | "rules" | "permissions";
+
+type MetaRegistryItem = {
+  id: string;
+  name: string;
+  updatedAt: string;
+  [key: string]: unknown;
+};
+
+type MetaRegistryProvider = {
+  list(kind: MetaResourceKind): Promise<MetaRegistryItem[]>;
+  listKinds(): MetaResourceKind[];
+};
 
 type DemoMetaDefinitionSeed<K extends MetaDefinitionKind = MetaDefinitionKind> = {
   appId: string;
@@ -122,11 +131,9 @@ const STATIC_FIXTURES: Pick<Record<MetaResourceKind, MetaRegistryItem[]>, "table
 };
 
 export function createOrdersDemoMetaKernel(): MetaKernelService {
-  return new MetaKernelService(
-    new InMemoryMetaKernelRepository({
-      definitions: ORDERS_DEMO_DEFINITION_SEEDS
-    })
-  );
+  return createInMemoryMetaKernelService({
+    definitions: ORDERS_DEMO_DEFINITION_SEEDS
+  });
 }
 
 export function createOrdersDemoMetaRegistryProvider(): MetaRegistryProvider {

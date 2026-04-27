@@ -1,15 +1,9 @@
 import type {
+  CreateRuntimeManagerExecutionWsEventRequest,
   RuntimeManagerExecutedEvent,
   RuntimePageTopicRef
 } from "../../core/interfaces";
 import { createRuntimeManagerExecutedEvent } from "../../core/factories";
-import type { RuntimeInteractionExecutionResult } from "../runtime-interaction-executor";
-
-export interface CreateRuntimeManagerExecutionWsEventRequest {
-  page: RuntimePageTopicRef;
-  executionResult: RuntimeInteractionExecutionResult;
-  requestId?: string;
-}
 
 export function createRuntimeManagerExecutionWsEvent(
   request: CreateRuntimeManagerExecutionWsEventRequest

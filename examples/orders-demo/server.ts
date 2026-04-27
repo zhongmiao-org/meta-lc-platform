@@ -1,4 +1,4 @@
-import { startBffServer, type RuntimeGatewayRunner } from "../../packages/bff/dist/bff/src/index.js";
+import { startBffServer } from "../../packages/bff/dist/bff/src/index.js";
 import { executeRuntimeGatewayView } from "../../packages/runtime/dist/runtime/src/index.js";
 import type { DbConfig } from "@zhongmiao/meta-lc-datasource";
 import { OrdersDemoMutationAdapter } from "./datasource-adapters.ts";
@@ -9,6 +9,8 @@ import {
 } from "./meta-registry.ts";
 
 const metaKernel = createOrdersDemoMetaKernel();
+
+type RuntimeGatewayRunner = NonNullable<Parameters<typeof startBffServer>[0]["runtimeRunner"]>;
 
 const runtimeRunner: RuntimeGatewayRunner = async (viewName, request) => {
   const mutationDatasource = new OrdersDemoMutationAdapter(loadBusinessDbConfig());
