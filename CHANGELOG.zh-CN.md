@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(topology): 基于 manifest 与生产源码 import 重新生成 package dependency topology。
 - chore(examples): 将 orders demo metadata、SQL seed 与 mutation adapter 从核心包抽离到 `examples/orders-demo`。
 - docs(readme): 同步最终架构协作流、子包上下游关系与编译/执行边界口径。
 - fix(ci): 在 package-local test 前先构建 workspace 依赖，确保 clean CI runner 能解析各包入口。

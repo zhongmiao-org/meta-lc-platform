@@ -16,6 +16,7 @@
     "infra:migrate": "node --experimental-strip-types infra/scripts/migrate.ts",
     "infra:seed": "node --experimental-strip-types infra/scripts/seed.ts",
     "test:examples:orders-demo": "pnpm --filter @zhongmiao/meta-lc-datasource build && node --experimental-strip-types --test \"examples/orders-demo/tests/*.test.ts\"",
+    "docs:topology": "node scripts/generate-package-dependency-topology.mjs",
     "test:boundaries": "node --test scripts/check-boundaries.test.mjs",
     "lint:boundaries": "node scripts/check-boundaries.mjs",
     "changeset": "changeset",
