@@ -1,19 +1,24 @@
 import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
 import type {
-  MergeStrategy,
   NodeDefinition,
   OutputDefinition,
-  SubmitDefinition,
-  ViewExpression
+  SubmitDefinition
 } from "@zhongmiao/meta-lc-kernel";
-export type {
-  RuntimeAuditEvent,
-  RuntimeAuditObserver
-} from "@zhongmiao/meta-lc-audit";
-
-export type MutationOperation = "create" | "update" | "delete";
-
-export type Expression = ViewExpression;
+import type {
+  ExpressionStateSource,
+  MutationOperation,
+  RuntimeContext,
+  RuntimeDependencyTargetKind,
+  RuntimeExecutionStage,
+  RuntimeFunctionHandler,
+  RuntimeManagerExecutedEventType,
+  RuntimeNodeResult,
+  RuntimeRefreshEvent,
+  RuntimeRuleTrigger,
+  RuntimeRuleEffectDefinition,
+  RuntimeRuleValueDefinition,
+  RuntimeTemplateSource
+} from "../types";
 
 export interface ExecutionNode {
   id: string;
@@ -27,8 +32,6 @@ export interface ExecutionPlan {
   output: OutputDefinition;
   submit?: SubmitDefinition;
 }
-
-export type RuntimeTemplateSource = "state";
 
 export interface RuntimeTemplateDependency {
   source: RuntimeTemplateSource;
@@ -48,14 +51,6 @@ export interface RuntimePageTopicRef {
   pageInstanceId: string;
 }
 
-export function buildRuntimePageTopic(ref: RuntimePageTopicRef): string {
-  return `tenant.${ref.tenantId}.page.${ref.pageId}.instance.${ref.pageInstanceId}`;
-}
-
-export const RUNTIME_MANAGER_EXECUTED_EVENT = "runtimeManagerExecuted";
-
-export type RuntimeManagerExecutedEventType = "runtime.manager.executed";
-
 export interface RuntimeManagerExecutedEvent {
   type: RuntimeManagerExecutedEventType;
   topic: string;
@@ -73,20 +68,6 @@ export interface CreateRuntimeManagerExecutedEventRequest {
   patchState?: Record<string, unknown>;
   refreshedDatasourceIds?: string[];
   runActionIds?: string[];
-}
-
-export function createRuntimeManagerExecutedEvent(
-  request: CreateRuntimeManagerExecutedEventRequest
-): RuntimeManagerExecutedEvent {
-  return {
-    type: "runtime.manager.executed",
-    topic: buildRuntimePageTopic(request.page),
-    page: { ...request.page },
-    ...(request.requestId ? { requestId: request.requestId } : {}),
-    patchState: { ...(request.patchState ?? {}) },
-    refreshedDatasourceIds: [...(request.refreshedDatasourceIds ?? [])],
-    runActionIds: [...(request.runActionIds ?? [])]
-  };
 }
 
 export interface RuntimeNodeSchema {
@@ -131,10 +112,6 @@ export interface RuntimeActionDefinition {
   steps: RuntimeActionStepDefinition[];
 }
 
-export type RuntimeRuleTrigger = "state.changed" | "mutation.succeeded";
-
-export type RuntimeRuleValueSource = "literal" | "state" | "event" | "function";
-
 export interface RuntimeRuleLiteralValueDefinition {
   source: "literal";
   value: unknown;
@@ -160,12 +137,6 @@ export interface RuntimeRuleFunctionValueDefinition {
   call: RuntimeFunctionCallDefinition;
 }
 
-export type RuntimeRuleValueDefinition =
-  | RuntimeRuleLiteralValueDefinition
-  | RuntimeRuleStateValueDefinition
-  | RuntimeRuleEventValueDefinition
-  | RuntimeRuleFunctionValueDefinition;
-
 export interface RuntimeRuleConditionDefinition {
   call: RuntimeFunctionCallDefinition;
 }
@@ -186,19 +157,12 @@ export interface RuntimeRefreshDatasourceEffectDefinition {
   datasourceId: string;
 }
 
-export type RuntimeRuleEffectDefinition =
-  | RuntimeSetStateEffectDefinition
-  | RuntimeRunActionEffectDefinition
-  | RuntimeRefreshDatasourceEffectDefinition;
-
 export interface RuntimeRuleDefinition {
   id: string;
   trigger: RuntimeRuleTrigger;
   condition: RuntimeRuleConditionDefinition;
   effects: RuntimeRuleEffectDefinition[];
 }
-
-export type RuntimeDependencyTargetKind = "datasource" | "action";
 
 export interface RuntimeDependencyTargetRef {
   kind: RuntimeDependencyTargetKind;
@@ -215,8 +179,6 @@ export interface RuntimeMutationSucceededEvent {
   actionId: string;
   operation: MutationOperation;
 }
-
-export type RuntimeRefreshEvent = RuntimeStateChangedEvent | RuntimeMutationSucceededEvent;
 
 export interface RuntimeRefreshPlan {
   datasourceIds: string[];
@@ -239,15 +201,9 @@ export interface ExpressionStateGetter {
   get(path: string): unknown;
 }
 
-export type ExpressionStateSource = Record<string, unknown> | Map<string, unknown> | ExpressionStateGetter;
-
-export type RuntimeContext = Record<string, unknown>;
-
 export interface RuntimeStateStore {
   get(path: string): unknown;
 }
-
-export type RuntimeExecutionStage = "schedule" | "execute" | "output";
 
 export interface RuntimeQueryNodeResult {
   rows: QueryResultRow[];
@@ -258,29 +214,12 @@ export interface RuntimeValueNodeResult {
   value: unknown;
 }
 
-export type RuntimeNodeResult = RuntimeQueryNodeResult | RuntimeValueNodeResult;
-
 export interface RuntimeExecutionResult {
   viewModel: Record<string, unknown>;
   state: Record<string, unknown>;
   nodeResults: Record<string, RuntimeNodeResult>;
   layers: string[][];
 }
-
-export class RuntimeExecutionError extends Error {
-  constructor(
-    message: string,
-    public readonly stage: RuntimeExecutionStage,
-    public readonly cause?: unknown,
-    public readonly nodeId?: string,
-    public readonly nodeType?: ExecutionNode["type"]
-  ) {
-    super(message);
-    this.name = "RuntimeExecutionError";
-  }
-}
-
-export type DagEdges = Record<string, string[]>;
 
 export interface DagGraphNode {
   id: string;
@@ -299,67 +238,6 @@ export interface DagCycleResult {
 export interface ViewCompilerDependency {
   nodeId: string;
   expression: string;
-}
-
-export class ViewCompilerError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ViewCompilerError";
-  }
-}
-
-export class DagSchedulerError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DagSchedulerError";
-  }
-}
-
-export class ExpressionResolverError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ExpressionResolverError";
-  }
-}
-
-export class NodeExecutorError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "NodeExecutorError";
-  }
-}
-
-export class QueryExecutorError extends NodeExecutorError {
-  constructor(
-    message: string,
-    public readonly stage: "validation" | "compile" | "execute",
-    public readonly cause?: unknown
-  ) {
-    super(message);
-    this.name = "QueryExecutorError";
-  }
-}
-
-export class MutationExecutorError extends NodeExecutorError {
-  constructor(
-    message: string,
-    public readonly stage: "validation" | "execute",
-    public readonly cause?: unknown
-  ) {
-    super(message);
-    this.name = "MutationExecutorError";
-  }
-}
-
-export class MergeExecutorError extends NodeExecutorError {
-  constructor(
-    message: string,
-    public readonly strategy?: MergeStrategy,
-    public readonly hook?: string
-  ) {
-    super(message);
-    this.name = "MergeExecutorError";
-  }
 }
 
 export interface ParsedRuntimeDatasourceDefinition extends RuntimeDatasourceDefinition {
@@ -440,71 +318,7 @@ export interface RuntimeDslValidationIssue {
   message: string;
 }
 
-export class RuntimeDslParseError extends Error {
-  constructor(public readonly issues: RuntimeDslValidationIssue[]) {
-    super(
-      `Invalid runtime DSL: ${issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`
-    );
-    this.name = "RuntimeDslParseError";
-  }
-}
-
-export class RuntimeDependencyGraphError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "RuntimeDependencyGraphError";
-  }
-}
-
-export class RuntimeFunctionRegistryError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "RuntimeFunctionRegistryError";
-  }
-}
-
-export class RuntimeRuleEngineError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "RuntimeRuleEngineError";
-  }
-}
-
 export interface PlanRuntimeRefreshResult extends RuntimeRefreshPlan {}
-
-export function createRuntimeTargetRef(kind: RuntimeDependencyTargetKind, id: string): RuntimeDependencyTargetRef {
-  return { kind, id };
-}
-
-export function getRuntimeTargetRefKey(ref: RuntimeDependencyTargetRef): string {
-  return `${ref.kind}:${ref.id}`;
-}
-
-export function toStableTargetOrder(refs: RuntimeDependencyTargetRef[]): RuntimeDependencyTargetRef[] {
-  const kindPriority: Record<RuntimeDependencyTargetKind, number> = {
-    datasource: 0,
-    action: 1
-  };
-
-  return [...refs].sort((left, right) => {
-    if (left.kind !== right.kind) {
-      return kindPriority[left.kind] - kindPriority[right.kind];
-    }
-    return left.id.localeCompare(right.id);
-  });
-}
-
-export function createRefreshPlan(
-  triggeredBy: RuntimeRefreshEvent,
-  targetOrder: RuntimeDependencyTargetRef[]
-): PlanRuntimeRefreshResult {
-  return {
-    triggeredBy,
-    targetOrder,
-    datasourceIds: targetOrder.filter((ref) => ref.kind === "datasource").map((ref) => ref.id),
-    actionIds: targetOrder.filter((ref) => ref.kind === "action").map((ref) => ref.id)
-  };
-}
 
 export interface RuntimeFunctionExecutionContext {
   state: Record<string, unknown>;
@@ -512,11 +326,6 @@ export interface RuntimeFunctionExecutionContext {
   parsedDsl: ParsedRuntimePageDsl;
   graph: RuntimeDependencyGraph;
 }
-
-export type RuntimeFunctionHandler = (
-  args: unknown[],
-  context: RuntimeFunctionExecutionContext
-) => unknown | Promise<unknown>;
 
 export interface RuntimeFunctionRegistry {
   register(name: string, handler: RuntimeFunctionHandler): void;
@@ -541,42 +350,4 @@ export interface RuntimeRuleEvaluationRequest {
   parsedDsl: ParsedRuntimePageDsl;
   graph: RuntimeDependencyGraph;
   functionRegistry: RuntimeFunctionRegistry;
-}
-
-export function createEmptyRuleEffectsPlan(triggeredBy: RuntimeRefreshEvent): RuntimeRuleEffectsPlan {
-  return {
-    triggeredBy,
-    matchedRuleIds: [],
-    patchState: {},
-    runActionIds: [],
-    refreshDatasourceIds: []
-  };
-}
-
-export function isSupportedRuleTrigger(value: string): value is RuntimeRuleTrigger {
-  return value === "state.changed" || value === "mutation.succeeded";
-}
-
-export function collectRuleStateDependencies(value: RuntimeRuleValueDefinition | RuntimeFunctionCallDefinition): string[] {
-  const keys = new Set<string>();
-  const visitValue = (current: RuntimeRuleValueDefinition): void => {
-    if (current.source === "state") {
-      keys.add(current.key);
-      return;
-    }
-    if (current.source === "function") {
-      current.call.args.forEach((argument) => visitValue(argument));
-    }
-  };
-  const visitCall = (call: RuntimeFunctionCallDefinition): void => {
-    call.args.forEach((argument) => visitValue(argument));
-  };
-
-  if ("name" in value) {
-    visitCall(value);
-  } else {
-    visitValue(value);
-  }
-
-  return [...keys].sort((left, right) => left.localeCompare(right));
 }

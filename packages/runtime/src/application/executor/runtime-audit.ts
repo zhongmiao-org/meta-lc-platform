@@ -2,7 +2,8 @@ import type {
   RuntimeAuditEvent,
   RuntimeAuditObserver
 } from "@zhongmiao/meta-lc-audit";
-import type { ExecutionPlan, RuntimeContext } from "../../core/types";
+import type { ExecutionPlan } from "../../core/interfaces";
+import type { RuntimeContext } from "../../core/types";
 
 export interface RuntimeAuditDispatchContext {
   observer?: RuntimeAuditObserver;

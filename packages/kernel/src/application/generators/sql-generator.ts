@@ -1,5 +1,5 @@
 import type { CompiledSchemaSql, MetaIndex, MetaSchema, MetaTable, SnapshotRelation } from "../../core/types/shared.types";
-import { validateSchema } from "../../core/types/contracts";
+import { validateSchema } from "../../core/utils";
 import { createTableSql, quoteIdentifier } from "../../utils/sql-utils";
 
 export function compileSchemaSql(schema: MetaSchema): CompiledSchemaSql {

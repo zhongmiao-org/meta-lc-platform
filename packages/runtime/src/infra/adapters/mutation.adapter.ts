@@ -1,4 +1,4 @@
-import type { MutationAdapterCommand, MutationAdapterResult } from "../../core/types";
+import type { MutationAdapterCommand, MutationAdapterResult } from "../../core/interfaces";
 
 export interface MutationDatasourceAdapter {
   execute(command: MutationAdapterCommand): Promise<MutationAdapterResult>;

@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import type { DbConfig } from "../../core/types/shared.types";
+import type { DbConfig } from "../../core/interfaces";
 
 export interface PostgresOrgScopeInput {
   tenantId: string;

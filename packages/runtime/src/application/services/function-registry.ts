@@ -1,9 +1,9 @@
-import {
-  RuntimeFunctionRegistryError,
-  type RuntimeFunctionExecutionContext,
-  type RuntimeFunctionHandler,
-  type RuntimeFunctionRegistry
-} from "../../core/types";
+import type {
+  RuntimeFunctionExecutionContext,
+  RuntimeFunctionRegistry
+} from "../../core/interfaces";
+import type { RuntimeFunctionHandler } from "../../core/types";
+import { RuntimeFunctionRegistryError } from "../../core/errors";
 
 class DefaultRuntimeFunctionRegistry implements RuntimeFunctionRegistry {
   private readonly handlers = new Map<string, RuntimeFunctionHandler>();

@@ -1,11 +1,11 @@
-import {
-  RuntimeExecutionError,
-  type ExecutionNode,
-  type ExecutionPlan,
-  type MutationExecutionResult,
-  type RuntimeContext,
-  type RuntimeExecutionResult
-} from "../../core/types";
+import type {
+  ExecutionNode,
+  ExecutionPlan,
+  MutationExecutionResult,
+  RuntimeExecutionResult
+} from "../../core/interfaces";
+import type { RuntimeContext } from "../../core/types";
+import { RuntimeExecutionError } from "../../core/errors";
 import { RuntimeExecutor, type RuntimeExecutorDependencies } from "./runtime-executor";
 
 export interface SubmitExecutionResult extends RuntimeExecutionResult {

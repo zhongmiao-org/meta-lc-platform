@@ -1,8 +1,8 @@
-import {
-  createRuntimeManagerExecutedEvent,
-  type RuntimeManagerExecutedEvent,
-  type RuntimePageTopicRef
-} from "../../core/types";
+import type {
+  RuntimeManagerExecutedEvent,
+  RuntimePageTopicRef
+} from "../../core/interfaces";
+import { createRuntimeManagerExecutedEvent } from "../../core/factories";
 import type { RuntimeInteractionExecutionResult } from "../runtime-interaction-executor";
 
 export interface CreateRuntimeManagerExecutionWsEventRequest {

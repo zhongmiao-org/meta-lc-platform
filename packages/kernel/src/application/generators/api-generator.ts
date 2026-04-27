@@ -5,7 +5,7 @@ import type {
   MetaSchema,
   MetaTable
 } from "../../core/types/shared.types";
-import { validateSchema } from "../../core/types/contracts";
+import { validateSchema } from "../../core/utils";
 import { quoteIdentifier } from "../../utils/sql-utils";
 
 export function compileApiRoutes(schema: MetaSchema): CompiledApiRouteManifest {

@@ -18,10 +18,8 @@ import {
   type PostgresOrgScopeData
 } from "@zhongmiao/meta-lc-datasource";
 import { executeSubmitPlan, type SubmitExecutionResult } from "./submit-executor";
-import type {
-  RuntimeContext,
-  RuntimeStateStore
-} from "../../core/types";
+import type { RuntimeStateStore } from "../../core/interfaces";
+import type { RuntimeContext } from "../../core/types";
 import type { TransformNodeDefinition, ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-permission";
 import type {

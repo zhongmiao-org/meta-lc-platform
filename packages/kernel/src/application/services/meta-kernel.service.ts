@@ -5,7 +5,7 @@ import type {
   MetaKernelRepositoryPort,
   MigrationExecutionResult
 } from "../../core/interfaces";
-import { validateSchema } from "../../core/types/contracts";
+import { validateSchema } from "../../core/utils";
 import type {
   DatasourceDefinition,
   MetaDefinitionDiff,

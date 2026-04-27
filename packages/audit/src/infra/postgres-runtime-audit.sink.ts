@@ -1,18 +1,11 @@
 import { Pool } from "pg";
 import type {
   RuntimeAuditEvent,
+} from "../core/types";
+import type {
+  PostgresRuntimeAuditConfig,
   RuntimeAuditObserver
-} from "../domain/audit.entity";
-
-export interface PostgresRuntimeAuditConfig {
-  url?: string;
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-  ssl: boolean;
-}
+} from "../core/interfaces";
 
 export class PostgresRuntimeAuditSink implements RuntimeAuditObserver {
   private readonly pool: Pool;

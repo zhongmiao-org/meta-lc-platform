@@ -2,14 +2,14 @@ import type {
   RuntimeRuleEffectDefinition,
   RuntimeRuleValueDefinition
 } from "../../core/types";
-import {
-  createEmptyRuleEffectsPlan,
-  isSupportedRuleTrigger,
-  RuntimeRuleEngineError,
-  type RuntimeRuleEffectsPlan,
-  type RuntimeRuleEvaluationContext,
-  type RuntimeRuleEvaluationRequest
-} from "../../core/types";
+import type {
+  RuntimeRuleEffectsPlan,
+  RuntimeRuleEvaluationContext,
+  RuntimeRuleEvaluationRequest
+} from "../../core/interfaces";
+import { createEmptyRuleEffectsPlan } from "../../core/factories";
+import { isSupportedRuleTrigger } from "../../core/utils";
+import { RuntimeRuleEngineError } from "../../core/errors";
 
 export async function evaluateRules(request: RuntimeRuleEvaluationRequest): Promise<RuntimeRuleEffectsPlan> {
   const evaluationContext: RuntimeRuleEvaluationContext = {

@@ -1,3 +1,8 @@
+import type {
+  DatasourceExecutionKind,
+  DatasourceParamValue
+} from "../types";
+
 export interface DbConfig {
   url?: string;
   host: string;
@@ -11,10 +16,6 @@ export interface DbConfig {
 export interface QueryResultRow {
   [key: string]: unknown;
 }
-
-export type DatasourceParamValue = string | number | boolean | string[] | null;
-
-export type DatasourceExecutionKind = "query" | "mutation";
 
 export interface DatasourceExecutionRequest {
   kind: DatasourceExecutionKind;
@@ -35,15 +36,4 @@ export interface DatasourceExecutionResult {
 
 export interface DatasourceAdapter {
   execute(request: DatasourceExecutionRequest): Promise<DatasourceExecutionResult>;
-}
-
-export class DatasourceAdapterError extends Error {
-  constructor(
-    message: string,
-    public readonly kind: DatasourceExecutionKind,
-    public readonly cause?: unknown
-  ) {
-    super(message);
-    this.name = "DatasourceAdapterError";
-  }
 }

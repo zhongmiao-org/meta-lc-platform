@@ -1,7 +1,5 @@
-import {
-  type ExecutionPlan,
-  ViewCompilerError
-} from "../../core/types";
+import type { ExecutionPlan } from "../../core/interfaces";
+import { ViewCompilerError } from "../../core/errors";
 import type { ViewDefinition } from "@zhongmiao/meta-lc-kernel";
 import { buildExecutionPlan } from "./plan-builder";
 

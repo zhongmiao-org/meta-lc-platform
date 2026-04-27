@@ -3,11 +3,11 @@ import type {
   MutationAdapterCommand,
   MutationAdapterResult,
   MutationExecutionResult,
-  RuntimeContext,
   RuntimeStateStore
-} from "../../core/types";
+} from "../../core/interfaces";
+import type { RuntimeContext } from "../../core/types";
 import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
-import { NodeExecutorError } from "../../core/types";
+import { NodeExecutorError } from "../../core/errors";
 import type { MutationDatasourceAdapter } from "../../infra/adapters/mutation.adapter";
 
 export interface MutationExecutorDependencies {

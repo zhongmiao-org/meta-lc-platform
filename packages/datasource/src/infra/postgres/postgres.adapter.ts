@@ -1,13 +1,13 @@
 import { Pool } from "pg";
-import {
-  DatasourceAdapterError,
-  type DatasourceAdapter,
-  type DatasourceExecutionRequest,
-  type DatasourceExecutionResult,
-  type DatasourceParamValue,
-  type DbConfig,
-  type QueryResultRow
-} from "../../core/types/shared.types";
+import type {
+  DatasourceAdapter,
+  DatasourceExecutionRequest,
+  DatasourceExecutionResult,
+  DbConfig,
+  QueryResultRow
+} from "../../core/interfaces";
+import type { DatasourceParamValue } from "../../core/types";
+import { DatasourceAdapterError } from "../../core/errors";
 
 interface PostgresPoolLike {
   query(

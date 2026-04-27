@@ -1,9 +1,7 @@
 import { resolveExpression } from "../../domain/dsl/expression";
-import {
-  MergeExecutorError,
-  type RuntimeContext,
-  type RuntimeStateStore
-} from "../../core/types";
+import type { RuntimeStateStore } from "../../core/interfaces";
+import type { RuntimeContext } from "../../core/types";
+import { MergeExecutorError } from "../../core/errors";
 import type { MergeNodeDefinition, MergeStrategy } from "@zhongmiao/meta-lc-kernel";
 
 export type MergeExecutorResult = unknown;

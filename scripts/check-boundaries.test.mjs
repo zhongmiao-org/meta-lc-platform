@@ -219,6 +219,44 @@ test('enforces common package core/domain/application boundaries', () => {
   ]);
 });
 
+test('enforces common package file semantic purity', () => {
+  const allowed = createWorkspace({
+    'packages/runtime/src/core/index.ts': 'export * from "./types";\nexport * from "./interfaces";\n',
+    'packages/runtime/src/index.ts': 'export * from "./core";\n',
+    'packages/runtime/src/core/interfaces/runtime.interface.ts': 'import type { RuntimeContext } from "../types";\nexport interface RuntimePort { run(context: RuntimeContext): void; }\n',
+    'packages/runtime/src/core/types/runtime.type.ts': 'import type { RuntimePort } from "../interfaces";\nexport type RuntimeContext = Record<string, unknown>;\nexport type RuntimePortLike = RuntimePort;\n',
+    'packages/runtime/src/domain/audit.entity.ts': 'export class AuditEntity {}\n'
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/audit/src/domain/audit.entity.ts': 'export interface AuditRecord {}\nexport type AuditStatus = "success";\nexport class AuditEntity {}\n',
+    'packages/kernel/src/core/interfaces/bad.interface.ts': 'import { value } from "../utils";\nexport type Bad = {};\nexport const bad = value;\n',
+    'packages/query/src/core/types/bad.type.ts': 'import { value } from "../utils";\nexport interface Bad {}\nexport function makeBad() {}\n',
+    'packages/runtime/src/domain/graph/bad.ts': 'import { x } from "../../core";\n',
+    'packages/runtime/src/core/types/bad.ts': 'export const bad = true;\n',
+    'packages/datasource/src/core/interfaces/bad.ts': 'export type Bad = {};\nexport class Bad {}\n'
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/audit/src/domain/audit.entity.ts: *.entity.ts files may not export interface declarations.',
+    'packages/audit/src/domain/audit.entity.ts: *.entity.ts files may not export type declarations.',
+    'packages/datasource/src/core/interfaces/bad.ts: core interfaces files may not export type declarations.',
+    'packages/datasource/src/core/interfaces/bad.ts: core interfaces files may not export runtime values.',
+    'packages/kernel/src/core/interfaces/bad.interface.ts: *.interface.ts files may only use import type declarations.',
+    'packages/kernel/src/core/interfaces/bad.interface.ts: *.interface.ts files may not export type declarations.',
+    'packages/kernel/src/core/interfaces/bad.interface.ts: *.interface.ts files may only export interface declarations.',
+    'packages/kernel/src/core/interfaces/bad.interface.ts: core interfaces files may not export type declarations.',
+    'packages/kernel/src/core/interfaces/bad.interface.ts: core interfaces files may not export runtime values.',
+    'packages/query/src/core/types/bad.type.ts: *.type.ts files may only use import type declarations.',
+    'packages/query/src/core/types/bad.type.ts: *.type.ts files may not export interface declarations.',
+    'packages/query/src/core/types/bad.type.ts: *.type.ts files may only export type declarations.',
+    'packages/query/src/core/types/bad.type.ts: core types files may not export runtime values.',
+    'packages/runtime/src/core/types/bad.ts: core types files may not export runtime values.',
+    'packages/runtime/src/domain/graph/bad.ts: package-internal source must not import the core root barrel (../../core).'
+  ]);
+});
+
 test('rejects legacy BFF query/mutation orchestration surfaces', () => {
   const workspace = createWorkspace({
     'packages/bff/src/controller/http/query.controller.ts': [

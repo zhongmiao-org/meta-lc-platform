@@ -383,6 +383,8 @@ function checkCommonPackageSourceLayout(rel, content, file, root, violations) {
   const packageName = getPackageName(rel);
   if (!COMMON_LAYER_PACKAGES.has(packageName) || !rel.startsWith(`packages/${packageName}/src/`)) return;
 
+  checkCommonFileSemanticPurity(rel, content, file, root, violations);
+
   if (rel.includes('/src/core/')) {
     checkCommonCoreFile(rel, content, file, root, violations);
   }
@@ -411,6 +413,72 @@ function checkCommonCoreFile(rel, content, file, root, violations) {
     ) {
       violations.push(`${rel}: core files must not import domain/application/infra (${specifier}).`);
     }
+  }
+
+  if (rel.includes('/src/core/types/') && hasValueExportDeclaration(content)) {
+    violations.push(`${rel}: core types files may not export runtime values.`);
+  }
+
+  if (rel.includes('/src/core/interfaces/')) {
+    if (hasExportedTypeDeclaration(content)) {
+      violations.push(`${rel}: core interfaces files may not export type declarations.`);
+    }
+    if (hasValueExportDeclaration(content)) {
+      violations.push(`${rel}: core interfaces files may not export runtime values.`);
+    }
+  }
+}
+
+function checkCommonFileSemanticPurity(rel, content, file, root, violations) {
+  if (rel.endsWith('.entity.ts')) {
+    if (/^\s*export\s+interface\s+\w+/m.test(content)) {
+      violations.push(`${rel}: *.entity.ts files may not export interface declarations.`);
+    }
+    if (hasExportedTypeDeclaration(content)) {
+      violations.push(`${rel}: *.entity.ts files may not export type declarations.`);
+    }
+  }
+
+  if (rel.endsWith('.interface.ts')) {
+    checkPureInterfaceFile(rel, content, violations);
+  }
+
+  if (rel.endsWith('.type.ts')) {
+    checkPureTypeFile(rel, content, violations);
+  }
+
+  if (!rel.endsWith('/src/core/index.ts') && !rel.endsWith('/src/index.ts')) {
+    for (const specifier of findImportSpecifiers(content)) {
+      if (!specifier.startsWith('.')) continue;
+      const targetRel = normalizePath(path.relative(root, path.resolve(path.dirname(file), specifier)));
+      if (targetRel === `packages/${getPackageName(rel)}/src/core`) {
+        violations.push(`${rel}: package-internal source must not import the core root barrel (${specifier}).`);
+      }
+    }
+  }
+}
+
+function checkPureInterfaceFile(rel, content, violations) {
+  if (hasNonTypeImport(content)) {
+    violations.push(`${rel}: *.interface.ts files may only use import type declarations.`);
+  }
+  if (hasExportedTypeDeclaration(content)) {
+    violations.push(`${rel}: *.interface.ts files may not export type declarations.`);
+  }
+  if (hasValueExportDeclaration(content)) {
+    violations.push(`${rel}: *.interface.ts files may only export interface declarations.`);
+  }
+}
+
+function checkPureTypeFile(rel, content, violations) {
+  if (hasNonTypeImport(content)) {
+    violations.push(`${rel}: *.type.ts files may only use import type declarations.`);
+  }
+  if (/^\s*(?:export\s+)?interface\s+\w+/m.test(content)) {
+    violations.push(`${rel}: *.type.ts files may not export interface declarations.`);
+  }
+  if (hasValueExportDeclaration(content)) {
+    violations.push(`${rel}: *.type.ts files may only export type declarations.`);
   }
 }
 
@@ -468,19 +536,9 @@ function checkBffSourceFile(rel, content, file, root, violations) {
   }
 
   if (rel.endsWith('.interface.ts')) {
-    if (/^\s*(?:export\s+)?type\s+\w+\s*=/m.test(content) || /^\s*export\s+type\s+\{/m.test(content)) {
-      violations.push(`${rel}: *.interface.ts files may not export type declarations.`);
-    }
-    if (/^\s*export\s+(?:class|const|let|var|function|enum)\b/m.test(content)) {
-      violations.push(`${rel}: *.interface.ts files may only export interface declarations.`);
-    }
+    checkPureInterfaceFile(rel, content, violations);
   } else if (rel.endsWith('.type.ts')) {
-    if (/^\s*(?:export\s+)?interface\s+\w+/m.test(content)) {
-      violations.push(`${rel}: *.type.ts files may not export interface declarations.`);
-    }
-    if (/^\s*export\s+(?:class|const|let|var|function|enum)\b/m.test(content)) {
-      violations.push(`${rel}: *.type.ts files may only export type declarations.`);
-    }
+    checkPureTypeFile(rel, content, violations);
   } else if (hasTypeOrInterfaceDeclaration(content)) {
     violations.push(`${rel}: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.`);
   }
@@ -566,6 +624,18 @@ function checkForbiddenPackageRefs(rel, content, violations) {
 
 function hasTypeOrInterfaceDeclaration(content) {
   return /^\s*(?:export\s+)?interface\s+\w+/m.test(content) || /^\s*(?:export\s+)?type\s+\w+\s*=/m.test(content);
+}
+
+function hasExportedTypeDeclaration(content) {
+  return /^\s*export\s+type\s+\w+\s*=/m.test(content) || /^\s*export\s+type\s+\{/m.test(content);
+}
+
+function hasValueExportDeclaration(content) {
+  return /^\s*export\s+(?:class|const|let|var|function|enum)\b/m.test(content);
+}
+
+function hasNonTypeImport(content) {
+  return /^\s*import\s+(?!type\b)/m.test(content);
 }
 
 function checkBffDependencyDirection(rel, content, file, root, violations) {

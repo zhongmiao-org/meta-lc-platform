@@ -4,11 +4,9 @@ import type { OrgScopeContext } from "@zhongmiao/meta-lc-permission";
 import type { PermissionAstTransformContext } from "@zhongmiao/meta-lc-permission";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import { resolveExpression } from "../../domain/dsl/expression";
-import {
-  QueryExecutorError,
-  type RuntimeContext,
-  type RuntimeStateStore
-} from "../../core/types";
+import type { RuntimeStateStore } from "../../core/interfaces";
+import type { RuntimeContext } from "../../core/types";
+import { QueryExecutorError } from "../../core/errors";
 import type { QueryNodeDefinition, ViewExpression } from "@zhongmiao/meta-lc-kernel";
 import {
   createQueryCompilerAdapter,

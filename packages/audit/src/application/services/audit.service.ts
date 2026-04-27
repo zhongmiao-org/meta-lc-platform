@@ -1,12 +1,11 @@
 import type {
   AccessAuditLog,
-  AuditSink,
   MigrationAuditLog,
   MutationAuditLog,
   QueryAuditLog,
   RuntimeAuditEvent
-} from "../../domain/audit.entity";
-import type { AuditDbConfig } from "../../core/interfaces";
+} from "../../core/types";
+import type { AuditDbConfig, AuditSink } from "../../core/interfaces";
 
 function createNoopAuditSink(): AuditSink {
   return {
