@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(topology): 在 package dependency topology 旁补充 runtime execution handoff 图。
 - fix(boundaries): 移除 BFF 残留 kernel package 依赖，并明确 meta registry 只能通过 provider 注入访问。
 - docs(topology): 基于 manifest 与生产源码 import 重新生成 package dependency topology。
 - chore(examples): 将 orders demo metadata、SQL seed 与 mutation adapter 从核心包抽离到 `examples/orders-demo`。

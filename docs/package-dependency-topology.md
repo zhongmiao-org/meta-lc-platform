@@ -106,6 +106,26 @@ flowchart TD
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
   - value: `packages/runtime/src/infra/adapter/query.adapter.ts`
 
+## Runtime 执行流 / Execution Handoff
+
+这张图表示 runtime 执行链路中的产物流转，不表示 workspace package import dependency。`Query --> Datasource` 只表示 query compiler 产生 compiled SQL/request 后，由 runtime 交给 datasource adapter 执行；`packages/query` 仍然禁止依赖 `packages/datasource`。
+
+```mermaid
+flowchart LR
+  Runtime["@zhongmiao/meta-lc-runtime<br/>RuntimeExecutor"]
+  Permission["@zhongmiao/meta-lc-permission<br/>AST transform"]
+  Query["@zhongmiao/meta-lc-query<br/>AST to SQL"]
+  Datasource["@zhongmiao/meta-lc-datasource<br/>execute"]
+  BusinessDb[("business_db")]
+
+  Runtime --> Permission
+  Permission -->|"query AST / type-only contract"| Query
+  Runtime --> Query
+  Query -->|"compiled SQL/request handoff"| Datasource
+  Runtime --> Datasource
+  Datasource --> BusinessDb
+```
+
 ## 分层视图
 
 按 package manifest 依赖方向从入口到基础包看：

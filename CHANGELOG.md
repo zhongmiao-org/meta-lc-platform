@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(topology): add a runtime execution handoff diagram beside package dependency topology.
 - fix(boundaries): remove the stale BFF kernel package dependency and document provider-only meta registry access.
 - docs(topology): regenerate package dependency topology from manifest and production source imports.
 - chore(examples): extract the orders demo metadata, SQL seed, and mutation adapter out of core packages into `examples/orders-demo`.
