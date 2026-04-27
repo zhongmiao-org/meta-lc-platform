@@ -11,8 +11,9 @@ test('allows current explicit pg edge files', () => {
       dependencies: { pg: '^8.13.1' },
       devDependencies: { '@types/pg': '^8.11.10' }
     }),
-    'packages/datasource/src/infra/postgres/postgres.adapter.ts': 'import { Pool } from "pg";\n',
-    'packages/datasource/src/infra/postgres/postgres-org-scope.adapter.ts': 'import { Pool } from "pg";\n'
+    'packages/datasource/src/postgres/postgres.adapter.ts': 'import { Pool } from "pg";\n',
+    'packages/datasource/src/postgres/postgres-org-scope.adapter.ts': 'import { Pool } from "pg";\n',
+    'packages/audit/src/postgres/postgres-runtime-audit.sink.ts': 'import { Pool } from "pg";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), []);
@@ -65,7 +66,7 @@ test('allows infra-persistence as the only kernel postgres integration edge', ()
         '@types/pg': '^8.11.10'
       }
     }),
-    'packages/infra-persistence/src/postgres-meta-kernel-repository.ts': [
+    'packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts': [
       'import { Pool } from "pg";',
       'import type { MetaKernelRepositoryPort } from "@zhongmiao/meta-lc-kernel";'
     ].join('\n')
@@ -102,6 +103,11 @@ test('keeps deep import and kernel reverse dependency checks', () => {
       'import { x } from "@zhongmiao/meta-lc-query/src/index";',
       'import { y } from "@zhongmiao/meta-lc-bff";',
       'import { z } from "@zhongmiao/meta-lc-permission";'
+    ].join('\n'),
+    'apps/bff-server/src/main.ts': [
+      'import { startBffServer } from "@zhongmiao/meta-lc-bff";',
+      'import { createPostgresDatasourceAdapter } from "@zhongmiao/meta-lc-datasource/postgres";',
+      'import { PostgresRuntimeAuditSink } from "@zhongmiao/meta-lc-audit/postgres";'
     ].join('\n')
   });
 
@@ -145,20 +151,20 @@ test('rejects demo artifacts in core packages and infra SQL', () => {
   const workspace = createWorkspace({
     'packages/kernel/src/domain/demo-meta-registry.ts': 'export const seed = true;\n',
     'packages/kernel/src/domain/index.ts': 'export * from "./demo-meta-registry";\n',
-    'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts': 'import { Pool } from "pg";\n',
+    'packages/datasource/src/postgres/postgres-demo-orders-mutation.adapter.ts': 'import { Pool } from "pg";\n',
     'infra/sql/001_orders_demo.sql': 'SELECT 1;\n',
     'packages/runtime/src/index.ts': 'import { seed } from "../../../examples/orders-demo/meta-registry";\n',
     'packages/runtime/src/example.ts': 'export const sql = "001_orders_demo.sql";\n',
-    'packages/datasource/src/infra/postgres/orders.adapter.ts': 'export const table = "orders";\n'
+    'packages/datasource/src/postgres/orders.adapter.ts': 'export const table = "orders";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/kernel/src/domain/demo-meta-registry.ts: demo artifacts must live under examples/orders-demo.',
-    'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts: demo artifacts must live under examples/orders-demo.',
+    'packages/datasource/src/postgres/postgres-demo-orders-mutation.adapter.ts: demo artifacts must live under examples/orders-demo.',
     'infra/sql/001_orders_demo.sql: demo artifacts must live under examples/orders-demo.',
-    'packages/datasource/src/infra/postgres/orders.adapter.ts: datasource source must stay business-generic and must not reference orders.',
-    'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts: demo source must live under examples/orders-demo.',
-    'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts: direct pg import is not allowed here.',
+    'packages/datasource/src/postgres/orders.adapter.ts: datasource source must stay business-generic and must not reference orders.',
+    'packages/datasource/src/postgres/postgres-demo-orders-mutation.adapter.ts: demo source must live under examples/orders-demo.',
+    'packages/datasource/src/postgres/postgres-demo-orders-mutation.adapter.ts: direct pg import is not allowed here.',
     'packages/kernel/src/domain/demo-meta-registry.ts: demo source must live under examples/orders-demo.',
     'packages/kernel/src/domain/index.ts: core package source must not reference demo-owned artifacts.',
     'packages/runtime/src/example.ts: core package source must not reference demo-owned artifacts.',
@@ -294,7 +300,11 @@ test('keeps BFF root public API narrow', () => {
 test('enforces common package file semantic purity', () => {
   const allowed = createWorkspace({
     'packages/runtime/src/core/index.ts': 'export * from "./types";\nexport * from "./interfaces";\n',
-    'packages/runtime/src/index.ts': 'export * from "./core";\n',
+    'packages/runtime/src/index.ts': [
+      'export * from "./core";',
+      'export { executeRuntimeGatewayView, executeRuntimeView } from "./application/facades/runtime-view.facade";',
+      'export { executeRuntimeInteractionPlan, createRecordingRuntimeInteractionPort } from "./application/facades/runtime-interaction.facade";'
+    ].join('\n'),
     'packages/runtime/src/core/interfaces/runtime.interface.ts': 'import type { RuntimeContext } from "../types";\nexport interface RuntimePort { run(context: RuntimeContext): void; }\n',
     'packages/runtime/src/core/types/runtime.type.ts': 'import type { RuntimePort } from "../interfaces";\nexport type RuntimeContext = Record<string, unknown>;\nexport type RuntimePortLike = RuntimePort;\n',
     'packages/runtime/src/domain/audit.entity.ts': 'export class AuditEntity {}\n'
@@ -307,6 +317,11 @@ test('enforces common package file semantic purity', () => {
     'packages/query/src/core/types/bad.type.ts': 'import { value } from "../utils";\nexport interface Bad {}\nexport function makeBad() {}\n',
     'packages/permission/src/core/types/shared.types.ts': 'export type Bad = {};\n',
     'packages/kernel/src/core/types/migration-safety.types.ts': 'export interface MigrationGuardOptions {}\n',
+    'packages/runtime/src/index.ts': [
+      'export * from "./core";',
+      'export * from "./application";',
+      'export { RuntimeExecutor } from "./application/executor/runtime-executor";'
+    ].join('\n'),
     'packages/runtime/src/domain/graph/bad.ts': 'import { x } from "../../core";\n',
     'packages/runtime/src/core/types/bad.ts': 'export const bad = true;\n',
     'packages/datasource/src/core/interfaces/bad.ts': 'export type Bad = {};\nexport class Bad {}\n'
@@ -331,7 +346,9 @@ test('enforces common package file semantic purity', () => {
     'packages/query/src/core/types/bad.type.ts: core types files may not export runtime values.',
     'packages/query/src/core/types/bad.type.ts: core types files may not export interface declarations.',
     'packages/runtime/src/core/types/bad.ts: core types files may not export runtime values.',
-    'packages/runtime/src/domain/graph/bad.ts: package-internal source must not import the core root barrel (../../core).'
+    'packages/runtime/src/domain/graph/bad.ts: package-internal source must not import the core root barrel (../../core).',
+    'packages/runtime/src/index.ts: runtime root may only export-star ./core.',
+    'packages/runtime/src/index.ts: runtime root export "RuntimeExecutor" is not public API.'
   ]);
 });
 
@@ -555,7 +572,7 @@ test('rejects final app and package dependency direction violations', () => {
     'packages/query/package.json: query dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
     'packages/query/package.json: query dependency "@zhongmiao/meta-lc-permission" is forbidden in dependencies.',
     'apps/bff-server/package.json: app dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
-    'apps/bff-server/src/main.ts: bff-server app can only depend on @zhongmiao/meta-lc-bff.'
+    'apps/bff-server/src/main.ts: bff-server app can only depend on approved composition packages.'
   ]);
 });
 
@@ -564,6 +581,8 @@ test('keeps infra-persistence composition-only for packages while allowing apps'
     'apps/bff-server/package.json': packageJson({
       dependencies: {
         '@zhongmiao/meta-lc-bff': 'workspace:*',
+        '@zhongmiao/meta-lc-datasource': 'workspace:*',
+        '@zhongmiao/meta-lc-audit': 'workspace:*',
         '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
       }
     }),

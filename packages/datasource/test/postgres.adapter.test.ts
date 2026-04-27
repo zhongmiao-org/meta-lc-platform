@@ -5,7 +5,7 @@ import {
   type DatasourceAdapter,
   type DatasourceExecutionRequest
 } from "../src";
-import { PostgresDatasourceAdapter } from "../src/infra/postgres/postgres.adapter";
+import { PostgresDatasourceAdapter } from "../src/postgres/postgres.adapter";
 
 const dbConfig = {
   host: "127.0.0.1",

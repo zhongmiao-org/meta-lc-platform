@@ -1,3 +1,4 @@
+export * from "./facades";
 export * from "./factories";
 export * from "./generators/api-generator";
 export * from "./generators/permission-generator";

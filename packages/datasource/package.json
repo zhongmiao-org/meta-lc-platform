@@ -19,6 +19,20 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "nx": {
-    "tags": ["layer:datasource"]
+    "tags": [
+      "layer:datasource"
+    ]
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./postgres": {
+      "types": "./dist/postgres/index.d.ts",
+      "require": "./dist/postgres/index.js",
+      "default": "./dist/postgres/index.js"
+    }
   }
 }

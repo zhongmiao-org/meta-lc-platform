@@ -79,8 +79,8 @@ flowchart TD
 - `@zhongmiao/meta-lc-bff-server` -> `@zhongmiao/meta-lc-bff`
   - value: `apps/bff-server/src/main.ts`
 - `@zhongmiao/meta-lc-infra-persistence` -> `@zhongmiao/meta-lc-kernel`
-  - value: `packages/infra-persistence/src/postgres-meta-kernel-repository.ts`
-  - type-only: `packages/infra-persistence/src/postgres-meta-kernel-repository.ts`
+  - value: `packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts`
+  - type-only: `packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts`
 - `@zhongmiao/meta-lc-permission` -> `@zhongmiao/meta-lc-query` (type-only)
   - type-only: `packages/permission/src/domain/permission-ast-transform.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-audit` (type-only)

@@ -5,7 +5,7 @@ import {
   createPostgresOrgScopeResolver,
   type DbConfig,
   type PostgresOrgScopeData
-} from "@zhongmiao/meta-lc-datasource";
+} from "@zhongmiao/meta-lc-datasource/postgres";
 import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-permission";
 import { OrdersDemoMutationAdapter } from "./datasource-adapters.ts";
 import {

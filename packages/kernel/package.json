@@ -16,6 +16,15 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "nx": {
-    "tags": ["layer:kernel"]
+    "tags": [
+      "layer:kernel"
+    ]
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   }
 }

@@ -1,1 +1,1 @@
-export * from "./postgres-meta-kernel-repository";
+export * from "./postgres";

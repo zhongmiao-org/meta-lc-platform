@@ -3,8 +3,8 @@ import { resolveExpression } from "../../domain/dsl/expression";
 import { parseRuntimePageDsl } from "../../domain/dsl/runtime-dsl-parser";
 import { resolveExecutionOrder } from "../../domain/graph/dep-resolver";
 import { buildDependencyGraph, planRefresh } from "../../domain/graph/runtime-dependency-graph";
-import { createFunctionRegistry } from "../services/function-registry";
-import { evaluateRules } from "../services/rule-engine";
+import { createFunctionRegistry } from "../services/function-registry.service";
+import { evaluateRules } from "../services/rule-engine.service";
 import { executeNode } from "./node-executor";
 import {
   createRuntimeAuditDispatchContext,

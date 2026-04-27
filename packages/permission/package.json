@@ -18,6 +18,15 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "nx": {
-    "tags": ["layer:permission"]
+    "tags": [
+      "layer:permission"
+    ]
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   }
 }

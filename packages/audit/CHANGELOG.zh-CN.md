@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(public-api): 将 Postgres audit sink 移到 `@zhongmiao/meta-lc-audit/postgres` secondary entry。
 - docs(readme): 补充最终架构协作流中的上下游关系说明。
 - chore(boundaries): 新增最终 Nx layer tags，并将 audit 锁定为无 workspace 依赖的被动观测包。
 - feat(sink): 新增可选 Postgres runtime audit sink，落盘失败不会阻断 runtime execution。

@@ -5,9 +5,9 @@ import type {
   DatasourceExecutionResult,
   DbConfig,
   QueryResultRow
-} from "../../core/interfaces";
-import type { DatasourceParamValue } from "../../core/types";
-import { DatasourceAdapterError } from "../../core/errors";
+} from "../core/interfaces";
+import type { DatasourceParamValue } from "../core/types";
+import { DatasourceAdapterError } from "../core/errors";
 
 interface PostgresPoolLike {
   query(

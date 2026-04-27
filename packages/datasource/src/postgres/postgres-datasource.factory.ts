@@ -3,9 +3,9 @@ import type {
   DbConfig,
   PostgresOrgScopeData,
   PostgresOrgScopeInput
-} from "../../core/interfaces";
-import { PostgresDatasourceAdapter } from "../../infra/postgres/postgres.adapter";
-import { PostgresOrgScopeAdapter } from "../../infra/postgres/postgres-org-scope.adapter";
+} from "../core/interfaces";
+import { PostgresDatasourceAdapter } from "./postgres.adapter";
+import { PostgresOrgScopeAdapter } from "./postgres-org-scope.adapter";
 
 export function createPostgresDatasourceAdapter(config: DbConfig): DatasourceAdapter & ClosableResource {
   return new PostgresDatasourceAdapter(config);

@@ -5,10 +5,14 @@ import { fileURLToPath } from 'node:url';
 const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'infra-persistence']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
-  'packages/datasource/src/infra/postgres/postgres.adapter.ts',
-  'packages/datasource/src/infra/postgres/postgres-org-scope.adapter.ts',
-  'packages/infra-persistence/src/postgres-meta-kernel-repository.ts',
-  'packages/audit/src/infra/postgres-runtime-audit.sink.ts'
+  'packages/datasource/src/postgres/postgres.adapter.ts',
+  'packages/datasource/src/postgres/postgres-org-scope.adapter.ts',
+  'packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts',
+  'packages/audit/src/postgres/postgres-runtime-audit.sink.ts'
+]);
+const ALLOWED_SECONDARY_IMPORTS = new Set([
+  '@zhongmiao/meta-lc-datasource/postgres',
+  '@zhongmiao/meta-lc-audit/postgres'
 ]);
 const FORBIDDEN_PACKAGE_DIRS = [
   'packages/contracts',
@@ -73,7 +77,9 @@ const FORBIDDEN_BFF_DEPS = [
   '@types/pg'
 ];
 const FORBIDDEN_RUNTIME_DEPS = [
-  '@zhongmiao/meta-lc-infra-persistence'
+  '@zhongmiao/meta-lc-infra-persistence',
+  '@zhongmiao/meta-lc-datasource/postgres',
+  '@zhongmiao/meta-lc-audit/postgres'
 ];
 const FORBIDDEN_INFRA_PERSISTENCE_DEPS = [
   '@zhongmiao/meta-lc-runtime',
@@ -84,7 +90,12 @@ const FORBIDDEN_INFRA_PERSISTENCE_DEPS = [
   '@zhongmiao/meta-lc-audit'
 ];
 const ALLOWED_APP_DEPS = {
-  'bff-server': new Set(['@zhongmiao/meta-lc-bff', '@zhongmiao/meta-lc-infra-persistence'])
+  'bff-server': new Set([
+    '@zhongmiao/meta-lc-bff',
+    '@zhongmiao/meta-lc-datasource',
+    '@zhongmiao/meta-lc-audit',
+    '@zhongmiao/meta-lc-infra-persistence'
+  ])
 };
 const BFF_TOP_LEVEL_DIRS = new Set([
   'bootstrap',
@@ -143,6 +154,7 @@ const RUNTIME_FORBIDDEN_SOURCE_DIRS = [
 const FORBIDDEN_DEMO_ARTIFACT_PATHS = [
   'packages/kernel/src/domain/demo-meta-registry.ts',
   'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts',
+  'packages/datasource/src/postgres/postgres-demo-orders-mutation.adapter.ts',
   'infra/sql/001_orders_demo.sql'
 ];
 const KERNEL_STRUCTURE_CONTRACT_DECLARATIONS = [
@@ -283,10 +295,12 @@ function checkSourceFile(file, root, violations) {
   checkBffSourceFile(rel, content, file, root, violations);
   checkContractDefinitions(rel, content, violations);
 
-  // No deep cross-package imports.
-  const deepImport = content.match(/from\s+["'](?:@meta-lc\/[a-z-]+|@zhongmiao\/meta-lc-[a-z-]+)\//g);
-  if (deepImport) {
-    violations.push(`${rel}: deep import from package internals is forbidden.`);
+  // No deep cross-package imports except explicit secondary entrypoints.
+  for (const specifier of findImportSpecifiers(content)) {
+    if (isPackageDeepImport(specifier) && !ALLOWED_SECONDARY_IMPORTS.has(specifier)) {
+      violations.push(`${rel}: deep import from package internals is forbidden.`);
+      break;
+    }
   }
 
   // DB driver access is a hard boundary: only explicit DB edge files may import pg.
@@ -358,6 +372,9 @@ function checkSourceFile(file, root, violations) {
   if (rel.startsWith('packages/runtime/src/')) {
     checkRuntimeDatasourceImports(rel, content, violations);
   }
+  if (rel === 'packages/runtime/src/index.ts') {
+    checkRuntimeRootPublicApi(rel, content, violations);
+  }
   if (rel.startsWith('packages/infra-persistence/')) {
     for (const dep of FORBIDDEN_INFRA_PERSISTENCE_DEPS) {
       if (content.includes(dep)) {
@@ -375,10 +392,11 @@ function checkSourceFile(file, root, violations) {
       '@zhongmiao/meta-lc-query',
       '@zhongmiao/meta-lc-permission',
       '@zhongmiao/meta-lc-datasource',
-      '@zhongmiao/meta-lc-audit'
+      '@zhongmiao/meta-lc-audit',
+      '@zhongmiao/meta-lc-infra-persistence'
     ]) {
-      if (content.includes(dep)) {
-        violations.push(`${rel}: bff-server app can only depend on @zhongmiao/meta-lc-bff.`);
+      if (content.includes(dep) && !ALLOWED_APP_DEPS['bff-server'].has(dep)) {
+        violations.push(`${rel}: bff-server app can only depend on approved composition packages.`);
       }
     }
   }
@@ -433,6 +451,9 @@ function checkCommonPackageSourceLayout(rel, content, file, root, violations) {
 
   if (rel === `packages/${packageName}/src/index.ts` && exportsInfra(content)) {
     violations.push(`${rel}: package root must not export infra.`);
+  }
+  if (rel === `packages/${packageName}/src/index.ts` && exportsPostgres(content) && packageName !== 'infra-persistence') {
+    violations.push(`${rel}: package root must not export postgres implementation.`);
   }
 
   if (rel.includes('/src/core/')) {
@@ -752,6 +773,40 @@ function exportsInfra(content) {
   return /^\s*export\s+\*\s+from\s+["']\.\/infra(?:\/index)?["'];?/m.test(content);
 }
 
+function exportsPostgres(content) {
+  return /^\s*export\s+\*\s+from\s+["']\.\/postgres(?:\/index)?["'];?/m.test(content);
+}
+
+function checkRuntimeRootPublicApi(rel, content, violations) {
+  const allowedNamedExports = new Map([
+    ['executeRuntimeGatewayView', './application/facades/runtime-view.facade'],
+    ['executeRuntimeView', './application/facades/runtime-view.facade'],
+    ['executeRuntimeInteractionPlan', './application/facades/runtime-interaction.facade'],
+    ['createRecordingRuntimeInteractionPort', './application/facades/runtime-interaction.facade']
+  ]);
+
+  const starExportPattern = /^\s*export\s+\*\s+from\s+["']([^"']+)["'];?/gm;
+  let starMatch;
+  while ((starMatch = starExportPattern.exec(content)) !== null) {
+    if (starMatch[1] !== './core') {
+      violations.push(`${rel}: runtime root may only export-star ./core.`);
+    }
+  }
+
+  const namedExportPattern = /^\s*export\s+\{([\s\S]*?)\}\s+from\s+["']([^"']+)["'];?/gm;
+  let namedMatch;
+  while ((namedMatch = namedExportPattern.exec(content)) !== null) {
+    const source = namedMatch[2];
+    for (const rawName of namedMatch[1].split(',')) {
+      const exportedName = rawName.trim().split(/\s+as\s+/)[0]?.trim();
+      if (!exportedName) continue;
+      if (allowedNamedExports.get(exportedName) !== source) {
+        violations.push(`${rel}: runtime root export "${exportedName}" is not public API.`);
+      }
+    }
+  }
+}
+
 function checkRuntimeDatasourceImports(rel, content, violations) {
   const datasourceImportPattern = /^\s*import\s+([^;]*?)\s+from\s+["']@zhongmiao\/meta-lc-datasource["'];?/gm;
   let importMatch;
@@ -803,6 +858,10 @@ function findImportSpecifiers(content) {
     specifiers.push(match[1]);
   }
   return specifiers;
+}
+
+function isPackageDeepImport(specifier) {
+  return /^@meta-lc\/[a-z-]+\//.test(specifier) || /^@zhongmiao\/meta-lc-[a-z-]+\//.test(specifier);
 }
 
 function findNamedImportsFrom(content, packageName) {

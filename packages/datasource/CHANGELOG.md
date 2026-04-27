@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- refactor(public-api): move Postgres adapters to the `@zhongmiao/meta-lc-datasource/postgres` secondary entry and keep the package root contract-only.
 - refactor(adapter): remove the orders demo mutation adapter from datasource and move business demo wiring to `examples/orders-demo`.
 - docs(readme): clarify datasource upstream/downstream relationships and physical-execution-only boundaries.
 - chore(boundaries): add final Nx layer tags and lock datasource against workspace package dependencies.

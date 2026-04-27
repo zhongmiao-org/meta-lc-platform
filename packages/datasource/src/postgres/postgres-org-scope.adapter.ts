@@ -5,7 +5,7 @@ import type {
   PostgresOrgScopeData,
   PostgresOrgScopeInput,
   PostgresRoleDataPolicyRow
-} from "../../core/interfaces";
+} from "../core/interfaces";
 
 export class PostgresOrgScopeAdapter {
   private readonly pool: Pool;

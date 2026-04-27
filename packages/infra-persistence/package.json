@@ -20,6 +20,15 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "nx": {
-    "tags": ["layer:infra-persistence"]
+    "tags": [
+      "layer:infra-persistence"
+    ]
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   }
 }
