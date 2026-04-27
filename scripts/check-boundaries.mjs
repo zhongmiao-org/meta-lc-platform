@@ -329,11 +329,26 @@ function checkSourceFile(file, root, violations) {
 function checkPackageSourceDemoArtifacts(rel, content, violations) {
   if (!rel.startsWith('packages/') || !rel.includes('/src/')) return;
   const basename = path.posix.basename(rel);
-  if (/^demo[-\w]*\.ts$/.test(basename) || rel.includes('demo-meta-registry') || rel.includes('postgres-demo-')) {
+  if (
+    /^demo[-\w]*\.ts$/.test(basename) ||
+    rel.includes('demo-meta-registry') ||
+    rel.includes('postgres-demo-') ||
+    rel.includes('orders-demo') ||
+    rel.includes('001_orders_demo.sql')
+  ) {
     violations.push(`${rel}: demo source must live under examples/orders-demo.`);
   }
-  if (content.includes('demo-meta-registry') || content.includes('postgres-demo-')) {
+  if (
+    /\bdemo\b/i.test(content) ||
+    content.includes('demo-meta-registry') ||
+    content.includes('postgres-demo-') ||
+    content.includes('orders-demo') ||
+    content.includes('001_orders_demo.sql')
+  ) {
     violations.push(`${rel}: core package source must not reference demo-owned artifacts.`);
+  }
+  if (rel.startsWith('packages/datasource/src/') && /\borders\b/i.test(content)) {
+    violations.push(`${rel}: datasource source must stay business-generic and must not reference orders.`);
   }
 }
 

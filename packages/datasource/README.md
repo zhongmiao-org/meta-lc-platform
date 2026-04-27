@@ -21,7 +21,9 @@ English | [中文文档](./README_zh.md)
 - `query` produces SQL that a datasource adapter can execute.
 - `permission` affects the constraints included before execution.
 - `kernel` remains separate; metadata versioning is not owned by this package.
-- Orders-specific demo mutation logic lives in `examples/orders-demo`; core datasource only keeps generic Postgres execution and platform adapter edges such as org-scope loading.
+- `PostgresOrgScopeAdapter` is a platform data-scope adapter used by runtime permission context assembly.
+- Orders-specific demo mutation logic lives in `examples/orders-demo` only.
+- Core datasource only keeps generic Postgres execution and platform adapter edges such as org-scope loading.
 
 ## Minimal Flow
 

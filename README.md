@@ -86,6 +86,7 @@ flowchart LR
 - Business demos live under `examples/*`, not inside core packages.
 - `examples/orders-demo` owns the orders workbench seed metadata, demo mutation adapter, and `001_orders_demo.sql`.
 - Deleting `examples/` must not affect `packages/*` build or test; examples may depend on packages, but packages must never depend on examples.
+- Examples are demonstration applications only and are not part of the core platform package topology.
 
 ## Commands
 

@@ -21,7 +21,9 @@
 - `query` 生成 datasource adapter 可执行的 SQL。
 - `permission` 影响执行前加入的约束。
 - `kernel` 保持独立；metadata versioning 不属于本包职责。
-- orders 专用 demo mutation 逻辑放在 `examples/orders-demo`；核心 datasource 只保留 generic Postgres execution 与 org-scope loading 等平台 adapter 边界。
+- `PostgresOrgScopeAdapter` 是 runtime permission context 装配使用的平台 data-scope adapter。
+- orders 专用 demo mutation 逻辑只放在 `examples/orders-demo`。
+- 核心 datasource 只保留 generic Postgres execution 与 org-scope loading 等平台 adapter 边界。
 
 ## 最小闭环
 

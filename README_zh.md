@@ -86,6 +86,7 @@ flowchart LR
 - 业务 demo 放在 `examples/*`，不放入核心 packages。
 - `examples/orders-demo` 拥有 orders workbench 的 seed metadata、demo mutation adapter 与 `001_orders_demo.sql`。
 - 删除 `examples/` 不应影响 `packages/*` build 或 test；examples 可以依赖 packages，但 packages 永远不能依赖 examples。
+- examples 仅作为演示应用，不属于核心平台包拓扑。
 
 ## 常用命令
 

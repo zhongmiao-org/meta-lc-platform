@@ -105,17 +105,22 @@ test('rejects demo artifacts in core packages and infra SQL', () => {
     'packages/kernel/src/domain/index.ts': 'export * from "./demo-meta-registry";\n',
     'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts': 'import { Pool } from "pg";\n',
     'infra/sql/001_orders_demo.sql': 'SELECT 1;\n',
-    'packages/runtime/src/index.ts': 'import { seed } from "../../../examples/orders-demo/meta-registry";\n'
+    'packages/runtime/src/index.ts': 'import { seed } from "../../../examples/orders-demo/meta-registry";\n',
+    'packages/runtime/src/example.ts': 'export const sql = "001_orders_demo.sql";\n',
+    'packages/datasource/src/infra/postgres/orders.adapter.ts': 'export const table = "orders";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/kernel/src/domain/demo-meta-registry.ts: demo artifacts must live under examples/orders-demo.',
     'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts: demo artifacts must live under examples/orders-demo.',
     'infra/sql/001_orders_demo.sql: demo artifacts must live under examples/orders-demo.',
+    'packages/datasource/src/infra/postgres/orders.adapter.ts: datasource source must stay business-generic and must not reference orders.',
     'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts: demo source must live under examples/orders-demo.',
     'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts: direct pg import is not allowed here.',
     'packages/kernel/src/domain/demo-meta-registry.ts: demo source must live under examples/orders-demo.',
     'packages/kernel/src/domain/index.ts: core package source must not reference demo-owned artifacts.',
+    'packages/runtime/src/example.ts: core package source must not reference demo-owned artifacts.',
+    'packages/runtime/src/index.ts: core package source must not reference demo-owned artifacts.',
     'packages/runtime/src/index.ts: packages/apps must not import examples (../../../examples/orders-demo/meta-registry).'
   ]);
 });
