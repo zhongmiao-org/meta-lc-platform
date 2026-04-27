@@ -199,6 +199,8 @@ test("executeRuntimeGatewayView rejects unknown views before creating execution 
           roles: ["USER"]
         },
         {
+          appId: "runtime-test-app",
+          metaKernel: createTestMetaKernel(),
           queryDatasource: {
             async execute() {
               throw new Error("query should not run");

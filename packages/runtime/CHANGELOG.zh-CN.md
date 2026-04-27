@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - refactor(gateway): 从 runtime gateway facade 移除默认 orders demo seeds 与 mutation adapter wiring，demo wiring 改由 `examples/orders-demo` 注入。
+- chore(package): 将 runtime 包输出对齐到 `dist/index.js` 与 `dist/index.d.ts`。
 - docs(readme): 补充最终执行引擎拓扑中的 runtime 上下游关系说明。
 - fix(ci): 在 clean runner 的 runtime package-local test 前先构建 workspace 依赖。
 - chore(boundaries): 新增最终 Nx layer tags，并保持 runtime 是唯一允许同时依赖 kernel/query/permission/datasource/audit 的执行包。
@@ -15,7 +16,7 @@
 - refactor(datasource): query node 改为通过共享 datasource adapter 契约执行。
 - feat(runtime): 新增高层 runtime view executor facade，通过 RuntimeExecutor 编译并执行 ViewDefinition。
 - refactor(contracts): 从共享 contracts 包转导 V2 view 与 execution plan 契约。
-- fix(package): 将 runtime 包的 main/types 入口对齐到重构后的 `dist/runtime/src` 目录，确保下游包可在运行时正确解析。
+- fix(package): 将 runtime 包的 main/types 入口对齐到重构后的 `dist/index.*` 布局，确保下游包可在运行时正确解析。
 - refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。
 - feat(runtime): 新增 RuntimeExecutor 主执行引擎，负责 DAG 分层调度、原子提交 state snapshot 并解析最终 view model。
 - feat(runtime): 新增 merge 执行器，支持 V2 fan-in 策略与自定义 merge hook。

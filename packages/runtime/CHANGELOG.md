@@ -3,6 +3,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 ## [Unreleased]
 
 - refactor(gateway): remove default orders demo seeds and mutation adapter wiring from the runtime gateway facade; demo wiring is now injected by `examples/orders-demo`.
+- chore(package): align runtime package output to `dist/index.js` and `dist/index.d.ts`.
 - docs(readme): add runtime upstream/downstream notes for the final execution-engine topology.
 - fix(ci): build runtime workspace dependencies before package-local tests on clean runners.
 - chore(boundaries): add final Nx layer tags and keep runtime as the only package allowed to depend on kernel/query/permission/datasource/audit together.
@@ -15,7 +16,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - refactor(datasource): execute query nodes through the shared datasource adapter contract.
 - feat(runtime): add a high-level runtime view executor facade that compiles and executes ViewDefinition through RuntimeExecutor.
 - refactor(contracts): re-export V2 view and execution plan contracts from the shared contracts package.
-- fix(package): align the runtime package main/types entrypoint with the refactored dist/runtime/src layout so downstream packages can resolve it at runtime.
+- fix(package): align the runtime package main/types entrypoint with the refactored `dist/index.*` layout so downstream packages can resolve it at runtime.
 - refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - feat(runtime): add a RuntimeExecutor main engine that schedules DAG layers, commits state snapshots atomically, and resolves final view models.
 - feat(runtime): add a merge executor for V2 fan-in strategies and custom merge hooks.

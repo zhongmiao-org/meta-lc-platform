@@ -27,8 +27,8 @@ test('rejects pg declarations in non-db-boundary package manifests', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/query/package.json: pg is forbidden in dependencies outside audit/datasource/kernel packages.',
-    'packages/query/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/kernel packages.'
+    'packages/query/package.json: pg is forbidden in dependencies outside audit/datasource/infra-persistence packages.',
+    'packages/query/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/infra-persistence packages.'
   ]);
 });
 
@@ -38,7 +38,7 @@ test('rejects pg imports outside db-boundary packages', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/runtime/src/index.ts: direct pg import is forbidden outside audit/datasource/kernel packages.'
+    'packages/runtime/src/index.ts: direct pg import is forbidden outside audit/datasource/infra-persistence packages.'
   ]);
 });
 
@@ -49,8 +49,50 @@ test('rejects unapproved pg imports inside db-boundary packages', () => {
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/bff/src/random-db-helper.ts: unsupported BFF top-level source file.',
-    'packages/bff/src/random-db-helper.ts: direct pg import is forbidden outside audit/datasource/kernel packages.',
+    'packages/bff/src/random-db-helper.ts: direct pg import is forbidden outside audit/datasource/infra-persistence packages.',
     'packages/bff/src/random-db-helper.ts: BFF cannot depend on pg.'
+  ]);
+});
+
+test('allows infra-persistence as the only kernel postgres integration edge', () => {
+  const allowed = createWorkspace({
+    'packages/infra-persistence/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-kernel': 'workspace:*',
+        pg: '^8.13.1'
+      },
+      devDependencies: {
+        '@types/pg': '^8.11.10'
+      }
+    }),
+    'packages/infra-persistence/src/postgres-meta-kernel-repository.ts': [
+      'import { Pool } from "pg";',
+      'import type { MetaKernelRepositoryPort } from "@zhongmiao/meta-lc-kernel";'
+    ].join('\n')
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/kernel/package.json': packageJson({
+      dependencies: {
+        pg: '^8.13.1'
+      }
+    }),
+    'packages/kernel/src/infra/postgres.ts': 'import { Pool } from "pg";\n',
+    'packages/infra-persistence/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-kernel': 'workspace:*',
+        '@zhongmiao/meta-lc-runtime': 'workspace:*'
+      }
+    }),
+    'packages/infra-persistence/src/bad.ts': 'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";\n'
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/infra-persistence/package.json: infra-persistence dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
+    'packages/infra-persistence/src/bad.ts: infra-persistence cannot depend on @zhongmiao/meta-lc-runtime.',
+    'packages/kernel/package.json: pg is forbidden in dependencies outside audit/datasource/infra-persistence packages.',
+    'packages/kernel/src/infra/postgres.ts: direct pg import is forbidden outside audit/datasource/infra-persistence packages.'
   ]);
 });
 
@@ -341,6 +383,24 @@ test('rejects misplaced structure and execution contract definitions', () => {
   ]);
 });
 
+test('rejects misplaced query AST contracts and runtime datasource implementation imports', () => {
+  const workspace = createWorkspace({
+    'packages/runtime/src/application/facades/bad.ts': [
+      'import { createPostgresDatasourceAdapter, type DbConfig } from "@zhongmiao/meta-lc-datasource";',
+      'export const bad = createPostgresDatasourceAdapter;'
+    ].join('\n'),
+    'packages/permission/src/core/interfaces/bad.interface.ts': 'export interface SelectQueryAst {}\n',
+    'packages/kernel/src/core/types/bad.type.ts': 'export type QueryPredicate = {};\n'
+  });
+
+  assert.deepEqual(checkWorkspace(workspace), [
+    'packages/kernel/src/core/types/bad.type.ts: query AST contract "QueryPredicate" must be defined in packages/query only.',
+    'packages/permission/src/core/interfaces/bad.interface.ts: query AST contract "SelectQueryAst" must be defined in packages/query only.',
+    'packages/runtime/src/application/facades/bad.ts: runtime may only import datasource contracts with import type.',
+    'packages/runtime/src/application/facades/bad.ts: runtime must not import datasource implementation "createPostgresDatasourceAdapter".'
+  ]);
+});
+
 test('rejects runtime orchestrator directory and migration package', () => {
   const workspace = createWorkspace({
     'packages/runtime/src/application/orchestrator/runtime.orchestrator.ts': 'export const x = 1;\n',
@@ -417,10 +477,10 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-query" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-audit" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "pg" is forbidden in dependencies.',
-    'packages/bff/package.json: pg is forbidden in dependencies outside audit/datasource/kernel packages.',
+    'packages/bff/package.json: pg is forbidden in dependencies outside audit/datasource/infra-persistence packages.',
     'packages/bff/package.json: BFF dependency "@types/pg" is forbidden in devDependencies.',
-    'packages/bff/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/kernel packages.',
-    'packages/bff/src/controller/http/bad.ts: direct pg import is forbidden outside audit/datasource/kernel packages.',
+    'packages/bff/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/infra-persistence packages.',
+    'packages/bff/src/controller/http/bad.ts: direct pg import is forbidden outside audit/datasource/infra-persistence packages.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-datasource.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-permission.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-query.',

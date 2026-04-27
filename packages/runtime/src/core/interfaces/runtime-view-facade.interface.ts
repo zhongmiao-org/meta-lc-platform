@@ -1,7 +1,3 @@
-import type {
-  DbConfig,
-  PostgresOrgScopeData
-} from "@zhongmiao/meta-lc-datasource";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import type { OrgScopeContext } from "@zhongmiao/meta-lc-permission";
 import type { MetaKernelService } from "@zhongmiao/meta-lc-kernel";
@@ -22,13 +18,12 @@ export interface RuntimeGatewayViewRequest {
 }
 
 export interface RuntimeGatewayViewOptions {
-  appId?: string;
-  metaKernel?: Pick<MetaKernelService, "getViewDefinition">;
-  queryDatasource?: QueryDatasourceAdapter & ClosableResource;
+  appId: string;
+  metaKernel: Pick<MetaKernelService, "getViewDefinition">;
+  queryDatasource: QueryDatasourceAdapter & ClosableResource;
   mutationDatasource?: MutationDatasourceAdapter & ClosableResource;
-  orgScopeResolver?: RuntimeOrgScopeResolver & ClosableResource;
+  orgScopeResolver: RuntimeOrgScopeResolver & ClosableResource;
   auditObserver?: RuntimeAuditObserver & ClosableResource;
-  businessDbConfig?: DbConfig;
 }
 
 export interface RuntimeOrgScopeResolver {
@@ -42,11 +37,6 @@ export interface RuntimeViewExecutorDependencies {
   mutationDatasource?: MutationDatasourceAdapter;
   merge?: MergeExecutorDependencies;
   auditObserver?: RuntimeAuditObserver;
-}
-
-export interface RuntimePostgresOrgScopeResolver {
-  resolve(input: { tenantId: string; userId: string }): Promise<PostgresOrgScopeData>;
-  close(): Promise<void>;
 }
 
 export interface ClosableResource {

@@ -6,7 +6,7 @@ import {
   type MetaDefinitionVersion,
   type PermissionPolicy,
   type ViewDefinition
-} from "../../packages/kernel/dist/src/index.js";
+} from "../../packages/kernel/dist/index.js";
 
 type MetaResourceKind = "tables" | "pages" | "datasources" | "rules" | "permissions";
 

@@ -1,7 +1,10 @@
 import { Pool } from "pg";
-import { createMigrationSafetyReport } from "../../domain/migration-safety";
 import { randomUUID } from "node:crypto";
-import type { MigrationGuardOptions } from "../../core/interfaces";
+import { createMigrationSafetyReport } from "@zhongmiao/meta-lc-kernel";
+import type {
+  MigrationGuardOptions,
+  MetaDefinitionKind
+} from "@zhongmiao/meta-lc-kernel";
 import type {
   DbConfig,
   MetaDefinitionPublishInput,
@@ -9,8 +12,7 @@ import type {
   MetaSchema,
   MetaVersion,
   MigrationAuditRecord
-} from "../../core/interfaces";
-import type { MetaDefinitionKind } from "../../core/types";
+} from "@zhongmiao/meta-lc-kernel";
 
 interface MigrationExecutionContext {
   appId: string;
@@ -385,6 +387,10 @@ export class PostgresMetaKernelRepository {
       return false;
     }
   }
+}
+
+export function createPostgresMetaKernelRepository(config: DbConfig): PostgresMetaKernelRepository {
+  return new PostgresMetaKernelRepository(config);
 }
 
 function mapRow(row: {

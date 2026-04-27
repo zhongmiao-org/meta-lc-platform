@@ -1,23 +1,12 @@
 import { resolveExpression } from "../../domain/dsl/expression";
 import {
-  createInMemoryMetaKernelService,
-  MetaKernelService
-} from "@zhongmiao/meta-lc-kernel";
-import {
   executeMergeNode
 } from "../executor/merge-executor";
 import { executeMutationNode } from "../executor/mutation-executor";
 import { executeQueryNode } from "../executor/query-executor";
 import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
-import {
-  createPostgresDatasourceAdapter,
-  createPostgresOrgScopeResolver,
-  type DbConfig,
-  type PostgresOrgScopeData
-} from "@zhongmiao/meta-lc-datasource";
 import { executeSubmitPlan } from "../executor/submit-executor";
 import type {
-  ClosableResource,
   MutationDatasourceAdapter,
   RuntimeExecutorDependencies,
   RuntimeGatewayViewOptions,
@@ -29,10 +18,8 @@ import type {
 } from "../../core/interfaces";
 import type { RuntimeContext } from "../../core/types";
 import type { TransformNodeDefinition, ViewDefinition } from "@zhongmiao/meta-lc-kernel";
-import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-permission";
+import type { OrgScopeContext } from "@zhongmiao/meta-lc-permission";
 import { compileViewDefinition } from "../compiler/view-compiler";
-
-const DEFAULT_RUNTIME_APP_ID = "default-app";
 
 export class RuntimeViewNotFoundError extends Error {
   constructor(viewName: string) {
@@ -51,42 +38,32 @@ export class RuntimeGatewayRequestError extends Error {
 export async function executeRuntimeGatewayView(
   viewName: string,
   request: RuntimeGatewayViewRequest & { requestId: string },
-  options: RuntimeGatewayViewOptions = {}
+  options?: RuntimeGatewayViewOptions
 ): Promise<SubmitExecutionResult> {
   ensureRuntimeGatewayRequest(request);
-  const resources: ClosableResource[] = [];
-  const metaKernel = options.metaKernel ?? createDefaultMetaKernel();
-  const view = await metaKernel.getViewDefinition(options.appId ?? DEFAULT_RUNTIME_APP_ID, viewName);
+  const metaKernel = options?.metaKernel ?? failMissingRuntimeGatewayDependency("metaKernel");
+  const appId = options?.appId ?? failMissingRuntimeGatewayDependency("appId");
+  const queryDatasource = options?.queryDatasource ?? failMissingRuntimeGatewayDependency("queryDatasource");
+  const orgScopeResolver = options?.orgScopeResolver ?? failMissingRuntimeGatewayDependency("orgScopeResolver");
+  const view = await metaKernel.getViewDefinition(appId, viewName);
   if (!view) {
     throw new RuntimeViewNotFoundError(viewName);
   }
 
-  const businessConfig =
-    options.queryDatasource && options.orgScopeResolver
-      ? undefined
-      : options.businessDbConfig ?? loadRuntimeDbConfig("business");
-  const queryDatasource =
-    options.queryDatasource ?? track(resources, createPostgresDatasourceAdapter(readBusinessConfig(businessConfig)));
-  const mutationDatasource = options.mutationDatasource;
-  const orgScopeResolver =
-    options.orgScopeResolver ?? track(resources, createDefaultOrgScopeResolver(readBusinessConfig(businessConfig)));
-  const auditObserver = options.auditObserver ?? createNoopRuntimeAuditObserver();
+  const mutationDatasource = options?.mutationDatasource;
+  const auditObserver = options?.auditObserver ?? createNoopRuntimeAuditObserver();
 
-  try {
-    const orgScope = await orgScopeResolver.resolve({
-      tenantId: request.tenantId,
-      userId: request.userId,
-      roles: request.roles
-    });
-    const runtimeContext = buildRuntimeGatewayContext(request, viewName, orgScope);
-    return executeRuntimeView(view.definition, runtimeContext, {
-      queryDatasource,
-      ...(mutationDatasource ? { mutationDatasource } : {}),
-      auditObserver
-    });
-  } finally {
-    await Promise.all(resources.map((resource) => resource.close?.()));
-  }
+  const orgScope = await orgScopeResolver.resolve({
+    tenantId: request.tenantId,
+    userId: request.userId,
+    roles: request.roles
+  });
+  const runtimeContext = buildRuntimeGatewayContext(request, viewName, orgScope);
+  return executeRuntimeView(view.definition, runtimeContext, {
+    queryDatasource,
+    ...(mutationDatasource ? { mutationDatasource } : {}),
+    auditObserver
+  });
 }
 
 export async function executeRuntimeView(
@@ -167,10 +144,6 @@ function isRecordLike(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function createDefaultMetaKernel(): MetaKernelService {
-  return createInMemoryMetaKernelService({ definitions: [] });
-}
-
 function createUnavailableMutationDatasourceAdapter(): MutationDatasourceAdapter {
   return {
     async execute(command) {
@@ -184,62 +157,6 @@ function createUnavailableMutationDatasourceAdapter(): MutationDatasourceAdapter
 function createNoopRuntimeAuditObserver(): RuntimeAuditObserver {
   return {
     recordRuntimeEvent() {}
-  };
-}
-
-function createDefaultOrgScopeResolver(config: DbConfig): RuntimeOrgScopeResolver & ClosableResource {
-  const adapter = createPostgresOrgScopeResolver(config);
-  return {
-    async resolve(input) {
-      try {
-        const data = await adapter.resolve({
-          tenantId: input.tenantId,
-          userId: input.userId
-        });
-        return mapOrgScopeData(input, data);
-      } catch (error) {
-        if (getPgErrorCode(error) === "42P01") {
-          return {
-            tenantId: input.tenantId,
-            userId: input.userId,
-            roles: input.roles,
-            userOrgIds: [],
-            rolePolicies: [],
-            orgNodes: []
-          };
-        }
-        throw error;
-      }
-    },
-    close: () => adapter.close()
-  };
-}
-
-function mapOrgScopeData(
-  input: { tenantId: string; userId: string; roles: string[] },
-  data: PostgresOrgScopeData
-): OrgScopeContext {
-  const roles = Array.from(new Set([...input.roles, ...data.roleBindings]));
-  return {
-    tenantId: input.tenantId,
-    userId: input.userId,
-    roles,
-    userOrgIds: data.userOrgIds,
-    rolePolicies: data.rolePolicies
-      .filter((policy) => roles.includes(policy.role))
-      .map<RoleDataPolicy>((policy) => ({
-        role: policy.role,
-        scope: normalizeScope(policy.scope),
-        customOrgIds: policy.customOrgIds
-      })),
-    orgNodes: data.orgNodes.map<OrgNode>((node) => ({
-      id: node.id,
-      tenantId: node.tenantId,
-      parentId: node.parentId,
-      path: node.path,
-      name: node.name,
-      type: node.type
-    }))
   };
 }
 
@@ -283,80 +200,6 @@ function ensureRuntimeGatewayRequest(request: RuntimeGatewayViewRequest): void {
   }
 }
 
-function normalizeScope(value: string): RoleDataPolicy["scope"] {
-  const normalized = value.toUpperCase();
-  if (
-    normalized === "SELF" ||
-    normalized === "DEPT" ||
-    normalized === "DEPT_AND_CHILDREN" ||
-    normalized === "CUSTOM_ORG_SET" ||
-    normalized === "TENANT_ALL"
-  ) {
-    return normalized;
-  }
-  return "SELF";
-}
-
-function track<T extends ClosableResource>(resources: ClosableResource[], resource: T): T {
-  resources.push(resource);
-  return resource;
-}
-
-function loadRuntimeDbConfig(target: "business" | "audit"): DbConfig {
-  const prefix = target === "business" ? "BUSINESS" : "AUDIT";
-  const url = process.env[`LC_DB_${prefix}_URL`];
-  if (url) {
-    return parseRuntimeDbUrl(url);
-  }
-  return {
-    host: readRequiredEnv("LC_DB_HOST"),
-    port: readPort(process.env.LC_DB_PORT, 5432),
-    user: readRequiredEnv("LC_DB_USER"),
-    password: readRequiredEnv("LC_DB_PASSWORD"),
-    database:
-      process.env[`LC_DB_${prefix}_NAME`] ??
-      process.env.LC_DB_NAME ??
-      (target === "business" ? "business_db" : "audit_db"),
-    ssl: (process.env.LC_DB_SSL ?? "false").toLowerCase() === "true"
-  };
-}
-
-function readBusinessConfig(config: DbConfig | undefined): DbConfig {
-  if (!config) {
-    throw new Error("business DB config is required for default runtime gateway dependencies.");
-  }
-  return config;
-}
-
-function parseRuntimeDbUrl(value: string): DbConfig {
-  const url = new URL(value);
-  if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") {
-    throw new Error(`Unsupported database url protocol: ${url.protocol}`);
-  }
-  return {
-    url: value,
-    host: url.hostname,
-    port: Number(url.port || "5432"),
-    user: decodeURIComponent(url.username),
-    password: decodeURIComponent(url.password),
-    database: decodeURIComponent(url.pathname.replace(/^\//, "")),
-    ssl: (url.searchParams.get("sslmode") ?? "").toLowerCase() === "require"
-  };
-}
-
-function readRequiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required env: ${name}`);
-  }
-  return value;
-}
-
-function readPort(value: string | undefined, fallback: number): number {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function getPgErrorCode(error: unknown): string {
-  return String((error as { code?: string })?.code ?? "");
+function failMissingRuntimeGatewayDependency(name: string): never {
+  throw new RuntimeGatewayRequestError(`Runtime gateway option "${name}" is required.`);
 }

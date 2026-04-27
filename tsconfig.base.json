@@ -31,6 +31,9 @@
       ],
       "@zhongmiao/meta-lc-bff": [
         "packages/bff/src"
+      ],
+      "@zhongmiao/meta-lc-infra-persistence": [
+        "packages/infra-persistence/src"
       ]
     }
   }

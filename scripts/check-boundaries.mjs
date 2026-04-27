@@ -2,12 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'kernel']);
+const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'infra-persistence']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/infra/postgres/postgres.adapter.ts',
   'packages/datasource/src/infra/postgres/postgres-org-scope.adapter.ts',
-  'packages/kernel/src/infra/persistence/postgres-meta-kernel-repository.ts',
+  'packages/infra-persistence/src/postgres-meta-kernel-repository.ts',
   'packages/audit/src/infra/postgres-runtime-audit.sink.ts'
 ]);
 const FORBIDDEN_PACKAGE_DIRS = [
@@ -65,6 +65,14 @@ const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-audit',
   'pg',
   '@types/pg'
+];
+const FORBIDDEN_INFRA_PERSISTENCE_DEPS = [
+  '@zhongmiao/meta-lc-runtime',
+  '@zhongmiao/meta-lc-bff',
+  '@zhongmiao/meta-lc-query',
+  '@zhongmiao/meta-lc-permission',
+  '@zhongmiao/meta-lc-datasource',
+  '@zhongmiao/meta-lc-audit'
 ];
 const ALLOWED_APP_DEPS = {
   'bff-server': new Set(['@zhongmiao/meta-lc-bff'])
@@ -143,6 +151,18 @@ const RUNTIME_EXECUTION_CONTRACT_DECLARATIONS = [
   'ExecutionPlan',
   'Expression',
   'RuntimeContext'
+];
+const QUERY_AST_CONTRACT_DECLARATIONS = [
+  'QueryFieldRef',
+  'QueryTableRef',
+  'QuerySelectItem',
+  'QueryComparisonPredicate',
+  'QueryInPredicate',
+  'QueryIsNullPredicate',
+  'QueryLiteralPredicate',
+  'QueryLogicalPredicate',
+  'QueryPredicate',
+  'SelectQueryAst'
 ];
 const COMMON_LAYER_PACKAGES = new Set([
   'kernel',
@@ -231,7 +251,7 @@ function walk(dir, root, violations) {
   for (const entry of sortedDirents(dir)) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === 'dist' || entry.name === 'node_modules') continue;
+      if (entry.name === 'dist' || entry.name === 'dist-test' || entry.name === 'node_modules') continue;
       walk(full, root, violations);
       continue;
     }
@@ -264,7 +284,7 @@ function checkSourceFile(file, root, violations) {
   if (importsPg(content)) {
     const packageName = getPackageName(rel);
     if (!DB_DRIVER_PACKAGES.has(packageName)) {
-        violations.push(`${rel}: direct pg import is forbidden outside audit/datasource/kernel packages.`);
+        violations.push(`${rel}: direct pg import is forbidden outside audit/datasource/infra-persistence packages.`);
     } else if (!ALLOWED_PG_IMPORT_FILES.has(rel)) {
       violations.push(`${rel}: direct pg import is not allowed here.`);
     }
@@ -318,6 +338,16 @@ function checkSourceFile(file, root, violations) {
   }
   if (rel.startsWith('packages/runtime/') && rel.includes('manager-adapter')) {
     violations.push(`${rel}: runtime manager-adapter references are forbidden.`);
+  }
+  if (rel.startsWith('packages/runtime/src/')) {
+    checkRuntimeDatasourceImports(rel, content, violations);
+  }
+  if (rel.startsWith('packages/infra-persistence/')) {
+    for (const dep of FORBIDDEN_INFRA_PERSISTENCE_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: infra-persistence cannot depend on ${dep}.`);
+      }
+    }
   }
   if (rel === 'packages/runtime/test/runtime-manager-event.test.ts') {
     violations.push(`${rel}: runtime manager event test naming is forbidden; use runtime-interaction-event.test.ts.`);
@@ -657,6 +687,16 @@ function checkContractDefinitions(rel, content, violations) {
       'packages/runtime'
     );
   }
+  if (!rel.startsWith('packages/query/src/')) {
+    checkContractDeclarations(
+      rel,
+      content,
+      violations,
+      QUERY_AST_CONTRACT_DECLARATIONS,
+      'query AST',
+      'packages/query'
+    );
+  }
 }
 
 function checkContractDeclarations(rel, content, violations, names, label, owner) {
@@ -694,6 +734,22 @@ function hasNonTypeImport(content) {
 
 function exportsInfra(content) {
   return /^\s*export\s+\*\s+from\s+["']\.\/infra(?:\/index)?["'];?/m.test(content);
+}
+
+function checkRuntimeDatasourceImports(rel, content, violations) {
+  const datasourceImportPattern = /^\s*import\s+([^;]*?)\s+from\s+["']@zhongmiao\/meta-lc-datasource["'];?/gm;
+  let importMatch;
+  while ((importMatch = datasourceImportPattern.exec(content)) !== null) {
+    if (!importMatch[1].trim().startsWith('type ')) {
+      violations.push(`${rel}: runtime may only import datasource contracts with import type.`);
+      break;
+    }
+  }
+  for (const importedName of findNamedImportsFrom(content, '@zhongmiao/meta-lc-datasource')) {
+    if (/^(?:Postgres|createPostgres)/.test(importedName)) {
+      violations.push(`${rel}: runtime must not import datasource implementation "${importedName}".`);
+    }
+  }
 }
 
 function checkBffDependencyDirection(rel, content, file, root, violations) {
@@ -782,13 +838,16 @@ function checkPackageManifest(file, root, violations) {
       if (packageName === 'audit' && FORBIDDEN_AUDIT_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: audit dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
+      if (packageName === 'infra-persistence' && FORBIDDEN_INFRA_PERSISTENCE_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: infra-persistence dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
       if (ALLOWED_APP_DEPS[packageName] && dependencyName.startsWith('@zhongmiao/meta-lc-') && !ALLOWED_APP_DEPS[packageName].has(dependencyName)) {
         violations.push(`${rel}: app dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
       if (!DB_DRIVER_DEPENDENCIES.has(dependencyName)) continue;
       if (!DB_DRIVER_PACKAGES.has(packageName)) {
         violations.push(
-          `${rel}: ${dependencyName} is forbidden in ${blockName} outside audit/datasource/kernel packages.`
+          `${rel}: ${dependencyName} is forbidden in ${blockName} outside audit/datasource/infra-persistence packages.`
         );
       }
     }

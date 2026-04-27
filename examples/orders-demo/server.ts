@@ -1,6 +1,12 @@
-import { startBffServer } from "../../packages/bff/dist/bff/src/index.js";
-import { executeRuntimeGatewayView } from "../../packages/runtime/dist/runtime/src/index.js";
-import type { DbConfig } from "@zhongmiao/meta-lc-datasource";
+import { startBffServer } from "../../packages/bff/dist/index.js";
+import { executeRuntimeGatewayView } from "../../packages/runtime/dist/index.js";
+import {
+  createPostgresDatasourceAdapter,
+  createPostgresOrgScopeResolver,
+  type DbConfig,
+  type PostgresOrgScopeData
+} from "@zhongmiao/meta-lc-datasource";
+import type { OrgNode, OrgScopeContext, RoleDataPolicy } from "@zhongmiao/meta-lc-permission";
 import { OrdersDemoMutationAdapter } from "./datasource-adapters.ts";
 import {
   ORDERS_DEMO_APP_ID,
@@ -13,16 +19,35 @@ const metaKernel = createOrdersDemoMetaKernel();
 type RuntimeGatewayRunner = NonNullable<Parameters<typeof startBffServer>[0]["runtimeRunner"]>;
 
 const runtimeRunner: RuntimeGatewayRunner = async (viewName, request) => {
-  const mutationDatasource = new OrdersDemoMutationAdapter(loadBusinessDbConfig());
+  const businessDbConfig = loadBusinessDbConfig();
+  const queryDatasource = createPostgresDatasourceAdapter(businessDbConfig);
+  const orgScopeDataResolver = createPostgresOrgScopeResolver(businessDbConfig);
+  const mutationDatasource = new OrdersDemoMutationAdapter(businessDbConfig);
   try {
     return await executeRuntimeGatewayView(viewName, request, {
       appId: ORDERS_DEMO_APP_ID,
       metaKernel,
+      queryDatasource,
       mutationDatasource,
-      businessDbConfig: loadBusinessDbConfig()
+      orgScopeResolver: {
+        async resolve(input) {
+          try {
+            return mapOrgScopeData(input, await orgScopeDataResolver.resolve(input));
+          } catch (error) {
+            if (getPgErrorCode(error) === "42P01") {
+              return createEmptyOrgScope(input);
+            }
+            throw error;
+          }
+        }
+      }
     });
   } finally {
-    await mutationDatasource.close();
+    await Promise.all([
+      queryDatasource.close?.(),
+      orgScopeDataResolver.close?.(),
+      mutationDatasource.close()
+    ]);
   }
 };
 
@@ -75,6 +100,63 @@ function readRequiredEnv(name: string): string {
 function readPort(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function mapOrgScopeData(
+  input: { tenantId: string; userId: string; roles: string[] },
+  data: PostgresOrgScopeData
+): OrgScopeContext {
+  const roles = Array.from(new Set([...input.roles, ...data.roleBindings]));
+  return {
+    tenantId: input.tenantId,
+    userId: input.userId,
+    roles,
+    userOrgIds: data.userOrgIds,
+    rolePolicies: data.rolePolicies
+      .filter((policy) => roles.includes(policy.role))
+      .map<RoleDataPolicy>((policy) => ({
+        role: policy.role,
+        scope: normalizeScope(policy.scope),
+        customOrgIds: policy.customOrgIds
+      })),
+    orgNodes: data.orgNodes.map<OrgNode>((node) => ({
+      id: node.id,
+      tenantId: node.tenantId,
+      parentId: node.parentId,
+      path: node.path,
+      name: node.name,
+      type: node.type
+    }))
+  };
+}
+
+function createEmptyOrgScope(input: { tenantId: string; userId: string; roles: string[] }): OrgScopeContext {
+  return {
+    tenantId: input.tenantId,
+    userId: input.userId,
+    roles: input.roles,
+    userOrgIds: [],
+    rolePolicies: [],
+    orgNodes: []
+  };
+}
+
+function normalizeScope(value: string): RoleDataPolicy["scope"] {
+  const normalized = value.toUpperCase();
+  if (
+    normalized === "SELF" ||
+    normalized === "DEPT" ||
+    normalized === "DEPT_AND_CHILDREN" ||
+    normalized === "CUSTOM_ORG_SET" ||
+    normalized === "TENANT_ALL"
+  ) {
+    return normalized;
+  }
+  return "SELF";
+}
+
+function getPgErrorCode(error: unknown): string {
+  return String((error as { code?: string })?.code ?? "");
 }
 
 void main().catch((error) => {

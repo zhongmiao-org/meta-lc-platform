@@ -4,20 +4,17 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test \"dist/**/test/*.test.js\"",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "test": "npm run build && rm -rf dist-test && tsc -p tsconfig.test.json && node --test \"dist-test/test/*.test.js\"",
     "lint": "echo lint:kernel"
   },
-  "dependencies": {
-    "pg": "^8.13.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "@types/pg": "^8.11.10",
     "typescript": "^5.7.2"
   },
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "nx": {
     "tags": ["layer:kernel"]
   }
