@@ -1,7 +1,7 @@
 import type {
   RuntimeManagerExecutedEvent,
   RuntimePageTopicRef
-} from "@zhongmiao/meta-lc-runtime";
+} from "@zhongmiao/meta-lc-runtime/core";
 
 export type RuntimeWsBroadcastMessage = {
   originId: string;

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'kernel-adapter-postgres']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
 const POSTGRES_SECONDARY_ENTRY_PACKAGES = new Set(['audit', 'datasource']);
+const POSTGRES_OPTIONAL_PEER_PACKAGES = new Set(['audit', 'datasource', 'kernel-adapter-postgres']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/postgres/postgres.adapter.ts',
   'packages/datasource/src/postgres/postgres-org-scope.adapter.ts',
@@ -13,11 +14,13 @@ const ALLOWED_PG_IMPORT_FILES = new Set([
 ]);
 const ALLOWED_SECONDARY_IMPORTS = new Set([
   '@zhongmiao/meta-lc-datasource/postgres',
-  '@zhongmiao/meta-lc-audit/postgres'
+  '@zhongmiao/meta-lc-audit/postgres',
+  '@zhongmiao/meta-lc-runtime/core'
 ]);
 const PACKAGE_EXPORT_ALLOWLIST = {
   audit: new Set(['.', './postgres']),
-  datasource: new Set(['.', './postgres'])
+  datasource: new Set(['.', './postgres']),
+  runtime: new Set(['.', './core'])
 };
 const FORBIDDEN_PACKAGE_DIRS = [
   'packages/contracts',
@@ -202,7 +205,7 @@ const COMMON_LAYER_PACKAGES = new Set([
 ]);
 const ROOT_PUBLIC_API_RULES = {
   runtime: {
-    starExports: new Set(['./core', './application/facades']),
+    starExports: new Set(['./application/facades']),
     namedExports: new Map()
   },
   kernel: {
@@ -490,6 +493,15 @@ function checkCommonPackageSourceLayout(rel, content, file, root, violations) {
   }
   if (rel === `packages/${packageName}/src/index.ts` && exportsPostgres(content) && packageName !== 'kernel-adapter-postgres') {
     violations.push(`${rel}: package root must not export postgres implementation.`);
+  }
+  if (rel === 'packages/kernel/src/application/index.ts' && /^\s*export\s+\*\s+from\s+["']\.\/services["'];?/m.test(content)) {
+    violations.push(`${rel}: kernel application public API must not export services barrel.`);
+  }
+  if (
+    rel === 'packages/kernel/src/application/facades/migration-safety.facade.ts' &&
+    /^\s*export\s+\{[\s\S]*?\}\s+from\s+["']\.\.\/\.\.\/domain\/migration-safety["'];?/m.test(content)
+  ) {
+    violations.push(`${rel}: migration safety facade must wrap domain functions instead of re-exporting them.`);
   }
 
   if (rel.includes('/src/core/')) {
@@ -962,11 +974,11 @@ function checkPackageManifest(file, root, violations) {
         violations.push(`${rel}: kernel-adapter-postgres dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
       if (
-        POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName) &&
+        POSTGRES_OPTIONAL_PEER_PACKAGES.has(packageName) &&
         blockName === 'dependencies' &&
         dependencyName === 'pg'
       ) {
-        violations.push(`${rel}: pg must be an optional peerDependency for postgres secondary entries, not a dependency.`);
+        violations.push(`${rel}: pg must be an optional peerDependency for postgres adapter packages, not a dependency.`);
       }
       if (ALLOWED_APP_DEPS[packageName] && dependencyName.startsWith('@zhongmiao/meta-lc-') && !ALLOWED_APP_DEPS[packageName].has(dependencyName)) {
         violations.push(`${rel}: app dependency "${dependencyName}" is forbidden in ${blockName}.`);
@@ -980,12 +992,12 @@ function checkPackageManifest(file, root, violations) {
     }
   }
 
-  if (POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName)) {
+  if (POSTGRES_OPTIONAL_PEER_PACKAGES.has(packageName)) {
     if (!manifest.peerDependencies?.pg) {
-      violations.push(`${rel}: postgres secondary entry packages must declare pg in peerDependencies.`);
+      violations.push(`${rel}: postgres adapter packages must declare pg in peerDependencies.`);
     }
     if (manifest.peerDependenciesMeta?.pg?.optional !== true) {
-      violations.push(`${rel}: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.`);
+      violations.push(`${rel}: postgres adapter packages must mark peerDependenciesMeta.pg.optional as true.`);
     }
   }
 }

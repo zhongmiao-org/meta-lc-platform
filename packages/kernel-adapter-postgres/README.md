@@ -22,7 +22,8 @@ The function factory and class factory are both public composition APIs. The pac
 
 ## Boundary Notes
 
-- Depends on `@zhongmiao/meta-lc-kernel` contracts and `pg`.
+- Depends on `@zhongmiao/meta-lc-kernel` contracts.
+- Treats `pg` as an optional peer dependency; composition roots that use this adapter must install a compatible `pg` version.
 - Must not depend on runtime, BFF, query, permission, datasource, or audit.
 - Should be imported only from app/example composition roots or infra scripts.
 - Keep interface, type, factory, class, mapper, schema, and util files split by semantic suffix.

@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { Module, type DynamicModule, type ModuleMetadata, type Provider } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
-import { executeRuntimeGatewayView } from "@zhongmiao/meta-lc-runtime";
+import {
+  executeRuntimeGatewayView
+} from "@zhongmiao/meta-lc-runtime";
 import { CacheService } from "../infra/cache/cache.service";
 import { HttpExceptionFilter } from "../common/http-exception.filter";
 import {

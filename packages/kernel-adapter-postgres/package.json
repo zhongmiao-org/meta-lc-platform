@@ -9,13 +9,21 @@
     "lint": "echo lint:kernel-adapter-postgres"
   },
   "dependencies": {
-    "@zhongmiao/meta-lc-kernel": "workspace:*",
-    "pg": "^8.13.1"
+    "@zhongmiao/meta-lc-kernel": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/pg": "^8.11.10",
+    "pg": "^8.13.1",
     "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "pg": "^8.13.1"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    }
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

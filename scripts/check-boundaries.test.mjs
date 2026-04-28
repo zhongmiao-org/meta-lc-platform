@@ -17,6 +17,12 @@ test('allows current explicit pg edge files', () => {
       peerDependencies: { pg: '^8.13.1' },
       peerDependenciesMeta: { pg: { optional: true } }
     }),
+    'packages/kernel-adapter-postgres/package.json': packageJson({
+      dependencies: { '@zhongmiao/meta-lc-kernel': 'workspace:*' },
+      devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
+    }),
     'packages/datasource/src/postgres/postgres.adapter.ts': 'import { Pool } from "pg";\n',
     'packages/datasource/src/postgres/postgres-org-scope.adapter.ts': 'import { Pool } from "pg";\n',
     'packages/audit/src/postgres/postgres-runtime-audit.sink.ts': 'import { Pool } from "pg";\n'
@@ -39,7 +45,7 @@ test('rejects pg declarations in non-db-boundary package manifests', () => {
   ]);
 });
 
-test('keeps audit and datasource pg dependencies as optional peers', () => {
+test('keeps postgres adapter package pg dependencies as optional peers', () => {
   const workspace = createWorkspace({
     'packages/datasource/package.json': packageJson({
       dependencies: { pg: '^8.13.1' },
@@ -48,14 +54,24 @@ test('keeps audit and datasource pg dependencies as optional peers', () => {
     'packages/audit/package.json': packageJson({
       devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
       peerDependencies: { pg: '^8.13.1' }
+    }),
+    'packages/kernel-adapter-postgres/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-kernel': 'workspace:*',
+        pg: '^8.13.1'
+      },
+      devDependencies: { '@types/pg': '^8.11.10' }
     })
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/audit/package.json: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.',
-    'packages/datasource/package.json: pg must be an optional peerDependency for postgres secondary entries, not a dependency.',
-    'packages/datasource/package.json: postgres secondary entry packages must declare pg in peerDependencies.',
-    'packages/datasource/package.json: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.'
+    'packages/audit/package.json: postgres adapter packages must mark peerDependenciesMeta.pg.optional as true.',
+    'packages/datasource/package.json: pg must be an optional peerDependency for postgres adapter packages, not a dependency.',
+    'packages/datasource/package.json: postgres adapter packages must declare pg in peerDependencies.',
+    'packages/datasource/package.json: postgres adapter packages must mark peerDependenciesMeta.pg.optional as true.',
+    'packages/kernel-adapter-postgres/package.json: pg must be an optional peerDependency for postgres adapter packages, not a dependency.',
+    'packages/kernel-adapter-postgres/package.json: postgres adapter packages must declare pg in peerDependencies.',
+    'packages/kernel-adapter-postgres/package.json: postgres adapter packages must mark peerDependenciesMeta.pg.optional as true.'
   ]);
 });
 
@@ -85,12 +101,14 @@ test('allows kernel-adapter-postgres as the only kernel postgres integration edg
   const allowed = createWorkspace({
     'packages/kernel-adapter-postgres/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-kernel': 'workspace:*',
-        pg: '^8.13.1'
+        '@zhongmiao/meta-lc-kernel': 'workspace:*'
       },
       devDependencies: {
+        pg: '^8.13.1',
         '@types/pg': '^8.11.10'
-      }
+      },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
     'packages/kernel-adapter-postgres/src/postgres/utils/postgres-pool.util.ts': [
       'import { Pool } from "pg";',
@@ -110,7 +128,10 @@ test('allows kernel-adapter-postgres as the only kernel postgres integration edg
       dependencies: {
         '@zhongmiao/meta-lc-kernel': 'workspace:*',
         '@zhongmiao/meta-lc-runtime': 'workspace:*'
-      }
+      },
+      devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
     'packages/kernel-adapter-postgres/src/bad.ts': 'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";\n'
   });
@@ -150,7 +171,8 @@ test('rejects package deep imports while allowing approved secondary entries', (
     'apps/bff-server/src/main.ts': [
       'import { createPostgresDatasourceAdapter } from "@zhongmiao/meta-lc-datasource/postgres";',
       'import { PostgresRuntimeAuditSink } from "@zhongmiao/meta-lc-audit/postgres";'
-    ].join('\n')
+    ].join('\n'),
+    'packages/bff/src/controller/ws/runtime/event.type.ts': 'import type { RuntimeManagerExecutedEvent } from "@zhongmiao/meta-lc-runtime/core";\n'
   });
   assert.deepEqual(checkWorkspace(allowed), []);
 
@@ -173,6 +195,18 @@ test('keeps package exports limited to approved public entrypoints', () => {
         '.': {
           types: './dist/index.d.ts',
           default: './dist/index.js'
+        }
+      }
+    }),
+    'packages/runtime/package.json': packageJson({
+      exports: {
+        '.': {
+          types: './dist/index.d.ts',
+          default: './dist/index.js'
+        },
+        './core': {
+          types: './dist/core/index.d.ts',
+          default: './dist/core/index.js'
         }
       }
     }),
@@ -451,11 +485,40 @@ test('keeps kernel query and permission root public APIs narrow', () => {
   ]);
 });
 
+test('keeps kernel application public API facade-first', () => {
+  const allowed = createWorkspace({
+    'packages/kernel/src/application/index.ts': [
+      'export * from "./facades";',
+      'export * from "./factories";',
+      'export * from "./generators/api-generator";',
+      'export * from "./generators/permission-generator";',
+      'export * from "./generators/sql-generator";'
+    ].join('\n'),
+    'packages/kernel/src/application/facades/migration-safety.facade.ts': [
+      'import { assertMigrationSafety as assertMigrationSafetyDomain } from "../../domain/migration-safety";',
+      'export function assertMigrationSafety() { return assertMigrationSafetyDomain([], {}); }'
+    ].join('\n')
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/kernel/src/application/index.ts': [
+      'export * from "./facades";',
+      'export * from "./services";'
+    ].join('\n'),
+    'packages/kernel/src/application/facades/migration-safety.facade.ts': 'export { assertMigrationSafety, createMigrationSafetyReport } from "../../domain/migration-safety";\n'
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/kernel/src/application/facades/migration-safety.facade.ts: migration safety facade must wrap domain functions instead of re-exporting them.',
+    'packages/kernel/src/application/index.ts: kernel application public API must not export services barrel.'
+  ]);
+});
+
 test('enforces common package file semantic purity', () => {
   const allowed = createWorkspace({
     'packages/runtime/src/core/index.ts': 'export * from "./types";\nexport * from "./interfaces";\n',
     'packages/runtime/src/index.ts': [
-      'export * from "./core";',
       'export * from "./application/facades";'
     ].join('\n'),
     'packages/runtime/src/core/interfaces/runtime.interface.ts': 'import type { RuntimeContext } from "../types";\nexport interface RuntimePort { run(context: RuntimeContext): void; }\n',
@@ -472,7 +535,6 @@ test('enforces common package file semantic purity', () => {
     'packages/kernel/src/core/types/migration-safety.types.ts': 'export interface MigrationGuardOptions {}\n',
     'packages/runtime/src/index.ts': [
       'export * from "./core";',
-      'export * from "./application";',
       'export { RuntimeExecutor } from "./application/executor/runtime-executor";'
     ].join('\n'),
     'packages/runtime/src/domain/graph/bad.ts': 'import { x } from "../../core";\n',
@@ -500,7 +562,7 @@ test('enforces common package file semantic purity', () => {
     'packages/query/src/core/types/bad.type.ts: core types files may not export interface declarations.',
     'packages/runtime/src/core/types/bad.ts: core types files may not export runtime values.',
     'packages/runtime/src/domain/graph/bad.ts: package-internal source must not import the core root barrel (../../core).',
-    'packages/runtime/src/index.ts: runtime root may only export-star ./application/facades, ./core.',
+    'packages/runtime/src/index.ts: runtime root may only export-star ./application/facades.',
     'packages/runtime/src/index.ts: runtime root export "RuntimeExecutor" is not public API.'
   ]);
 });

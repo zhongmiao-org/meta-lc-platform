@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(factory): 新增 datasource adapter factory contract 与 Postgres adapter class factory。
 - chore(boundaries): 围绕 datasource root 与 Postgres secondary entry 锁定 package exports 和 deep import 规则。
 - chore(sdk): 将 Postgres adapter secondary entry 使用的 `pg` 调整为可选 peer dependency。
 - refactor(public-api): 将 Postgres adapter 移到 `@zhongmiao/meta-lc-datasource/postgres` secondary entry，并保持包根只导出 contract。

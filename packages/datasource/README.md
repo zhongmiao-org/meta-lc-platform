@@ -47,6 +47,18 @@ pnpm --filter @zhongmiao/meta-lc-datasource test
 
 The package root is contract-only and does not force Postgres driver installation. Consumers that import `@zhongmiao/meta-lc-datasource/postgres` must install a compatible `pg` version in their composition root.
 
+```ts
+import {
+  PostgresDatasourceAdapterFactory,
+  createPostgresDatasourceAdapter
+} from "@zhongmiao/meta-lc-datasource/postgres";
+
+const adapter = createPostgresDatasourceAdapter(config);
+const adapterFromClassFactory = new PostgresDatasourceAdapterFactory().create(config);
+```
+
+Prefer the function or class factory from composition roots. The Postgres adapter class remains exported for advanced tests and low-level integration, but application wiring should use factories.
+
 ## Boundary Notes
 
 - Keep adapter code focused on database execution and lifecycle.

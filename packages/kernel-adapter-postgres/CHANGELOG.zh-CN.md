@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(package): 将 Postgres kernel adapter 的 `pg` 调整为 optional peer dependency。
 - feat(factory): 新增 class-based Postgres MetaKernel repository factory，实现 kernel contract。
 - refactor(package): 将 Postgres repository 实现拆成 repository、factory、schema、mapper、interface、type 与 utility 模块，同时不扩大 public API。
 - chore(package): 采用 kernel-adapter-postgres 包名，明确它只承载 kernel Postgres repository adapter。

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(public-api): application 不再导出 services barrel，并通过 facade 包装 migration safety。
 - feat(core): 新增 MetaKernel repository factory contract，供 adapter implementation 实现。
 - chore(public-api): 通过 application facade 转发 migration safety，并将 package root 固定为仅导出 `core + application`。
 - chore(public-api): 将 package root 收窄为 core contract 以及明确的 kernel service、generator、migration safety API。

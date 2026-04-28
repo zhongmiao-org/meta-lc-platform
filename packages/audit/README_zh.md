@@ -45,6 +45,18 @@ pnpm --filter @zhongmiao/meta-lc-audit test
 
 包根入口默认不安装也不暴露 Postgres persistence。消费者只有在导入 `@zhongmiao/meta-lc-audit/postgres` 时，才需要在 composition root 中安装兼容版本的 `pg`。
 
+```ts
+import {
+  PostgresRuntimeAuditSinkFactory,
+  createPostgresRuntimeAuditSink
+} from "@zhongmiao/meta-lc-audit/postgres";
+
+const sink = createPostgresRuntimeAuditSink(config);
+const sinkFromClassFactory = new PostgresRuntimeAuditSinkFactory().create(config);
+```
+
+composition root 优先使用函数式 factory 或 class factory。Postgres sink class 仍作为 advanced API 导出，供测试和低层集成使用，但应用装配应走 factory。
+
 ## 边界约束
 
 - 通过 `AuditSink` 保持 audit persistence 可插拔。

@@ -22,7 +22,8 @@ const repositoryFromClassFactory = new PostgresMetaKernelRepositoryFactory().cre
 
 ## 边界约束
 
-- 只依赖 `@zhongmiao/meta-lc-kernel` contract 与 `pg`。
+- 只依赖 `@zhongmiao/meta-lc-kernel` contract。
+- `pg` 是 optional peer dependency；使用该 adapter 的 composition root 需要自行安装兼容版本。
 - 不依赖 runtime、BFF、query、permission、datasource 或 audit。
 - 只应由 app/example composition root 或 infra script 引入。
 - interface、type、factory、class、mapper、schema 与 util 文件按语义后缀拆分。

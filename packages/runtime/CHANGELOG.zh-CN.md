@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(public-api): runtime root 收窄为仅 facade 入口，并通过 `./core` subpath 暴露 runtime contract。
 - refactor(public-api): 将 runtime package root 固定为仅导出 `core` 与 SDK-facing 的 `application/facades` 入口。
 - refactor(gateway): 从 runtime gateway facade 移除默认 orders demo seeds 与 mutation adapter wiring，demo wiring 改由 `examples/orders-demo` 注入。
 - refactor(public-api): 将 runtime 包根入口收窄到 core contract 与 runtime view facade。

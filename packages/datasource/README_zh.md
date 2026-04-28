@@ -47,6 +47,18 @@ pnpm --filter @zhongmiao/meta-lc-datasource test
 
 包根入口只暴露 contract，不强制安装 Postgres driver。消费者只有在导入 `@zhongmiao/meta-lc-datasource/postgres` 时，才需要在 composition root 中安装兼容版本的 `pg`。
 
+```ts
+import {
+  PostgresDatasourceAdapterFactory,
+  createPostgresDatasourceAdapter
+} from "@zhongmiao/meta-lc-datasource/postgres";
+
+const adapter = createPostgresDatasourceAdapter(config);
+const adapterFromClassFactory = new PostgresDatasourceAdapterFactory().create(config);
+```
+
+composition root 优先使用函数式 factory 或 class factory。Postgres adapter class 仍作为 advanced API 导出，供测试和低层集成使用，但应用装配应走 factory。
+
 ## 边界约束
 
 - adapter 代码只关注数据库执行与生命周期。

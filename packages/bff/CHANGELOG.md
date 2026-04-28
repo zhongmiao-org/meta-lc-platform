@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(public-api): consume runtime contracts from the `@zhongmiao/meta-lc-runtime/core` subpath.
 - fix(ci): keep the orders demo gateway e2e path running from built package entrypoints.
 - fix(boundaries): remove the stale kernel dependency from BFF and make meta registry reads provider-only.
 - refactor(gateway): allow injecting runtime runners and meta registry providers so orders demo wiring lives outside the core BFF package.
