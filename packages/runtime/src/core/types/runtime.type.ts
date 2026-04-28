@@ -1,7 +1,6 @@
 import type { ViewExpression } from "@zhongmiao/meta-lc-kernel";
 import type {
   ExpressionStateGetter,
-  RuntimeFunctionCallDefinition,
   RuntimeFunctionExecutionContext,
   RuntimeMutationSucceededEvent,
   RuntimeQueryNodeResult,

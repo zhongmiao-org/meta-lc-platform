@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- fix(ci): 移除未使用的 meta response 与 replay stripping 变量，让 gateway 代码通过零 warning lint。
+
 ## 0.2.0 (2026-04-28)
 
 - chore(public-api): BFF 改为从 `@zhongmiao/meta-lc-runtime/core` subpath 消费 runtime contract。

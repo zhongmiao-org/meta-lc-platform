@@ -5,7 +5,7 @@ import type {
   ViewCompilerDependency
 } from "../../core/interfaces";
 import { ViewCompilerError } from "../../core/errors";
-import type { NodeDefinition, OutputDefinition, SubmitDefinition } from "@zhongmiao/meta-lc-kernel";
+import type { NodeDefinition, SubmitDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const EXPRESSION_PATTERN = /\{\{\s*([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*)\s*\}\}/g;
 const RUNTIME_CONTEXT_ROOTS = new Set(["input", "params", "user", "ctx", "context", "state"]);

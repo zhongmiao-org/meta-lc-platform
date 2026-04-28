@@ -34,7 +34,7 @@ test("buildMigrationPlan returns SQL statements between versions", async () => {
       throw new Error("not used in test");
     },
     getVersion: async (_appId: string, version: number) => versions.get(version) ?? null,
-    executeMigration: async (_statements: string[]) => ({ auditCount: 0 }),
+    executeMigration: async () => ({ auditCount: 0 }),
     ...definitionRepositoryStubs()
   };
 
@@ -113,6 +113,7 @@ test("migrateToVersion passes guard options to repository", async () => {
     },
     getVersion: async (_appId: string, version: number) => versions.get(version) ?? null,
     executeMigration: async (_statements: string[], options?: unknown, context?: unknown) => {
+      void _statements;
       optionsSeen.push(options);
       contextSeen.push(context);
       return { auditCount: 1 };

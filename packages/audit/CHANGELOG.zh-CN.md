@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- fix(ci): 显式消费兼容配置参数，让 audit service 通过零 warning lint。
+
 ## 0.2.0 (2026-04-28)
 
 - docs(sdk): 明确 Postgres sink factory-first 使用方式，并将 sink class 标记为 advanced API。

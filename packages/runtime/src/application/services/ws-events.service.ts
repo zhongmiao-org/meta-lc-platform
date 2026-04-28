@@ -1,7 +1,6 @@
 import type {
   CreateRuntimeManagerExecutionWsEventRequest,
-  RuntimeManagerExecutedEvent,
-  RuntimePageTopicRef
+  RuntimeManagerExecutedEvent
 } from "../../core/interfaces";
 import { createRuntimeManagerExecutedEvent } from "../../core/factories";
 

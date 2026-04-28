@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- fix(ci): fail PR and release lint checks when ESLint reports warnings.
+
 ## 0.2.0 (2026-04-28)
 
 - fix(ci): run JavaScript actions on Node.js 24 and update github-script actions.

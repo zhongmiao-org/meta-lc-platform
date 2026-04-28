@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- fix(ci): 移除未使用的 runtime 类型 import 与 helper，让 runtime 通过零 warning lint 门禁。
+
 ## 0.2.0 (2026-04-28)
 
 - docs(sdk): 补充 runtime facade/core 入口用法与内部实现 deep import 约束。

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "lint": "pnpm run lint:boundaries && eslint \"packages/**/*.ts\" \"apps/**/*.ts\" --config eslint.config.mjs",
+    "lint": "pnpm run lint:boundaries && eslint \"packages/**/*.ts\" \"apps/**/*.ts\" --config eslint.config.mjs --max-warnings=0",
     "start": "pnpm run start:bff",
     "start:bff": "pnpm --filter @zhongmiao/meta-lc-bff-server... build && sh -c 'if [ -f .env ]; then exec node --env-file=.env apps/bff-server/dist/apps/bff-server/src/main.js; else exec node apps/bff-server/dist/apps/bff-server/src/main.js; fi'",
     "query-gate": "pnpm --filter @zhongmiao/meta-lc-bff-server run test:query-gate",

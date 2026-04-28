@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- test(ci): remove unused migration test parameters so the kernel package passes zero-warning lint.
+
 ## 0.2.0 (2026-04-28)
 
 - docs(sdk): document kernel domain/application deep-import constraints for SDK consumers.

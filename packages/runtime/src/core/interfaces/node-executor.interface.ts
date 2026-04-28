@@ -5,12 +5,10 @@ import type {
   TransformNodeDefinition
 } from "@zhongmiao/meta-lc-kernel";
 import type {
-  ExecutionNode,
-  RuntimeStateStore
+  ExecutionNode
 } from "./runtime.interface";
 import type {
-  NodeTypeExecutor,
-  RuntimeContext
+  NodeTypeExecutor
 } from "../types";
 
 export interface NodeExecutionMetadata {

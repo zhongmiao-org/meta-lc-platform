@@ -22,6 +22,7 @@ export class AuditService {
   private readonly sink: AuditSink;
 
   constructor(_config: AuditDbConfig = {}, sink?: AuditSink) {
+    void _config;
     this.sink = sink ?? createNoopAuditSink();
   }
 

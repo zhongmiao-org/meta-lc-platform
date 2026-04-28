@@ -4,12 +4,10 @@ import type {
 import type { NodeDefinition } from "@zhongmiao/meta-lc-kernel";
 import type { RuntimeAuditEvent } from "@zhongmiao/meta-lc-audit";
 import type {
-  NodeExecutionMetadata,
-  RuntimeInteractionContext
+  NodeExecutionMetadata
 } from "../interfaces";
 import type {
-  RuntimeContext,
-  RuntimeNodeResult
+  RuntimeContext
 } from "./runtime.type";
 import type { RuntimeStateStore } from "../interfaces";
 
