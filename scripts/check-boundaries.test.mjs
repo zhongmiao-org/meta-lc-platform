@@ -138,10 +138,81 @@ test('keeps deep import and kernel reverse dependency checks', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/kernel/src/index.ts: deep import from package internals is forbidden.',
+    'packages/kernel/src/index.ts: deep import from package internals is forbidden (@zhongmiao/meta-lc-query/src/index).',
     'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-bff.',
     'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-query.',
     'packages/kernel/src/index.ts: kernel cannot depend on @zhongmiao/meta-lc-permission.'
+  ]);
+});
+
+test('rejects package deep imports while allowing approved secondary entries', () => {
+  const allowed = createWorkspace({
+    'apps/bff-server/src/main.ts': [
+      'import { createPostgresDatasourceAdapter } from "@zhongmiao/meta-lc-datasource/postgres";',
+      'import { PostgresRuntimeAuditSink } from "@zhongmiao/meta-lc-audit/postgres";'
+    ].join('\n')
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/runtime/src/bad.ts': [
+      'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime/application/executor/runtime-executor";',
+      'import { compileSelectAst } from "@zhongmiao/meta-lc-query/src/index";'
+    ].join('\n')
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/runtime/src/bad.ts: deep import from package internals is forbidden (@zhongmiao/meta-lc-runtime/application/executor/runtime-executor).'
+  ]);
+});
+
+test('keeps package exports limited to approved public entrypoints', () => {
+  const allowed = createWorkspace({
+    'packages/query/package.json': packageJson({
+      exports: {
+        '.': {
+          types: './dist/index.d.ts',
+          default: './dist/index.js'
+        }
+      }
+    }),
+    'packages/datasource/package.json': packageJson({
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } },
+      exports: {
+        '.': {
+          types: './dist/index.d.ts',
+          default: './dist/index.js'
+        },
+        './postgres': {
+          types: './dist/postgres/index.d.ts',
+          default: './dist/postgres/index.js'
+        }
+      }
+    })
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/runtime/package.json': packageJson({
+      exports: {
+        '.': './dist/index.js',
+        './src/*': './dist/src/*.js',
+        './infra': './dist/infra/index.js',
+        './postgres': './dist/postgres/index.js',
+        './application/runtime': './dist/application/runtime.js'
+      }
+    })
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/runtime/package.json: package exports must not expose source paths (./src/*).',
+    'packages/runtime/package.json: package export "./src/*" is not an approved public entrypoint.',
+    'packages/runtime/package.json: package exports must not expose infra (./infra).',
+    'packages/runtime/package.json: package export "./infra" is not an approved public entrypoint.',
+    'packages/runtime/package.json: postgres secondary entry is only allowed for audit/datasource packages.',
+    'packages/runtime/package.json: package export "./postgres" is not an approved public entrypoint.',
+    'packages/runtime/package.json: package export "./application/runtime" is not an approved public entrypoint.'
   ]);
 });
 

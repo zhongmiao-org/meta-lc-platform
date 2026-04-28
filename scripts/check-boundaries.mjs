@@ -15,6 +15,10 @@ const ALLOWED_SECONDARY_IMPORTS = new Set([
   '@zhongmiao/meta-lc-datasource/postgres',
   '@zhongmiao/meta-lc-audit/postgres'
 ]);
+const PACKAGE_EXPORT_ALLOWLIST = {
+  audit: new Set(['.', './postgres']),
+  datasource: new Set(['.', './postgres'])
+};
 const FORBIDDEN_PACKAGE_DIRS = [
   'packages/contracts',
   'packages/shared',
@@ -341,7 +345,7 @@ function checkSourceFile(file, root, violations) {
   // No deep cross-package imports except explicit secondary entrypoints.
   for (const specifier of findImportSpecifiers(content)) {
     if (isPackageDeepImport(specifier) && !ALLOWED_SECONDARY_IMPORTS.has(specifier)) {
-      violations.push(`${rel}: deep import from package internals is forbidden.`);
+      violations.push(`${rel}: deep import from package internals is forbidden (${specifier}).`);
       break;
     }
   }
@@ -930,6 +934,8 @@ function checkPackageManifest(file, root, violations) {
   const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
   const dependencyBlocks = ['dependencies', 'devDependencies', 'peerDependencies'];
 
+  checkPackageExports(rel, packageName, manifest, violations);
+
   for (const blockName of dependencyBlocks) {
     const block = manifest[blockName] ?? {};
     for (const dependencyName of Object.keys(block)) {
@@ -985,6 +991,27 @@ function checkPackageManifest(file, root, violations) {
     }
     if (manifest.peerDependenciesMeta?.pg?.optional !== true) {
       violations.push(`${rel}: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.`);
+    }
+  }
+}
+
+function checkPackageExports(rel, packageName, manifest, violations) {
+  const packageExports = manifest.exports;
+  if (!packageExports || typeof packageExports !== 'object' || Array.isArray(packageExports)) return;
+
+  const allowed = PACKAGE_EXPORT_ALLOWLIST[packageName] ?? new Set(['.']);
+  for (const exportKey of Object.keys(packageExports)) {
+    if (exportKey.startsWith('./src') || exportKey.startsWith('./dist/src')) {
+      violations.push(`${rel}: package exports must not expose source paths (${exportKey}).`);
+    }
+    if (exportKey === './infra' || exportKey.startsWith('./infra/')) {
+      violations.push(`${rel}: package exports must not expose infra (${exportKey}).`);
+    }
+    if ((exportKey === './postgres' || exportKey.startsWith('./postgres/')) && !POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName)) {
+      violations.push(`${rel}: postgres secondary entry is only allowed for audit/datasource packages.`);
+    }
+    if (!allowed.has(exportKey)) {
+      violations.push(`${rel}: package export "${exportKey}" is not an approved public entrypoint.`);
     }
   }
 }

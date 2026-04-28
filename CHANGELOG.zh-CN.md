@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 加固 SDK export map、package deep import 守护与 infra-persistence composition-only 检查。
 - chore(sdk): 将 audit 与 datasource secondary entry 的 Postgres 支持调整为可选 peer dependency。
 - fix(ci): 在收窄 package public export 后，让 orders demo query gate 改为使用已构建的包入口运行。
 - chore(public-api): 将 kernel、query、permission package root export 收窄为明确的 SDK-facing 符号。

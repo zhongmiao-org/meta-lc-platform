@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(boundaries): harden SDK export maps, package deep-import guards, and infra-persistence composition-only checks.
 - chore(sdk): make Postgres support an optional peer for audit and datasource secondary entries.
 - fix(ci): run the orders demo query gate against built package entrypoints after tightening package public exports.
 - chore(public-api): narrow kernel, query, and permission package root exports to explicit SDK-facing symbols.

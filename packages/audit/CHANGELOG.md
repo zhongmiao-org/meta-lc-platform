@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(boundaries): lock package exports and deep-import rules around the audit root and Postgres secondary entry.
 - chore(sdk): remove the empty utils root export and make `pg` an optional peer for the Postgres sink entry.
 - refactor(public-api): move the Postgres audit sink to the `@zhongmiao/meta-lc-audit/postgres` secondary entry.
 - docs(readme): add upstream/downstream relationship notes for the final architecture flow.
