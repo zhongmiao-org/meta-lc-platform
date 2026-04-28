@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(kernel): 新增 MetaKernel repository factory contract，并由 Postgres adapter 提供实现。
 - refactor(adapter): 将 kernel Postgres adapter 拆分为 repository、factory、schema、mapper、interface、type 与 utility 语义文件。
 - chore(sdk): 收口 kernel/runtime SDK root export，并重命名 Postgres kernel adapter 包。
 - chore(boundaries): 加固 SDK export map、package deep import 守护与 kernel-adapter-postgres composition-only 检查。

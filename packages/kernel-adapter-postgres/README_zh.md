@@ -9,10 +9,16 @@
 ## Public API
 
 ```ts
-import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";
+import {
+  PostgresMetaKernelRepositoryFactory,
+  createPostgresMetaKernelRepository
+} from "@zhongmiao/meta-lc-kernel-adapter-postgres";
+
+const repository = createPostgresMetaKernelRepository(config);
+const repositoryFromClassFactory = new PostgresMetaKernelRepositoryFactory().create(config);
 ```
 
-包根入口只导出聚合 repository、factory 与公开 migration execution context type。内部 SQL schema、mapper、row interface、pool util 与子 repository 都是实现细节。
+函数式 factory 与 class factory 都是公开 composition API。包根入口只导出聚合 repository、这些 factory 与公开 migration execution context type。内部 SQL schema、mapper、row interface、pool util 与子 repository 都是实现细节。
 
 ## 边界约束
 

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(core): 新增 MetaKernel repository factory contract，供 adapter implementation 实现。
 - chore(public-api): 通过 application facade 转发 migration safety，并将 package root 固定为仅导出 `core + application`。
 - chore(public-api): 将 package root 收窄为 core contract 以及明确的 kernel service、generator、migration safety API。
 - refactor(meta): 从 kernel 移除 orders demo registry seeds，并将 example-owned metadata 迁入 `examples/orders-demo`。

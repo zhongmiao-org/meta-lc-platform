@@ -9,10 +9,16 @@ English | [中文文档](./README_zh.md)
 ## Public API
 
 ```ts
-import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";
+import {
+  PostgresMetaKernelRepositoryFactory,
+  createPostgresMetaKernelRepository
+} from "@zhongmiao/meta-lc-kernel-adapter-postgres";
+
+const repository = createPostgresMetaKernelRepository(config);
+const repositoryFromClassFactory = new PostgresMetaKernelRepositoryFactory().create(config);
 ```
 
-The package root exports only the aggregate repository, its factory, and the public migration execution context type. Internal SQL schema, mappers, row interfaces, pool utilities, and sub-repositories are implementation details.
+The function factory and class factory are both public composition APIs. The package root exports only the aggregate repository, these factories, and the public migration execution context type. Internal SQL schema, mappers, row interfaces, pool utilities, and sub-repositories are implementation details.
 
 ## Boundary Notes
 
