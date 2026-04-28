@@ -2,8 +2,6 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
-## 0.2.0 (2026-04-28)
-
 - docs(sdk): document runtime facade/core entry usage and internal implementation deep-import constraints.
 - chore(public-api): make the runtime root facade-only and expose runtime contracts through the `./core` subpath.
 - refactor(public-api): make the runtime package root export only `core` and the SDK-facing `application/facades` entry.
@@ -38,7 +36,6 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(runtime): add a manager-first orchestration plan that combines refresh planning, rule effects, next state, manager commands, and WebSocket topics.
 - feat(runtime): add a manager adapter execution contract for orchestrator command plans.
 - feat(runtime): add a helper that converts manager execution results into WebSocket update events.
-
 ## 0.1.0 (2026-04-18)
 
 - Initial runtime parser and template resolver baseline for Phase 4 execution planning.

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { finalizeUnreleasedSection } from "./changelog-utils.mjs";
 
-const [metadataPath] = process.argv.slice(2);
+const [metadataPath] = process.argv.slice(2).filter((arg) => arg !== "--");
 if (!metadataPath) {
   console.error("Usage: finalize-unreleased-changelogs.mjs <metadata-json-path>");
   process.exit(1);

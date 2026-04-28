@@ -1,4 +1,4 @@
-name: Release
+name: Release Prepare
 
 on:
   workflow_dispatch:
@@ -10,95 +10,14 @@ on:
       finalize_changelog:
         description: finalize root/package changelogs into the requested version
         required: false
-        default: false
+        default: true
         type: boolean
 
 env:
   PNPM_VERSION: 10.14.0
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          package-manager-cache: false
-      - run: corepack enable
-      - run: corepack prepare "pnpm@${PNPM_VERSION}" --activate
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm version:check
-      - run: mkdir -p .tmp
-      - run: pnpm run -s release:draft-notes:json -- --version "${{ inputs.version }}" > .tmp/release-metadata.json
-      - run: pnpm run -s release:draft-notes -- --version "${{ inputs.version }}" > .tmp/release-draft.md
-      - uses: actions/upload-artifact@v4
-        with:
-          name: release-metadata
-          path: |
-            .tmp/release-metadata.json
-            .tmp/release-draft.md
-
-  draft-release:
-    needs:
-      - prepare
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: release-metadata
-          path: .tmp
-      - uses: actions/github-script@v7
-        env:
-          RELEASE_TAG: v${{ inputs.version }}
-          RELEASE_BODY_FILE: .tmp/release-draft.md
-        with:
-          script: |
-            const fs = require('node:fs');
-            const tag = process.env.RELEASE_TAG;
-            const body = fs.readFileSync(process.env.RELEASE_BODY_FILE, 'utf8');
-            const releases = await github.paginate(github.rest.repos.listReleases, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 100
-            });
-            const existing = releases.find((release) => release.tag_name === tag && release.draft);
-            if (existing) {
-              await github.rest.repos.updateRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: existing.id,
-                tag_name: tag,
-                target_commitish: 'main',
-                name: tag,
-                body,
-                draft: true,
-                prerelease: false
-              });
-            } else {
-              await github.rest.repos.createRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag_name: tag,
-                target_commitish: 'main',
-                name: tag,
-                body,
-                draft: true,
-                prerelease: false
-              });
-            }
-
-  finalize-changelog:
-    if: ${{ inputs.finalize_changelog }}
-    needs:
-      - prepare
-      - draft-release
+  prepare-release-pr:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -115,33 +34,119 @@ jobs:
       - run: corepack enable
       - run: corepack prepare "pnpm@${PNPM_VERSION}" --activate
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
-        with:
-          name: release-metadata
-          path: .tmp
-      - run: pnpm run -s release:finalize-unreleased -- .tmp/release-metadata.json
-      - name: Create changelog PR
+      - run: pnpm version:check
+      - run: mkdir -p .tmp
+      - name: Resolve release version
+        id: version
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if git diff --quiet -- CHANGELOG.md CHANGELOG.zh-CN.md packages/*/CHANGELOG.md packages/*/CHANGELOG.zh-CN.md; then
-            echo "No changelog changes detected."
-            exit 0
+          VERSION="${INPUT_VERSION}"
+
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release version must be a formal semver version like 0.2.0."
+            exit 1
           fi
 
-          VERSION="${{ inputs.version }}"
-          BRANCH="chore/changelog-finalize-${VERSION}-${GITHUB_RUN_ID}"
+          echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
+      - name: Compose release metadata from Unreleased
+        run: |
+          pnpm run -s release:draft-notes:json -- --version "${{ steps.version.outputs.value }}" > .tmp/release-metadata.json
+          pnpm run -s release:draft-notes -- --version "${{ steps.version.outputs.value }}" > .tmp/release-draft.md
+      - name: Prepare release PR files
+        if: ${{ inputs.finalize_changelog }}
+        run: |
+          pnpm run -s release:prepare-pr -- .tmp/release-metadata.json
+          pnpm install --lockfile-only
+          pnpm version:check
+          pnpm run -s release:draft-notes:version -- --version "${{ steps.version.outputs.value }}" > .tmp/release-draft.md
+      - name: Create release branch
+        if: ${{ inputs.finalize_changelog }}
+        id: branch
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          if git diff --quiet; then
+            echo "No release PR changes detected."
+            exit 1
+          fi
+
+          BRANCH="chore/release-${VERSION}-${GITHUB_RUN_ID}"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "${BRANCH}"
-          git add CHANGELOG.md CHANGELOG.zh-CN.md packages/*/CHANGELOG.md packages/*/CHANGELOG.zh-CN.md
-          git commit -m "chore(changelog): finalize ${VERSION} release logs"
+          git add package.json pnpm-lock.yaml CHANGELOG.md CHANGELOG.zh-CN.md apps/*/package.json packages/*/package.json packages/*/CHANGELOG.md packages/*/CHANGELOG.zh-CN.md
+          git commit -m "chore(release): prepare ${VERSION}"
           git push --set-upstream origin "${BRANCH}"
 
-          PR_URL="$(gh pr create \
-            --title "chore(changelog): finalize ${VERSION} release logs" \
-            --body "Automated changelog finalize after release draft for ${VERSION}." \
+          echo "name=${BRANCH}" >> "$GITHUB_OUTPUT"
+      - name: Upsert draft release
+        uses: actions/github-script@v7
+        env:
+          RELEASE_TAG: v${{ steps.version.outputs.value }}
+          RELEASE_TARGET: ${{ steps.branch.outputs.name || 'main' }}
+          RELEASE_BODY_FILE: .tmp/release-draft.md
+        with:
+          script: |
+            const fs = require('node:fs');
+            const tag = process.env.RELEASE_TAG;
+            const target = process.env.RELEASE_TARGET;
+            const body = fs.readFileSync(process.env.RELEASE_BODY_FILE, 'utf8');
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            const existing = releases.find((release) => release.tag_name === tag && release.draft);
+            if (existing) {
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: existing.id,
+                tag_name: tag,
+                target_commitish: target,
+                name: tag,
+                body,
+                draft: true,
+                prerelease: false
+              });
+            } else {
+              await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tag,
+                target_commitish: target,
+                name: tag,
+                body,
+                draft: true,
+                prerelease: false
+              });
+            }
+      - name: Create release PR
+        if: ${{ inputs.finalize_changelog }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+        run: |
+          BODY_FILE=".tmp/release-pr-body.md"
+
+          cat > "${BODY_FILE}" <<EOF
+          ## Summary
+          - Finalizes the ${VERSION} release changelogs from \`[Unreleased]\`.
+          - Updates root, package, and app workspace versions to ${VERSION}.
+          - Synchronizes draft release \`v${VERSION}\` from the finalized root changelog.
+
+          ## Validation
+          CI should run package/build verification for this release PR. The changelog gate is intentionally skipped for generated release branches.
+
+          ## Publish
+          Merge this PR to \`main\` to trigger the main-branch release workflow. The release tag is finalized against the merged \`main\` commit after npm publish succeeds.
+          EOF
+
+          gh pr create \
+            --title "chore(release): prepare ${VERSION}" \
+            --body-file "${BODY_FILE}" \
             --base main \
-            --head "${BRANCH}")"
-          gh pr merge --auto --squash "${PR_URL}"
+            --head "${BRANCH}"

@@ -8,11 +8,11 @@ const requestedVersion = versionFlagIndex >= 0 ? args[versionFlagIndex + 1] : ""
 
 const rootPackage = JSON.parse(fs.readFileSync("package.json", "utf8"));
 const version = requestedVersion || rootPackage.version;
-const rootNotes = loadRootReleaseNotes(version);
-const packages = loadWorkspacePackages(version).filter((pkg) => pkg.unreleasedEn || pkg.unreleasedZh);
+const rootNotes = loadRootReleaseNotes();
+const packages = loadWorkspacePackages().filter((pkg) => pkg.unreleasedEn || pkg.unreleasedZh);
 
 if (!rootNotes.unreleasedEn && !rootNotes.unreleasedZh && packages.length === 0) {
-  console.error("No unreleased or versioned changelog content found.");
+  console.error("No unreleased changelog content found.");
   process.exit(1);
 }
 

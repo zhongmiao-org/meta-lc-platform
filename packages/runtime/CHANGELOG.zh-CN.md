@@ -2,8 +2,6 @@
 
 ## [Unreleased]
 
-## 0.2.0 (2026-04-28)
-
 - docs(sdk): 补充 runtime facade/core 入口用法与内部实现 deep import 约束。
 - chore(public-api): runtime root 收窄为仅 facade 入口，并通过 `./core` subpath 暴露 runtime contract。
 - refactor(public-api): 将 runtime package root 固定为仅导出 `core` 与 SDK-facing 的 `application/facades` 入口。
@@ -38,7 +36,6 @@
 - feat(runtime): 新增 manager-first orchestration plan，统一 refresh planning、rule effects、next state、manager commands 与 WebSocket topics。
 - feat(runtime): 新增 manager adapter 执行契约，用于执行 orchestrator command plan。
 - feat(runtime): 新增 helper，将 manager 执行结果转换为 WebSocket 更新事件。
-
 ## 0.1.0 (2026-04-18)
 
 - Phase 4 runtime parser 与模板解析器的首个基线版本。

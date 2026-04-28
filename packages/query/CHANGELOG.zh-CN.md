@@ -2,8 +2,6 @@
 
 ## [Unreleased]
 
-## 0.2.0 (2026-04-28)
-
 - chore(public-api): 将 package root 收窄为 core contract 与明确的 query compiler 入口。
 - docs(readme): 明确 query 上下游关系与只负责 AST-to-SQL 编译的边界。
 - chore(boundaries): 新增最终 Nx layer tags，并将 query 锁定为无 workspace 依赖的 AST/SQL compiler 包。
@@ -13,7 +11,6 @@
 - refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。
 - docs(readme): 新增双语子包 README 与最小架构流程图。
 - chore(package): 为 release 治理切换到 `@zhongmiao/meta-lc-query` 正式包名。
-
 ## 0.1.0 (2026-04-18)
 
 - 平台中间件查询编译器的首个基线版本。
