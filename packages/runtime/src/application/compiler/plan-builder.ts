@@ -1,20 +1,15 @@
-import {
-  type ExecutionNode,
-  type ExecutionPlan,
-  type ViewCompilerDependency,
-  ViewCompilerError
-} from "../../types";
+import type {
+  BuildExecutionPlanRequest,
+  ExecutionNode,
+  ExecutionPlan,
+  ViewCompilerDependency
+} from "../../core/interfaces";
+import { ViewCompilerError } from "../../core/errors";
 import type { NodeDefinition, OutputDefinition, SubmitDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const EXPRESSION_PATTERN = /\{\{\s*([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*)\s*\}\}/g;
 const RUNTIME_CONTEXT_ROOTS = new Set(["input", "params", "user", "ctx", "context", "state"]);
 const SUPPORTED_NODE_TYPES = new Set(["query", "mutation", "transform", "merge"]);
-
-export interface BuildExecutionPlanRequest {
-  nodes: Record<string, NodeDefinition>;
-  output: OutputDefinition;
-  submit?: SubmitDefinition;
-}
 
 export function buildExecutionPlan(request: BuildExecutionPlanRequest): ExecutionPlan {
   const nodeIds = Object.keys(request.nodes).sort((left, right) => left.localeCompare(right));

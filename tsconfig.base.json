@@ -20,17 +20,26 @@
       "@zhongmiao/meta-lc-datasource": [
         "packages/datasource/src"
       ],
+      "@zhongmiao/meta-lc-datasource/postgres": [
+        "packages/datasource/src/postgres"
+      ],
       "@zhongmiao/meta-lc-kernel": [
         "packages/kernel/src"
       ],
       "@zhongmiao/meta-lc-audit": [
         "packages/audit/src"
       ],
+      "@zhongmiao/meta-lc-audit/postgres": [
+        "packages/audit/src/postgres"
+      ],
       "@zhongmiao/meta-lc-runtime": [
         "packages/runtime/src"
       ],
       "@zhongmiao/meta-lc-bff": [
         "packages/bff/src"
+      ],
+      "@zhongmiao/meta-lc-infra-persistence": [
+        "packages/infra-persistence/src"
       ]
     }
   }

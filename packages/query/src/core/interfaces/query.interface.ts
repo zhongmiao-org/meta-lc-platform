@@ -1,0 +1,68 @@
+import type {
+  QueryComparisonOperator,
+  QueryPredicate,
+  QueryScalarValue
+} from "../types";
+
+export interface QueryRequest {
+  table: string;
+  fields: string[];
+  filters?: Record<string, QueryScalarValue>;
+  limit?: number;
+}
+
+export interface CompiledQuery {
+  sql: string;
+  params: QueryScalarValue[];
+}
+
+export interface QueryTableRef {
+  name: string;
+  alias?: string;
+}
+
+export interface QueryFieldRef {
+  name: string;
+  tableAlias?: string;
+}
+
+export interface QuerySelectItem extends QueryFieldRef {
+  alias?: string;
+}
+
+export interface QueryComparisonPredicate {
+  type: "comparison";
+  left: QueryFieldRef;
+  operator: QueryComparisonOperator;
+  value: QueryScalarValue;
+}
+
+export interface QueryInPredicate {
+  type: "in";
+  left: QueryFieldRef;
+  values: QueryScalarValue[];
+}
+
+export interface QueryIsNullPredicate {
+  type: "is_null";
+  left: QueryFieldRef;
+}
+
+export interface QueryLiteralPredicate {
+  type: "literal";
+  value: boolean;
+}
+
+export interface QueryLogicalPredicate {
+  type: "logical";
+  operator: "and" | "or";
+  predicates: QueryPredicate[];
+}
+
+export interface SelectQueryAst {
+  type: "select";
+  table: QueryTableRef;
+  fields: QuerySelectItem[];
+  where?: QueryPredicate;
+  limit: number;
+}

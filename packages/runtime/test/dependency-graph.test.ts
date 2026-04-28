@@ -1,12 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { RuntimePageDsl } from "../src";
+import type { RuntimePageDsl } from "./runtime-test-api";
 import {
   buildDependencyGraph,
   parseRuntimePageDsl,
   planRefresh,
   RuntimeDependencyGraphError
-} from "../src";
+} from "./runtime-test-api";
 
 function createRuntimeDsl(): RuntimePageDsl {
   return {

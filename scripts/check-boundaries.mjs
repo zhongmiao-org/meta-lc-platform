@@ -2,14 +2,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'kernel']);
+const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'infra-persistence']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
+const POSTGRES_SECONDARY_ENTRY_PACKAGES = new Set(['audit', 'datasource']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
-  'packages/datasource/src/infra/postgres/postgres.adapter.ts',
-  'packages/datasource/src/infra/postgres/postgres-org-scope.adapter.ts',
-  'packages/kernel/src/infra/persistence/postgres-meta-kernel-repository.ts',
-  'packages/audit/src/infra/postgres-runtime-audit.sink.ts'
+  'packages/datasource/src/postgres/postgres.adapter.ts',
+  'packages/datasource/src/postgres/postgres-org-scope.adapter.ts',
+  'packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts',
+  'packages/audit/src/postgres/postgres-runtime-audit.sink.ts'
 ]);
+const ALLOWED_SECONDARY_IMPORTS = new Set([
+  '@zhongmiao/meta-lc-datasource/postgres',
+  '@zhongmiao/meta-lc-audit/postgres'
+]);
+const PACKAGE_EXPORT_ALLOWLIST = {
+  audit: new Set(['.', './postgres']),
+  datasource: new Set(['.', './postgres'])
+};
 const FORBIDDEN_PACKAGE_DIRS = [
   'packages/contracts',
   'packages/shared',
@@ -28,34 +37,39 @@ const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-datasource',
-  '@zhongmiao/meta-lc-audit'
+  '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_QUERY_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-bff',
-  '@zhongmiao/meta-lc-audit'
+  '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_PERMISSION_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-bff',
-  '@zhongmiao/meta-lc-audit'
+  '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_DATASOURCE_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-bff',
-  '@zhongmiao/meta-lc-audit'
+  '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_AUDIT_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-permission',
-  '@zhongmiao/meta-lc-datasource'
+  '@zhongmiao/meta-lc-datasource',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-kernel',
@@ -63,11 +77,30 @@ const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-audit',
+  '@zhongmiao/meta-lc-infra-persistence',
   'pg',
   '@types/pg'
 ];
+const FORBIDDEN_RUNTIME_DEPS = [
+  '@zhongmiao/meta-lc-infra-persistence',
+  '@zhongmiao/meta-lc-datasource/postgres',
+  '@zhongmiao/meta-lc-audit/postgres'
+];
+const FORBIDDEN_INFRA_PERSISTENCE_DEPS = [
+  '@zhongmiao/meta-lc-runtime',
+  '@zhongmiao/meta-lc-bff',
+  '@zhongmiao/meta-lc-query',
+  '@zhongmiao/meta-lc-permission',
+  '@zhongmiao/meta-lc-datasource',
+  '@zhongmiao/meta-lc-audit'
+];
 const ALLOWED_APP_DEPS = {
-  'bff-server': new Set(['@zhongmiao/meta-lc-bff'])
+  'bff-server': new Set([
+    '@zhongmiao/meta-lc-bff',
+    '@zhongmiao/meta-lc-datasource',
+    '@zhongmiao/meta-lc-audit',
+    '@zhongmiao/meta-lc-infra-persistence'
+  ])
 };
 const BFF_TOP_LEVEL_DIRS = new Set([
   'bootstrap',
@@ -80,11 +113,13 @@ const BFF_FORBIDDEN_SOURCE_DIRS = [
   'packages/bff/src/application',
   'packages/bff/src/application/orchestrator',
   'packages/bff/src/contracts',
+  'packages/bff/src/core',
   'packages/bff/src/domain',
+  'packages/bff/src/interface',
   'packages/bff/src/mapper',
   'packages/bff/src/infra/interfaces',
   'packages/bff/src/infra/repository',
-  'packages/bff/src/interface',
+  'packages/bff/src/services',
   'packages/bff/src/types'
 ];
 const BFF_INFRA_ALLOWED_DIRS = new Set(['cache', 'integration']);
@@ -124,6 +159,7 @@ const RUNTIME_FORBIDDEN_SOURCE_DIRS = [
 const FORBIDDEN_DEMO_ARTIFACT_PATHS = [
   'packages/kernel/src/domain/demo-meta-registry.ts',
   'packages/datasource/src/infra/postgres/postgres-demo-orders-mutation.adapter.ts',
+  'packages/datasource/src/postgres/postgres-demo-orders-mutation.adapter.ts',
   'infra/sql/001_orders_demo.sql'
 ];
 const KERNEL_STRUCTURE_CONTRACT_DECLARATIONS = [
@@ -142,6 +178,68 @@ const RUNTIME_EXECUTION_CONTRACT_DECLARATIONS = [
   'Expression',
   'RuntimeContext'
 ];
+const QUERY_AST_CONTRACT_DECLARATIONS = [
+  'QueryFieldRef',
+  'QueryTableRef',
+  'QuerySelectItem',
+  'QueryComparisonPredicate',
+  'QueryInPredicate',
+  'QueryIsNullPredicate',
+  'QueryLiteralPredicate',
+  'QueryLogicalPredicate',
+  'QueryPredicate',
+  'SelectQueryAst'
+];
+const COMMON_LAYER_PACKAGES = new Set([
+  'kernel',
+  'query',
+  'permission',
+  'datasource',
+  'audit',
+  'runtime'
+]);
+const ROOT_PUBLIC_API_RULES = {
+  runtime: {
+    starExports: new Set(['./core']),
+    namedExports: new Map([
+      ['executeRuntimeGatewayView', './application/facades/runtime-view.facade'],
+      ['executeRuntimeView', './application/facades/runtime-view.facade'],
+      ['executeRuntimeInteractionPlan', './application/facades/runtime-interaction.facade'],
+      ['createRecordingRuntimeInteractionPort', './application/facades/runtime-interaction.facade']
+    ])
+  },
+  kernel: {
+    starExports: new Set(['./core']),
+    namedExports: new Map([
+      ['MetaKernelService', './application/services/meta-kernel.service'],
+      ['createInMemoryMetaKernelService', './application/factories/in-memory-meta-kernel.factory'],
+      ['compileApiRoutes', './application/generators/api-generator'],
+      ['compilePermissionManifest', './application/generators/permission-generator'],
+      ['compileSchemaSql', './application/generators/sql-generator'],
+      ['assertMigrationSafety', './domain/migration-safety'],
+      ['createMigrationSafetyReport', './domain/migration-safety']
+    ])
+  },
+  query: {
+    starExports: new Set(['./core']),
+    namedExports: new Map([
+      ['buildSelectQueryAst', './domain/query-compiler'],
+      ['compileSelectAst', './domain/query-compiler'],
+      ['compileSelectQuery', './domain/query-compiler']
+    ])
+  },
+  permission: {
+    starExports: new Set(['./core']),
+    namedExports: new Map([
+      ['buildDataScopeFilter', './domain/permission-engine'],
+      ['buildRowLevelFilter', './domain/permission-engine'],
+      ['canAccessOrg', './domain/permission-engine'],
+      ['injectPermissionClause', './domain/permission-engine'],
+      ['resolveDataScope', './domain/permission-engine'],
+      ['transformSelectQueryAstWithPermission', './domain/permission-ast-transform']
+    ])
+  }
+};
 
 export function checkWorkspace(root = process.cwd()) {
   const packagesDir = path.join(root, 'packages');
@@ -221,7 +319,7 @@ function walk(dir, root, violations) {
   for (const entry of sortedDirents(dir)) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === 'dist' || entry.name === 'node_modules') continue;
+      if (entry.name === 'dist' || entry.name === 'dist-test' || entry.name === 'node_modules') continue;
       walk(full, root, violations);
       continue;
     }
@@ -240,20 +338,23 @@ function checkSourceFile(file, root, violations) {
   checkForbiddenPackageRefs(rel, content, violations);
   checkPackageSourceDemoArtifacts(rel, content, violations);
   checkPackageDoesNotImportExamples(rel, content, file, root, violations);
+  checkCommonPackageSourceLayout(rel, content, file, root, violations);
   checkBffSourceFile(rel, content, file, root, violations);
   checkContractDefinitions(rel, content, violations);
 
-  // No deep cross-package imports.
-  const deepImport = content.match(/from\s+["'](?:@meta-lc\/[a-z-]+|@zhongmiao\/meta-lc-[a-z-]+)\//g);
-  if (deepImport) {
-    violations.push(`${rel}: deep import from package internals is forbidden.`);
+  // No deep cross-package imports except explicit secondary entrypoints.
+  for (const specifier of findImportSpecifiers(content)) {
+    if (isPackageDeepImport(specifier) && !ALLOWED_SECONDARY_IMPORTS.has(specifier)) {
+      violations.push(`${rel}: deep import from package internals is forbidden (${specifier}).`);
+      break;
+    }
   }
 
   // DB driver access is a hard boundary: only explicit DB edge files may import pg.
   if (importsPg(content)) {
     const packageName = getPackageName(rel);
     if (!DB_DRIVER_PACKAGES.has(packageName)) {
-        violations.push(`${rel}: direct pg import is forbidden outside audit/datasource/kernel packages.`);
+        violations.push(`${rel}: direct pg import is forbidden outside audit/datasource/infra-persistence packages.`);
     } else if (!ALLOWED_PG_IMPORT_FILES.has(rel)) {
       violations.push(`${rel}: direct pg import is not allowed here.`);
     }
@@ -305,8 +406,28 @@ function checkSourceFile(file, root, violations) {
       violations.push(`${rel}: runtime manager-adapter references are forbidden.`);
     }
   }
+  if (rel.startsWith('packages/runtime/')) {
+    for (const dep of FORBIDDEN_RUNTIME_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: runtime cannot depend on ${dep}.`);
+      }
+    }
+  }
   if (rel.startsWith('packages/runtime/') && rel.includes('manager-adapter')) {
     violations.push(`${rel}: runtime manager-adapter references are forbidden.`);
+  }
+  if (rel.startsWith('packages/runtime/src/')) {
+    checkRuntimeDatasourceImports(rel, content, violations);
+  }
+  if (rel.match(/^packages\/(?:kernel|query|permission|runtime)\/src\/index\.ts$/)) {
+    checkPackageRootPublicApi(rel, content, violations);
+  }
+  if (rel.startsWith('packages/infra-persistence/')) {
+    for (const dep of FORBIDDEN_INFRA_PERSISTENCE_DEPS) {
+      if (content.includes(dep)) {
+        violations.push(`${rel}: infra-persistence cannot depend on ${dep}.`);
+      }
+    }
   }
   if (rel === 'packages/runtime/test/runtime-manager-event.test.ts') {
     violations.push(`${rel}: runtime manager event test naming is forbidden; use runtime-interaction-event.test.ts.`);
@@ -318,10 +439,11 @@ function checkSourceFile(file, root, violations) {
       '@zhongmiao/meta-lc-query',
       '@zhongmiao/meta-lc-permission',
       '@zhongmiao/meta-lc-datasource',
-      '@zhongmiao/meta-lc-audit'
+      '@zhongmiao/meta-lc-audit',
+      '@zhongmiao/meta-lc-infra-persistence'
     ]) {
-      if (content.includes(dep)) {
-        violations.push(`${rel}: bff-server app can only depend on @zhongmiao/meta-lc-bff.`);
+      if (content.includes(dep) && !ALLOWED_APP_DEPS['bff-server'].has(dep)) {
+        violations.push(`${rel}: bff-server app can only depend on approved composition packages.`);
       }
     }
   }
@@ -368,8 +490,176 @@ function checkPackageDoesNotImportExamples(rel, content, file, root, violations)
   }
 }
 
+function checkCommonPackageSourceLayout(rel, content, file, root, violations) {
+  const packageName = getPackageName(rel);
+  if (!COMMON_LAYER_PACKAGES.has(packageName) || !rel.startsWith(`packages/${packageName}/src/`)) return;
+
+  checkCommonFileSemanticPurity(rel, content, file, root, violations);
+
+  if (rel === `packages/${packageName}/src/index.ts` && exportsInfra(content)) {
+    violations.push(`${rel}: package root must not export infra.`);
+  }
+  if (rel === `packages/${packageName}/src/index.ts` && exportsPostgres(content) && packageName !== 'infra-persistence') {
+    violations.push(`${rel}: package root must not export postgres implementation.`);
+  }
+
+  if (rel.includes('/src/core/')) {
+    checkCommonCoreFile(rel, content, file, root, violations);
+  }
+
+  if (rel.includes('/src/domain/')) {
+    checkCommonDomainFile(rel, content, file, root, violations);
+  }
+
+  if (rel.includes('/src/application/')) {
+    checkCommonApplicationFile(rel, content, violations);
+  }
+
+  if (
+    rel.includes('/src/domain/') ||
+    rel.includes('/src/application/') ||
+    rel.includes('/src/infra/')
+  ) {
+    checkCommonImplementationFile(rel, content, violations);
+  }
+
+  if (/^\s*export\s+class\s+\w*Service\b/m.test(content) && !rel.includes('/src/application/services/')) {
+    violations.push(`${rel}: service classes must live under src/application/services.`);
+  }
+}
+
+function checkCommonCoreFile(rel, content, file, root, violations) {
+  for (const specifier of findImportSpecifiers(content)) {
+    if (!specifier.startsWith('.')) continue;
+    const targetRel = normalizePath(path.relative(root, path.resolve(path.dirname(file), specifier)));
+    if (
+      targetRel.includes('/src/domain/') ||
+      targetRel.includes('/src/application/') ||
+      targetRel.includes('/src/infra/')
+    ) {
+      violations.push(`${rel}: core files must not import domain/application/infra (${specifier}).`);
+    }
+  }
+
+  if (rel.includes('/src/core/types/') && hasValueExportDeclaration(content)) {
+    violations.push(`${rel}: core types files may not export runtime values.`);
+  }
+  if (rel.includes('/src/core/types/') && /^\s*(?:export\s+)?interface\s+\w+/m.test(content)) {
+    violations.push(`${rel}: core types files may not export interface declarations.`);
+  }
+
+  if (rel.includes('/src/core/interfaces/')) {
+    if (hasExportedTypeDeclaration(content)) {
+      violations.push(`${rel}: core interfaces files may not export type declarations.`);
+    }
+    if (hasValueExportDeclaration(content)) {
+      violations.push(`${rel}: core interfaces files may not export runtime values.`);
+    }
+  }
+}
+
+function checkCommonFileSemanticPurity(rel, content, file, root, violations) {
+  if (rel.endsWith('/shared.types.ts') || rel.endsWith('.types.ts')) {
+    violations.push(`${rel}: shared *.types.ts bucket files are forbidden; use *.type.ts or *.interface.ts.`);
+  }
+
+  if (rel.endsWith('.entity.ts')) {
+    if (/^\s*export\s+interface\s+\w+/m.test(content)) {
+      violations.push(`${rel}: *.entity.ts files may not export interface declarations.`);
+    }
+    if (hasExportedTypeDeclaration(content)) {
+      violations.push(`${rel}: *.entity.ts files may not export type declarations.`);
+    }
+  }
+
+  if (rel.endsWith('.interface.ts')) {
+    checkPureInterfaceFile(rel, content, violations);
+  }
+
+  if (rel.endsWith('.type.ts')) {
+    checkPureTypeFile(rel, content, violations);
+  }
+
+  if (!rel.endsWith('/src/core/index.ts') && !rel.endsWith('/src/index.ts')) {
+    for (const specifier of findImportSpecifiers(content)) {
+      if (!specifier.startsWith('.')) continue;
+      const targetRel = normalizePath(path.relative(root, path.resolve(path.dirname(file), specifier)));
+      if (targetRel === `packages/${getPackageName(rel)}/src/core`) {
+        violations.push(`${rel}: package-internal source must not import the core root barrel (${specifier}).`);
+      }
+    }
+  }
+}
+
+function checkPureInterfaceFile(rel, content, violations) {
+  if (hasNonTypeImport(content)) {
+    violations.push(`${rel}: *.interface.ts files may only use import type declarations.`);
+  }
+  if (hasExportedTypeDeclaration(content)) {
+    violations.push(`${rel}: *.interface.ts files may not export type declarations.`);
+  }
+  if (hasValueExportDeclaration(content)) {
+    violations.push(`${rel}: *.interface.ts files may only export interface declarations.`);
+  }
+}
+
+function checkPureTypeFile(rel, content, violations) {
+  if (hasNonTypeImport(content)) {
+    violations.push(`${rel}: *.type.ts files may only use import type declarations.`);
+  }
+  if (/^\s*(?:export\s+)?interface\s+\w+/m.test(content)) {
+    violations.push(`${rel}: *.type.ts files may not export interface declarations.`);
+  }
+  if (hasValueExportDeclaration(content)) {
+    violations.push(`${rel}: *.type.ts files may only export type declarations.`);
+  }
+}
+
+function checkCommonDomainFile(rel, content, file, root, violations) {
+  for (const dep of ['@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-datasource']) {
+    if (content.includes(dep)) {
+      violations.push(`${rel}: domain files must not depend on ${dep}.`);
+    }
+  }
+
+  for (const specifier of findImportSpecifiers(content)) {
+    if (!specifier.startsWith('.')) continue;
+    const targetRel = normalizePath(path.relative(root, path.resolve(path.dirname(file), specifier)));
+    if (targetRel.includes('/src/infra/')) {
+      violations.push(`${rel}: domain files must not import infra (${specifier}).`);
+    }
+  }
+}
+
+function checkCommonApplicationFile(rel, content, violations) {
+  if (importsPg(content)) {
+    violations.push(`${rel}: application files must not import pg directly.`);
+  }
+  if (
+    rel.includes('/src/application/adapters/') ||
+    rel.includes('/src/application/persistence/') ||
+    rel.endsWith('.adapter.ts')
+  ) {
+    violations.push(`${rel}: adapters and persistence implementations must live under src/infra.`);
+  }
+}
+
+function checkCommonImplementationFile(rel, content, violations) {
+  if (rel.endsWith('.entity.ts')) return;
+  if (/^\s*export\s+interface\s+\w+/m.test(content)) {
+    violations.push(`${rel}: implementation files must not export interface declarations.`);
+  }
+  if (hasExportedTypeDeclaration(content)) {
+    violations.push(`${rel}: implementation files must not export type declarations.`);
+  }
+}
+
 function checkBffSourceFile(rel, content, file, root, violations) {
   if (!rel.startsWith('packages/bff/src/')) return;
+
+  if (rel === 'packages/bff/src/index.ts') {
+    checkBffRootExports(rel, content, violations);
+  }
 
   for (const symbol of FORBIDDEN_BFF_SYMBOLS) {
     if (content.includes(symbol)) {
@@ -379,6 +669,9 @@ function checkBffSourceFile(rel, content, file, root, violations) {
 
   if (rel.startsWith('packages/bff/src/controller/') && /@Post\(\s*["'](?:query|mutation)["']\s*\)/.test(content)) {
     violations.push(`${rel}: legacy /query and /mutation endpoints are forbidden.`);
+  }
+  if (rel.startsWith('packages/bff/src/controller/') && rel.endsWith('.service.ts')) {
+    violations.push(`${rel}: BFF controller service files must live under infra-owned gateway services.`);
   }
 
   checkBffRuntimeImports(rel, content, violations);
@@ -390,19 +683,9 @@ function checkBffSourceFile(rel, content, file, root, violations) {
   }
 
   if (rel.endsWith('.interface.ts')) {
-    if (/^\s*(?:export\s+)?type\s+\w+\s*=/m.test(content) || /^\s*export\s+type\s+\{/m.test(content)) {
-      violations.push(`${rel}: *.interface.ts files may not export type declarations.`);
-    }
-    if (/^\s*export\s+(?:class|const|let|var|function|enum)\b/m.test(content)) {
-      violations.push(`${rel}: *.interface.ts files may only export interface declarations.`);
-    }
+    checkPureInterfaceFile(rel, content, violations);
   } else if (rel.endsWith('.type.ts')) {
-    if (/^\s*(?:export\s+)?interface\s+\w+/m.test(content)) {
-      violations.push(`${rel}: *.type.ts files may not export interface declarations.`);
-    }
-    if (/^\s*export\s+(?:class|const|let|var|function|enum)\b/m.test(content)) {
-      violations.push(`${rel}: *.type.ts files may only export type declarations.`);
-    }
+    checkPureTypeFile(rel, content, violations);
   } else if (hasTypeOrInterfaceDeclaration(content)) {
     violations.push(`${rel}: TypeScript type/interface declarations must live in a *.type.ts or *.interface.ts file.`);
   }
@@ -412,6 +695,27 @@ function checkBffSourceFile(rel, content, file, root, violations) {
   }
 
   checkBffDependencyDirection(rel, content, file, root, violations);
+}
+
+function checkBffRootExports(rel, content, violations) {
+  const allowed = new Set(['AppModule', 'createBffGatewayModule', 'startBffServer']);
+  if (/^\s*export\s+type\b/m.test(content)) {
+    violations.push(`${rel}: BFF root must not export types.`);
+  }
+  if (/^\s*export\s+\*/m.test(content)) {
+    violations.push(`${rel}: BFF root must not use export-star barrels.`);
+  }
+
+  const exportPattern = /^\s*export\s+\{([^}]+)\}/gm;
+  let match;
+  while ((match = exportPattern.exec(content)) !== null) {
+    for (const rawName of match[1].split(',')) {
+      const exportedName = rawName.trim().split(/\s+as\s+/).pop()?.trim();
+      if (exportedName && !allowed.has(exportedName)) {
+        violations.push(`${rel}: BFF root export "${exportedName}" is not public API.`);
+      }
+    }
+  }
 }
 
 function checkBffGatewayConfig(rel, content, violations) {
@@ -467,6 +771,16 @@ function checkContractDefinitions(rel, content, violations) {
       'packages/runtime'
     );
   }
+  if (!rel.startsWith('packages/query/src/')) {
+    checkContractDeclarations(
+      rel,
+      content,
+      violations,
+      QUERY_AST_CONTRACT_DECLARATIONS,
+      'query AST',
+      'packages/query'
+    );
+  }
 }
 
 function checkContractDeclarations(rel, content, violations, names, label, owner) {
@@ -488,6 +802,70 @@ function checkForbiddenPackageRefs(rel, content, violations) {
 
 function hasTypeOrInterfaceDeclaration(content) {
   return /^\s*(?:export\s+)?interface\s+\w+/m.test(content) || /^\s*(?:export\s+)?type\s+\w+\s*=/m.test(content);
+}
+
+function hasExportedTypeDeclaration(content) {
+  return /^\s*export\s+type\s+\w+\s*=/m.test(content) || /^\s*export\s+type\s+\{/m.test(content);
+}
+
+function hasValueExportDeclaration(content) {
+  return /^\s*export\s+(?:class|const|let|var|function|enum)\b/m.test(content);
+}
+
+function hasNonTypeImport(content) {
+  return /^\s*import\s+(?!type\b)/m.test(content);
+}
+
+function exportsInfra(content) {
+  return /^\s*export\s+\*\s+from\s+["']\.\/infra(?:\/index)?["'];?/m.test(content);
+}
+
+function exportsPostgres(content) {
+  return /^\s*export\s+\*\s+from\s+["']\.\/postgres(?:\/index)?["'];?/m.test(content);
+}
+
+function checkPackageRootPublicApi(rel, content, violations) {
+  const packageName = getPackageName(rel);
+  const rule = ROOT_PUBLIC_API_RULES[packageName];
+  if (!rule) return;
+  const starExportPattern = /^\s*export\s+\*\s+from\s+["']([^"']+)["'];?/gm;
+  let starMatch;
+  while ((starMatch = starExportPattern.exec(content)) !== null) {
+    if (!rule.starExports.has(starMatch[1])) {
+      violations.push(`${rel}: ${packageName} root may only export-star ./core.`);
+    }
+  }
+
+  const namedExportPattern = /^\s*export\s+(?:type\s+)?\{([\s\S]*?)\}\s+from\s+["']([^"']+)["'];?/gm;
+  let namedMatch;
+  while ((namedMatch = namedExportPattern.exec(content)) !== null) {
+    const source = namedMatch[2];
+    for (const rawName of namedMatch[1].split(',')) {
+      const cleanedName = rawName.trim().replace(/^type\s+/, '');
+      const [importedName, aliasName] = cleanedName.split(/\s+as\s+/);
+      const exportedName = (aliasName ?? importedName)?.trim();
+      if (!exportedName) continue;
+      if (rule.namedExports.get(exportedName) !== source || importedName.trim() !== exportedName) {
+        violations.push(`${rel}: ${packageName} root export "${exportedName}" is not public API.`);
+      }
+    }
+  }
+}
+
+function checkRuntimeDatasourceImports(rel, content, violations) {
+  const datasourceImportPattern = /^\s*import\s+([^;]*?)\s+from\s+["']@zhongmiao\/meta-lc-datasource["'];?/gm;
+  let importMatch;
+  while ((importMatch = datasourceImportPattern.exec(content)) !== null) {
+    if (!importMatch[1].trim().startsWith('type ')) {
+      violations.push(`${rel}: runtime may only import datasource contracts with import type.`);
+      break;
+    }
+  }
+  for (const importedName of findNamedImportsFrom(content, '@zhongmiao/meta-lc-datasource')) {
+    if (/^(?:Postgres|createPostgres)/.test(importedName)) {
+      violations.push(`${rel}: runtime must not import datasource implementation "${importedName}".`);
+    }
+  }
 }
 
 function checkBffDependencyDirection(rel, content, file, root, violations) {
@@ -527,6 +905,10 @@ function findImportSpecifiers(content) {
   return specifiers;
 }
 
+function isPackageDeepImport(specifier) {
+  return /^@meta-lc\/[a-z-]+\//.test(specifier) || /^@zhongmiao\/meta-lc-[a-z-]+\//.test(specifier);
+}
+
 function findNamedImportsFrom(content, packageName) {
   const importedNames = [];
   const importPattern = /import\s+(?:type\s+)?\{([\s\S]*?)\}\s+from\s+["']([^"']+)["']/g;
@@ -552,6 +934,8 @@ function checkPackageManifest(file, root, violations) {
   const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
   const dependencyBlocks = ['dependencies', 'devDependencies', 'peerDependencies'];
 
+  checkPackageExports(rel, packageName, manifest, violations);
+
   for (const blockName of dependencyBlocks) {
     const block = manifest[blockName] ?? {};
     for (const dependencyName of Object.keys(block)) {
@@ -560,6 +944,9 @@ function checkPackageManifest(file, root, violations) {
       }
       if (packageName === 'bff' && FORBIDDEN_BFF_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: BFF dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
+      if (packageName === 'runtime' && FORBIDDEN_RUNTIME_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: runtime dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
       if (packageName === 'query' && FORBIDDEN_QUERY_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: query dependency "${dependencyName}" is forbidden in ${blockName}.`);
@@ -576,15 +963,55 @@ function checkPackageManifest(file, root, violations) {
       if (packageName === 'audit' && FORBIDDEN_AUDIT_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: audit dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
+      if (packageName === 'infra-persistence' && FORBIDDEN_INFRA_PERSISTENCE_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: infra-persistence dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      }
+      if (
+        POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName) &&
+        blockName === 'dependencies' &&
+        dependencyName === 'pg'
+      ) {
+        violations.push(`${rel}: pg must be an optional peerDependency for postgres secondary entries, not a dependency.`);
+      }
       if (ALLOWED_APP_DEPS[packageName] && dependencyName.startsWith('@zhongmiao/meta-lc-') && !ALLOWED_APP_DEPS[packageName].has(dependencyName)) {
         violations.push(`${rel}: app dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
       if (!DB_DRIVER_DEPENDENCIES.has(dependencyName)) continue;
       if (!DB_DRIVER_PACKAGES.has(packageName)) {
         violations.push(
-          `${rel}: ${dependencyName} is forbidden in ${blockName} outside audit/datasource/kernel packages.`
+          `${rel}: ${dependencyName} is forbidden in ${blockName} outside audit/datasource/infra-persistence packages.`
         );
       }
+    }
+  }
+
+  if (POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName)) {
+    if (!manifest.peerDependencies?.pg) {
+      violations.push(`${rel}: postgres secondary entry packages must declare pg in peerDependencies.`);
+    }
+    if (manifest.peerDependenciesMeta?.pg?.optional !== true) {
+      violations.push(`${rel}: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.`);
+    }
+  }
+}
+
+function checkPackageExports(rel, packageName, manifest, violations) {
+  const packageExports = manifest.exports;
+  if (!packageExports || typeof packageExports !== 'object' || Array.isArray(packageExports)) return;
+
+  const allowed = PACKAGE_EXPORT_ALLOWLIST[packageName] ?? new Set(['.']);
+  for (const exportKey of Object.keys(packageExports)) {
+    if (exportKey.startsWith('./src') || exportKey.startsWith('./dist/src')) {
+      violations.push(`${rel}: package exports must not expose source paths (${exportKey}).`);
+    }
+    if (exportKey === './infra' || exportKey.startsWith('./infra/')) {
+      violations.push(`${rel}: package exports must not expose infra (${exportKey}).`);
+    }
+    if ((exportKey === './postgres' || exportKey.startsWith('./postgres/')) && !POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName)) {
+      violations.push(`${rel}: postgres secondary entry is only allowed for audit/datasource packages.`);
+    }
+    if (!allowed.has(exportKey)) {
+      violations.push(`${rel}: package export "${exportKey}" is not an approved public entrypoint.`);
     }
   }
 }

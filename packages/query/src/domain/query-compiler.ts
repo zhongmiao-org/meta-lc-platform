@@ -6,13 +6,15 @@ import type {
   QueryIsNullPredicate,
   QueryLiteralPredicate,
   QueryLogicalPredicate,
-  QueryPredicate,
   QueryRequest,
-  QueryScalarValue,
   QuerySelectItem,
   QueryTableRef,
   SelectQueryAst
-} from "../types/shared.types";
+} from "../core/interfaces";
+import type {
+  QueryPredicate,
+  QueryScalarValue
+} from "../core/types";
 
 const DEFAULT_LIMIT = 100;
 const KEYWORD_SEARCH_FIELDS = ["id", "owner"] as const;

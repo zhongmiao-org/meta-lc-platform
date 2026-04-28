@@ -1,6 +1,9 @@
-export * from "./domain";
-export * from "./application";
-export * from "./infra";
-export * from "./interface";
-export * from "./types";
-export * from "./utils";
+export * from "./core";
+export {
+  buildDataScopeFilter,
+  buildRowLevelFilter,
+  canAccessOrg,
+  injectPermissionClause,
+  resolveDataScope
+} from "./domain/permission-engine";
+export { transformSelectQueryAstWithPermission } from "./domain/permission-ast-transform";

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { PostgresOrgScopeAdapter } from "../src";
+import { PostgresOrgScopeAdapter } from "../src/postgres/postgres-org-scope.adapter";
 
 const dbConfig = {
   host: "127.0.0.1",

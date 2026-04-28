@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { RuntimePageDsl } from "../src";
-import { parseRuntimePageDsl, RuntimeDslParseError } from "../src";
+import type { RuntimePageDsl } from "./runtime-test-api";
+import { parseRuntimePageDsl, RuntimeDslParseError } from "./runtime-test-api";
 
 function createRuntimeDsl(): RuntimePageDsl {
   return {

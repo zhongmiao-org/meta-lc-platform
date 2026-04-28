@@ -1,9 +1,9 @@
-import {
-  type DagDependencyGraph,
-  type DagEdges,
-  type DagGraphNode,
-  DagSchedulerError
-} from "../../types";
+import type {
+  DagDependencyGraph,
+  DagGraphNode
+} from "../../core/interfaces";
+import type { DagEdges } from "../../core/types";
+import { DagSchedulerError } from "../../core/errors";
 
 export function buildDagDependencyGraph(edges: DagEdges): DagDependencyGraph {
   const normalizedEdges = normalizeDagEdges(edges);

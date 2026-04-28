@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createFunctionRegistry, RuntimeFunctionRegistryError } from "../src";
+import { createFunctionRegistry, RuntimeFunctionRegistryError } from "./runtime-test-api";
 
 test("createFunctionRegistry registers and executes built-in functions", async () => {
   const registry = createFunctionRegistry();

@@ -1,19 +1,11 @@
 import type {
-  MetaDefinitionKind,
+  InMemoryMetaDefinitionSeed,
   MetaDefinitionPublishInput,
   MetaDefinitionVersion,
   MetaSchema,
   MetaVersion
-} from "../../types/shared.types";
-
-export interface InMemoryMetaDefinitionSeed<K extends MetaDefinitionKind = MetaDefinitionKind> {
-  appId: string;
-  kind: K;
-  id: string;
-  definition: MetaDefinitionVersion<K>["definition"];
-  version?: number;
-  metadata?: Partial<MetaDefinitionVersion<K>["metadata"]>;
-}
+} from "../../core/interfaces";
+import type { MetaDefinitionKind } from "../../core/types";
 
 export class InMemoryMetaKernelRepository {
   private readonly schemaVersions = new Map<string, MetaVersion[]>();

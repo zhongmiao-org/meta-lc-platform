@@ -3,71 +3,40 @@ import { resolveExpression } from "../../domain/dsl/expression";
 import { parseRuntimePageDsl } from "../../domain/dsl/runtime-dsl-parser";
 import { resolveExecutionOrder } from "../../domain/graph/dep-resolver";
 import { buildDependencyGraph, planRefresh } from "../../domain/graph/runtime-dependency-graph";
-import { createFunctionRegistry } from "../function-registry";
-import { evaluateRules } from "../rule-engine";
-import { executeNode, type NodeExecutorDependencies } from "./node-executor";
+import { createFunctionRegistry } from "../services/function-registry.service";
+import { evaluateRules } from "../services/rule-engine.service";
+import { executeNode } from "./node-executor";
 import {
   createRuntimeAuditDispatchContext,
   emitRuntimeAuditEvent,
-  getErrorMessage,
-  type RuntimeAuditDispatchContext
+  getErrorMessage
 } from "./runtime-audit";
-import {
-  type ExecutionNode,
-  type ExecutionPlan,
-  RuntimeExecutionError,
-  type RuntimeExecutionResult,
-  type RuntimeExecutionStage,
-  type RuntimeNodeResult,
-  type RuntimeQueryNodeResult,
-  type RuntimeStateStore,
-  type RuntimeValueNodeResult,
-  type RuntimeContext,
-  buildRuntimePageTopic,
-  type ParsedRuntimePageDsl,
-  type RuntimeFunctionRegistry,
-  type RuntimePageDsl,
-  type RuntimePageTopicRef,
-  type RuntimeRefreshEvent,
-  type RuntimeRefreshPlan,
-  type RuntimeRuleEffectsPlan
-} from "../../types";
-import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
-
-export interface RuntimeExecutorDependencies {
-  executors: NodeExecutorDependencies;
-  auditObserver?: RuntimeAuditObserver;
-}
-
-export type RuntimeManagerCommand =
-  | {
-      type: "patchState";
-      patch: Record<string, unknown>;
-    }
-  | {
-      type: "refreshDatasource";
-      datasourceId: string;
-    }
-  | {
-      type: "runAction";
-      actionId: string;
-    };
-
-export interface RuntimeManagerEventRequest {
-  dsl: RuntimePageDsl | ParsedRuntimePageDsl;
-  state: Record<string, unknown>;
-  event: RuntimeRefreshEvent;
-  functionRegistry?: RuntimeFunctionRegistry;
-  pageInstance?: RuntimePageTopicRef;
-}
-
-export interface RuntimeManagerPlan {
-  refreshPlan: RuntimeRefreshPlan;
-  ruleEffects: RuntimeRuleEffectsPlan;
-  nextState: Record<string, unknown>;
-  managerCommands: RuntimeManagerCommand[];
-  wsTopics: string[];
-}
+import type {
+  ExecutionNode,
+  ExecutionPlan,
+  ParsedRuntimePageDsl,
+  RuntimeAuditDispatchContext,
+  RuntimeExecutionResult,
+  RuntimeExecutorDependencies,
+  RuntimeFunctionRegistry,
+  RuntimeManagerEventRequest,
+  RuntimeManagerPlan,
+  RuntimePageDsl,
+  RuntimePageTopicRef,
+  RuntimeQueryNodeResult,
+  RuntimeRefreshPlan,
+  RuntimeRuleEffectsPlan,
+  RuntimeStateStore,
+  RuntimeValueNodeResult
+} from "../../core/interfaces";
+import type {
+  RuntimeContext,
+  RuntimeExecutionStage,
+  RuntimeManagerCommand,
+  RuntimeNodeResult
+} from "../../core/types";
+import { RuntimeExecutionError } from "../../core/errors";
+import { buildRuntimePageTopic } from "../../core/utils";
 
 export class RuntimeExecutor {
   async execute(

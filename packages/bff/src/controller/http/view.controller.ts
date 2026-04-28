@@ -20,8 +20,9 @@ import {
 import { BFF_RUNTIME_GATEWAY_RUNNER } from "../../common/constants/gateway-provider.constant";
 import { resolveRequestId } from "../../common/request-id";
 import { readGatewayRequestIdHeader } from "../../config/gateway.config";
-import type { ViewRequestLike, ViewResponseLike } from "./view.interface";
-import type { RuntimeGatewayRunner, ViewApiRequest, ViewApiResponse } from "./view.type";
+import type { RuntimeGatewayRunner, ViewRequestLike, ViewResponseLike } from "./view.gateway.interface";
+import type { ViewApiRequest } from "./view.request.type";
+import type { ViewApiResponse } from "./view.response.type";
 
 @Controller()
 export class ViewController {

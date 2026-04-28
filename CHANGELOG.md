@@ -2,6 +2,10 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(boundaries): harden SDK export maps, package deep-import guards, and infra-persistence composition-only checks.
+- chore(sdk): make Postgres support an optional peer for audit and datasource secondary entries.
+- fix(ci): run the orders demo query gate against built package entrypoints after tightening package public exports.
+- chore(public-api): narrow kernel, query, and permission package root exports to explicit SDK-facing symbols.
 - docs(topology): add a runtime execution handoff diagram beside package dependency topology.
 - fix(boundaries): remove the stale BFF kernel package dependency and document provider-only meta registry access.
 - docs(topology): regenerate package dependency topology from manifest and production source imports.

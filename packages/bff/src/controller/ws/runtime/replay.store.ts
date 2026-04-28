@@ -4,13 +4,13 @@ import type {
   RedisRuntimeWsReplayClient,
   RedisRuntimeWsStreamReplayClient,
   RuntimeWsReplayStore
-} from "./runtime-ws.interface";
+} from "./runtime-ws.gateway.interface";
 import type {
   RedisRuntimeWsReplayStoreOptions,
   RedisRuntimeWsStreamEntry,
   RedisStreamRuntimeWsReplayStoreOptions,
   RuntimeWsReplayStoreMode
-} from "./runtime-ws.type";
+} from "./runtime-ws-event.type";
 
 export class InMemoryRuntimeWsReplayStore implements RuntimeWsReplayStore {
   private readonly latestRuntimeEventsByTopic = new Map<string, RuntimeManagerExecutedEvent>();

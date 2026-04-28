@@ -1,21 +1,11 @@
 import { resolveExpression } from "../../domain/dsl/expression";
-import {
-  MergeExecutorError,
-  type RuntimeContext,
-  type RuntimeStateStore
-} from "../../types";
+import type {
+  MergeExecutorDependencies,
+  RuntimeStateStore
+} from "../../core/interfaces";
+import type { MergeExecutorResult, RuntimeContext } from "../../core/types";
+import { MergeExecutorError } from "../../core/errors";
 import type { MergeNodeDefinition, MergeStrategy } from "@zhongmiao/meta-lc-kernel";
-
-export type MergeExecutorResult = unknown;
-
-export type MergeExecutorHook = (
-  inputs: Record<string, unknown>,
-  context: RuntimeContext
-) => MergeExecutorResult | Promise<MergeExecutorResult>;
-
-export interface MergeExecutorDependencies {
-  hooks?: Record<string, MergeExecutorHook>;
-}
 
 export async function executeMergeNode(
   node: MergeNodeDefinition,

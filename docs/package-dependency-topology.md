@@ -22,6 +22,7 @@ flowchart TD
   audit["@zhongmiao/meta-lc-audit<br/>packages/audit"]
   bff["@zhongmiao/meta-lc-bff<br/>packages/bff"]
   datasource["@zhongmiao/meta-lc-datasource<br/>packages/datasource"]
+  infra_persistence["@zhongmiao/meta-lc-infra-persistence<br/>packages/infra-persistence"]
   kernel["@zhongmiao/meta-lc-kernel<br/>packages/kernel"]
   permission["@zhongmiao/meta-lc-permission<br/>packages/permission"]
   query["@zhongmiao/meta-lc-query<br/>packages/query"]
@@ -29,6 +30,7 @@ flowchart TD
 
   bff --> runtime
   bff_server --> bff
+  infra_persistence --> kernel
   permission --> query
   runtime --> audit
   runtime --> datasource
@@ -47,6 +49,7 @@ flowchart TD
   audit["@zhongmiao/meta-lc-audit<br/>packages/audit"]
   bff["@zhongmiao/meta-lc-bff<br/>packages/bff"]
   datasource["@zhongmiao/meta-lc-datasource<br/>packages/datasource"]
+  infra_persistence["@zhongmiao/meta-lc-infra-persistence<br/>packages/infra-persistence"]
   kernel["@zhongmiao/meta-lc-kernel<br/>packages/kernel"]
   permission["@zhongmiao/meta-lc-permission<br/>packages/permission"]
   query["@zhongmiao/meta-lc-query<br/>packages/query"]
@@ -54,10 +57,11 @@ flowchart TD
 
   bff --> runtime
   bff_server --> bff
+  infra_persistence --> kernel
   permission -->|"type-only"| query
   runtime -->|"type-only"| audit
-  runtime --> datasource
-  runtime --> kernel
+  runtime -->|"type-only"| datasource
+  runtime -->|"type-only"| kernel
   runtime --> permission
   runtime --> query
 ```
@@ -69,42 +73,58 @@ flowchart TD
   - value: `packages/bff/src/controller/http/view.controller.ts`
   - type-only: `packages/bff/src/controller/ws/runtime/broadcast.bus.ts`
   - type-only: `packages/bff/src/controller/ws/runtime/replay.store.ts`
-  - type-only: `packages/bff/src/controller/ws/runtime/runtime-ws.interface.ts`
-  - type-only: `packages/bff/src/controller/ws/runtime/runtime-ws.type.ts`
+  - type-only: `packages/bff/src/controller/ws/runtime/runtime-ws-event.type.ts`
+  - type-only: `packages/bff/src/controller/ws/runtime/runtime-ws.gateway.interface.ts`
   - value: `packages/bff/src/controller/ws/runtime/ws.gateway.ts`
 - `@zhongmiao/meta-lc-bff-server` -> `@zhongmiao/meta-lc-bff`
   - value: `apps/bff-server/src/main.ts`
+- `@zhongmiao/meta-lc-infra-persistence` -> `@zhongmiao/meta-lc-kernel`
+  - value: `packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts`
+  - type-only: `packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts`
 - `@zhongmiao/meta-lc-permission` -> `@zhongmiao/meta-lc-query` (type-only)
   - type-only: `packages/permission/src/domain/permission-ast-transform.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-audit` (type-only)
-  - type-only: `packages/runtime/src/application/executor/query-executor.ts`
   - type-only: `packages/runtime/src/application/executor/runtime-audit.ts`
-  - type-only: `packages/runtime/src/application/executor/runtime-executor.ts`
-  - type-only: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - type-only: `packages/runtime/src/types/shared.types.ts`
-- `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-datasource`
+  - type-only: `packages/runtime/src/application/facades/runtime-view.facade.ts`
+  - type-only: `packages/runtime/src/core/interfaces/query-executor.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime-audit.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime-executor.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime-view-facade.interface.ts`
+  - type-only: `packages/runtime/src/core/types/executor.type.ts`
+  - type-only: `packages/runtime/src/core/types/runtime.type.ts`
+- `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-datasource` (type-only)
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
   - type-only: `packages/runtime/src/application/executor/runtime-executor.ts`
-  - value: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - type-only: `packages/runtime/src/infra/adapter/query.adapter.ts`
-  - type-only: `packages/runtime/src/types/shared.types.ts`
-- `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-kernel`
+  - type-only: `packages/runtime/src/core/interfaces/query-executor.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime-adapter.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime.interface.ts`
+  - type-only: `packages/runtime/src/core/types/executor.type.ts`
+- `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-kernel` (type-only)
   - type-only: `packages/runtime/src/application/compiler/plan-builder.ts`
   - type-only: `packages/runtime/src/application/compiler/view-compiler.ts`
   - type-only: `packages/runtime/src/application/executor/merge-executor.ts`
   - type-only: `packages/runtime/src/application/executor/mutation-executor.ts`
   - type-only: `packages/runtime/src/application/executor/node-executor.ts`
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
-  - value: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - type-only: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - type-only: `packages/runtime/src/types/shared.types.ts`
+  - type-only: `packages/runtime/src/application/facades/runtime-view.facade.ts`
+  - type-only: `packages/runtime/src/core/errors/runtime.error.ts`
+  - type-only: `packages/runtime/src/core/interfaces/node-executor.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/plan-builder.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime-view-facade.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime.interface.ts`
+  - type-only: `packages/runtime/src/core/types/executor.type.ts`
+  - type-only: `packages/runtime/src/core/types/runtime.type.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-permission`
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
-  - type-only: `packages/runtime/src/application/executor/runtime-view-executor.ts`
-  - value: `packages/runtime/src/infra/adapter/query.adapter.ts`
+  - type-only: `packages/runtime/src/application/facades/runtime-view.facade.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime-adapter.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime-view-facade.interface.ts`
+  - value: `packages/runtime/src/infra/adapters/query.adapter.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-query`
   - type-only: `packages/runtime/src/application/executor/query-executor.ts`
-  - value: `packages/runtime/src/infra/adapter/query.adapter.ts`
+  - type-only: `packages/runtime/src/core/interfaces/query-executor.interface.ts`
+  - type-only: `packages/runtime/src/core/interfaces/runtime-adapter.interface.ts`
+  - value: `packages/runtime/src/infra/adapters/query.adapter.ts`
 
 ## Runtime 执行流 / Execution Handoff
 

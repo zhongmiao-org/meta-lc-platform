@@ -5,7 +5,7 @@ import {
   getExpressionPathValue,
   resolveExpression,
   resolveExpressionString
-} from "../src";
+} from "./runtime-test-api";
 
 test("resolveExpressionString resolves simple and nested paths", () => {
   const state = {

@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- chore(boundaries): 围绕 audit root 与 Postgres secondary entry 锁定 package exports 和 deep import 规则。
+- chore(sdk): 移除空的 utils root export，并将 Postgres sink 入口使用的 `pg` 调整为可选 peer。
+- refactor(public-api): 将 Postgres audit sink 移到 `@zhongmiao/meta-lc-audit/postgres` secondary entry。
 - docs(readme): 补充最终架构协作流中的上下游关系说明。
 - chore(boundaries): 新增最终 Nx layer tags，并将 audit 锁定为无 workspace 依赖的被动观测包。
 - feat(sink): 新增可选 Postgres runtime audit sink，落盘失败不会阻断 runtime execution。

@@ -5,7 +5,7 @@ import {
   type MutationDatasourceAdapter,
   type RuntimeContext,
   type RuntimeStateStore
-} from "../src";
+} from "./runtime-test-api";
 import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const runtimeInput = {

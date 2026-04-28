@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import {
   DatasourceAdapterError,
   type DatasourceAdapter,
-  type DatasourceExecutionRequest,
-  PostgresDatasourceAdapter
+  type DatasourceExecutionRequest
 } from "../src";
+import { PostgresDatasourceAdapter } from "../src/postgres/postgres.adapter";
 
 const dbConfig = {
   host: "127.0.0.1",

@@ -10,7 +10,7 @@ import {
   type RuntimeContext,
   type RuntimeExecutorDependencies,
   type RuntimeStateStore
-} from "../src";
+} from "./runtime-test-api";
 import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const runtimeContext: RuntimeContext = {

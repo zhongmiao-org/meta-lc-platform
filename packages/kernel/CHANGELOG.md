@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- chore(public-api): narrow the package root to core contracts and explicit kernel service, generator, and migration safety APIs.
 - refactor(meta): remove orders demo registry seeds from kernel and move example-owned metadata to `examples/orders-demo`.
 - docs(readme): add kernel upstream/downstream notes for metadata ownership and meta_db persistence.
 - fix(package): align the kernel package main/types entrypoints with the dependency-free clean build output.

@@ -22,16 +22,31 @@ bff/src/
 ├── config/
 ├── controller/
 │   ├── http/
+│   │   ├── view.controller.ts
+│   │   ├── view.request.type.ts
+│   │   ├── view.response.type.ts
+│   │   ├── view.gateway.interface.ts
+│   │   ├── meta.controller.ts
+│   │   ├── meta.response.type.ts
+│   │   └── meta.gateway.interface.ts
 │   ├── ws/
 │   │   └── runtime/
 │   │       ├── ws.gateway.ts
+│   │       ├── runtime-ws-event.type.ts
+│   │       ├── runtime-ws-client.type.ts
+│   │       ├── runtime-ws.gateway.interface.ts
 │   │       ├── broadcast.bus.ts
 │   │       ├── health.controller.ts
 │   │       ├── operations.state.ts
 │   │       └── replay.store.ts
 ├── infra/
 │   ├── cache/
+│   │   ├── cache.service.ts
+│   │   └── cache-entry.type.ts
 │   └── integration/
+│       ├── meta-registry.service.ts
+│       ├── meta-registry-response.type.ts
+│       └── meta-registry-client.interface.ts
 └── index.ts
 ```
 
@@ -52,8 +67,10 @@ bff/src/
 - `*.type.ts` = 数据形状/结构组合，只允许 `export type`。
 - 禁止在 `*.interface.ts` 中混写 `export type`。
 - 禁止在 `*.type.ts` 中混写 `export interface`。
+- 允许 `controller/**` 与 `infra/**` 就近放置局部 `*.interface.ts` 与 `*.type.ts`。
+- 禁止在 `controller/**` 下放 `*.service.ts`。
 - 禁止在 controller/service/infra implementation 文件中声明 TypeScript `type` 或 `interface`。
-- 禁止新增 `types/index.ts` 或 `interfaces/index.ts` 聚合类型入口。
+- 禁止新增顶层 `core/**`、`domain/**`、`application/**`、`interface/**`、`types/**` 或 `services/**`。
 
 ## 依赖方向
 

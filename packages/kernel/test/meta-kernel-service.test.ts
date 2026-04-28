@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { InMemoryMetaKernelRepository, MetaKernelService } from "../src";
-import type { MetaVersion } from "../src/types";
+import { createInMemoryMetaKernelService, MetaKernelService } from "../src";
+import type { MetaVersion } from "../src/core/interfaces";
 
 function createVersion(version: number, schema: MetaVersion["schema"]): MetaVersion {
   return {
@@ -142,7 +142,7 @@ test("migrateToVersion passes guard options to repository", async () => {
 });
 
 test("publishes and fetches versioned view definitions", async () => {
-  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const service = createInMemoryMetaKernelService();
   const first = await service.publishViewDefinition({
     appId: "demo-app",
     definition: createOrdersView(["id"]),
@@ -164,7 +164,7 @@ test("publishes and fetches versioned view definitions", async () => {
 });
 
 test("diffDefinition returns stable changed paths for view versions", async () => {
-  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const service = createInMemoryMetaKernelService();
   await service.publishViewDefinition({
     appId: "demo-app",
     definition: createOrdersView(["id"]),
@@ -190,7 +190,7 @@ test("diffDefinition returns stable changed paths for view versions", async () =
 });
 
 test("publishes and fetches datasource definitions", async () => {
-  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const service = createInMemoryMetaKernelService();
   const published = await service.publishDatasourceDefinition({
     appId: "demo-app",
     definition: {
@@ -207,7 +207,7 @@ test("publishes and fetches datasource definitions", async () => {
 });
 
 test("rejects invalid datasource definitions", async () => {
-  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const service = createInMemoryMetaKernelService();
 
   await assert.rejects(
     () =>
@@ -225,7 +225,7 @@ test("rejects invalid datasource definitions", async () => {
 });
 
 test("publishes and fetches permission policies", async () => {
-  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const service = createInMemoryMetaKernelService();
   const published = await service.publishPermissionPolicy({
     appId: "demo-app",
     definition: {
@@ -244,7 +244,7 @@ test("publishes and fetches permission policies", async () => {
 });
 
 test("rejects invalid permission policies", async () => {
-  const service = new MetaKernelService(new InMemoryMetaKernelRepository());
+  const service = createInMemoryMetaKernelService();
 
   await assert.rejects(
     () =>

@@ -5,7 +5,7 @@ import {
   MergeExecutorError,
   type RuntimeContext,
   type RuntimeStateStore
-} from "../src";
+} from "./runtime-test-api";
 import type { MergeNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 
 const runtimeState: RuntimeStateStore = {

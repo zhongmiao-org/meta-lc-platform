@@ -14,16 +14,15 @@ import type {
   RuntimeWsBroadcastBus,
   RedisRuntimeWsStreamReplayClient,
   RedisRuntimeWsReplayClient,
-  RuntimeWsReplayStore,
-  WsClientLike,
-  WsServerLike
-} from "../src/controller/ws/runtime/runtime-ws.interface";
+  RuntimeWsReplayStore
+} from "../src/controller/ws/runtime/runtime-ws.gateway.interface";
+import type { WsClientLike, WsServerLike } from "../src/controller/ws/runtime/runtime-ws-client.type";
 import type {
   PageSubscribedEvent,
   RedisRuntimeWsStreamEntry,
   RuntimeWsBroadcastHandler,
   RuntimeWsBroadcastPublishOptions
-} from "../src/controller/ws/runtime/runtime-ws.type";
+} from "../src/controller/ws/runtime/runtime-ws-event.type";
 import { RuntimeWsHealthController } from "../src/controller/ws/runtime/health.controller";
 import { RuntimeWsOperationsState } from "../src/controller/ws/runtime/operations.state";
 import {

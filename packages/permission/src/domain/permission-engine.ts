@@ -1,11 +1,11 @@
 import type {
   DataScopeDecision,
-  DataScopeType,
   OrgScopeContext,
   PermissionContext,
   PermissionFilter,
   RoleDataPolicy
-} from "../types/shared.types";
+} from "../core/interfaces";
+import type { DataScopeType } from "../core/types";
 
 const SCOPE_PRIORITY: Record<DataScopeType, number> = {
   SELF: 10,

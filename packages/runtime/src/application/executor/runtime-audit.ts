@@ -2,21 +2,11 @@ import type {
   RuntimeAuditEvent,
   RuntimeAuditObserver
 } from "@zhongmiao/meta-lc-audit";
-import type { ExecutionPlan, RuntimeContext } from "../../types";
-
-export interface RuntimeAuditDispatchContext {
-  observer?: RuntimeAuditObserver;
-  requestId: string;
-  planId: string;
-  viewName?: string;
-  tenantId?: string;
-  userId?: string;
-}
-
-export type RuntimeAuditEventInput = Omit<
-  RuntimeAuditEvent,
-  "requestId" | "planId" | "timestamp" | "viewName" | "tenantId" | "userId"
->;
+import type {
+  ExecutionPlan,
+  RuntimeAuditDispatchContext
+} from "../../core/interfaces";
+import type { RuntimeAuditEventInput, RuntimeContext } from "../../core/types";
 
 export function createRuntimeAuditDispatchContext(
   context: RuntimeContext,

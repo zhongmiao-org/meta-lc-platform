@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { PostgresRuntimeAuditSink } from "../src/infra/postgres-runtime-audit.sink";
+import { PostgresRuntimeAuditSink } from "../src/postgres/postgres-runtime-audit.sink";
 import type { RuntimeAuditEvent } from "../src";
 
 const config = {

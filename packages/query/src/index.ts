@@ -1,6 +1,6 @@
-export * from "./domain";
-export * from "./application";
-export * from "./infra";
-export * from "./interface";
-export * from "./types";
-export * from "./utils";
+export * from "./core";
+export {
+  buildSelectQueryAst,
+  compileSelectAst,
+  compileSelectQuery
+} from "./domain/query-compiler";

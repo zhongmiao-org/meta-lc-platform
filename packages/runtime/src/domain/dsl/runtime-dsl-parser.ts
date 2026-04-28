@@ -4,18 +4,18 @@ import type {
   RuntimeNodeSchema,
   RuntimeRuleDefinition,
   RuntimePageDsl
-} from "../../types";
+} from "../../core/interfaces";
 import { collectTemplateDependencies } from "./template-resolver";
+import { RuntimeDslParseError } from "../../core/errors";
+import { collectRuleStateDependencies } from "../../core/utils";
 import {
-  collectRuleStateDependencies,
   type ParsedRuntimeActionDefinition,
   type ParsedRuntimeDatasourceDefinition,
   type ParsedRuntimeNodeSchema,
   type ParsedRuntimePageDsl,
   type ParsedRuntimeRuleDefinition,
-  RuntimeDslParseError,
   type RuntimeDslValidationIssue
-} from "../../types";
+} from "../../core/interfaces";
 
 export function parseRuntimePageDsl(input: RuntimePageDsl): ParsedRuntimePageDsl {
   const issues = validateRuntimePageDsl(input);

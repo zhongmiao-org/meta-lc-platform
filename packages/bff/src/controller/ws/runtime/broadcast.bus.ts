@@ -4,14 +4,14 @@ import { parseRuntimeManagerExecutedEvent } from "./replay.store";
 import type {
   RedisRuntimeWsBroadcastClient,
   RuntimeWsBroadcastBus
-} from "./runtime-ws.interface";
+} from "./runtime-ws.gateway.interface";
 import type {
   RedisRuntimeWsBroadcastBusOptions,
   RuntimeWsBroadcastBusMode,
   RuntimeWsBroadcastHandler,
   RuntimeWsBroadcastMessage,
   RuntimeWsBroadcastPublishOptions
-} from "./runtime-ws.type";
+} from "./runtime-ws-event.type";
 
 export class InProcessRuntimeWsBroadcastBus implements RuntimeWsBroadcastBus {
   private readonly handlers = new Set<RuntimeWsBroadcastHandler>();

@@ -2,45 +2,23 @@ import type { QueryResultRow } from "@zhongmiao/meta-lc-datasource";
 import type { CompiledQuery, QueryRequest, SelectQueryAst } from "@zhongmiao/meta-lc-query";
 import type { OrgScopeContext } from "@zhongmiao/meta-lc-permission";
 import type { PermissionAstTransformContext } from "@zhongmiao/meta-lc-permission";
-import type { RuntimeAuditObserver } from "@zhongmiao/meta-lc-audit";
 import { resolveExpression } from "../../domain/dsl/expression";
-import {
-  QueryExecutorError,
-  type RuntimeContext,
-  type RuntimeStateStore
-} from "../../types";
+import type {
+  QueryExecutorDependencies,
+  RuntimeStateStore
+} from "../../core/interfaces";
+import type { RuntimeContext } from "../../core/types";
+import { QueryExecutorError } from "../../core/errors";
 import type { QueryNodeDefinition, ViewExpression } from "@zhongmiao/meta-lc-kernel";
 import {
   createQueryCompilerAdapter,
-  createQueryPermissionAdapter,
-  type QueryCompilerAdapter,
-  type QueryDatasourceAdapter,
-  type QueryPermissionAdapter
-} from "../../infra/adapter/query.adapter";
+  createQueryPermissionAdapter
+} from "../../infra/adapters/query.adapter";
 import {
   createRuntimeAuditDispatchContext,
   emitRuntimeAuditEvent,
   getErrorMessage
 } from "./runtime-audit";
-
-export interface QueryAuditDependencies {
-  observer?: RuntimeAuditObserver;
-  nodeId?: string;
-  nodeType?: string;
-}
-
-export interface QueryExecutorDependencies {
-  compiler?: QueryCompilerAdapter;
-  permission?: QueryPermissionAdapter;
-  datasource: QueryDatasourceAdapter;
-  audit?: QueryAuditDependencies;
-}
-
-export interface QueryExecutionResult {
-  rows: QueryResultRow[];
-  query: CompiledQuery;
-  request: QueryRequest;
-}
 
 export async function executeQueryNode(
   node: QueryNodeDefinition,

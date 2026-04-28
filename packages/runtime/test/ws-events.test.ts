@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   createRuntimeManagerExecutionWsEvent,
   type RuntimeInteractionExecutionResult
-} from "../src";
+} from "./runtime-test-api";
 
 const page = {
   tenantId: "tenant-a",

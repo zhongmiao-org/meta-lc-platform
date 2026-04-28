@@ -1,10 +1,7 @@
 import { Inject, Injectable, Optional } from "@nestjs/common";
 import { BFF_META_REGISTRY_PROVIDER } from "../../common/constants/gateway-provider.constant";
-import type {
-  MetaRegistryItem,
-  MetaRegistryProvider,
-  MetaResourceKind
-} from "./meta-registry.type";
+import type { MetaRegistryProvider } from "./meta-registry-client.interface";
+import type { MetaRegistryItem, MetaResourceKind } from "./meta-registry-response.type";
 
 const META_RESOURCE_KINDS: MetaResourceKind[] = ["tables", "pages", "datasources", "rules", "permissions"];
 

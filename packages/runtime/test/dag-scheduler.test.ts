@@ -6,7 +6,7 @@ import {
   detectCycle,
   resolveExecutionOrder,
   topoSort
-} from "../src";
+} from "./runtime-test-api";
 
 test("DAG scheduler handles an empty graph explicitly", () => {
   assert.deepEqual(topoSort({}), []);

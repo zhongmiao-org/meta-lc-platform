@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(public-api): 将 package root 收窄为 core contract 与明确的 query compiler 入口。
 - docs(readme): 明确 query 上下游关系与只负责 AST-to-SQL 编译的边界。
 - chore(boundaries): 新增最终 Nx layer tags，并将 query 锁定为无 workspace 依赖的 AST/SQL compiler 包。
 - docs(boundary): 包拓扑收敛后，文档明确 query node contract 由 runtime 拥有。

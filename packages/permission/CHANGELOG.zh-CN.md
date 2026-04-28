@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- chore(public-api): 将 package root 收窄为 core contract 与明确的 permission engine 入口。
 - docs(readme): 明确 permission 上下游关系与仅 type-only 依赖 query AST/types 的边界。
 - fix(ci): 在 clean runner 的 permission package-local test 前先构建 query。
 - chore(boundaries): 新增最终 Nx layer tags，并将 permission 锁定为只能依赖 query。

@@ -1,21 +1,23 @@
 import type {
   RuntimeActionStepDefinition,
-  RuntimeDependencyTargetRef,
-  RuntimeRefreshEvent
-} from "../../types";
+  RuntimeDependencyTargetRef
+} from "../../core/interfaces";
+import type { RuntimeRefreshEvent } from "../../core/types";
+import { createRefreshPlan } from "../../core/factories";
 import {
-  createRefreshPlan,
   createRuntimeTargetRef,
   getRuntimeTargetRefKey,
+  toStableTargetOrder
+} from "../../core/utils";
+import {
   type ParsedRuntimeActionDefinition,
   type ParsedRuntimeDatasourceDefinition,
   type ParsedRuntimePageDsl,
   type PlanRuntimeRefreshResult,
-  RuntimeDependencyGraphError,
   type RuntimeDependencyGraph,
-  type RuntimeDependencyGraphNode,
-  toStableTargetOrder
-} from "../../types";
+  type RuntimeDependencyGraphNode
+} from "../../core/interfaces";
+import { RuntimeDependencyGraphError } from "../../core/errors";
 
 export function buildDependencyGraph(parsedDsl: ParsedRuntimePageDsl): RuntimeDependencyGraph {
   const stateKeys = [...parsedDsl.stateKeys];

@@ -1,8 +1,8 @@
-import {
-  type Expression,
-  type ExpressionStateSource,
-  ExpressionResolverError
-} from "../../types";
+import type {
+  Expression,
+  ExpressionStateSource
+} from "../../core/types";
+import { ExpressionResolverError } from "../../core/errors";
 
 const EXPRESSION_PATTERN = /\{\{\s*([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*)\s*\}\}/g;
 const WHOLE_EXPRESSION_PATTERN = /^\{\{\s*([a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*)\s*\}\}$/;
