@@ -4,13 +4,13 @@ English | [中文文档](./README_zh.md)
 
 ## Package Role
 
-`kernel` is the structural metadata source for the platform. It owns MetaSchema, ViewDefinition, NodeDefinition, DatasourceDefinition, PermissionPolicy, schema validation, snapshot and migration DSL helpers, schema diff, SQL generation, version publishing, rollback, migration audit persistence, and the versioned meta definition registry.
+`kernel` is the structural metadata source for the platform. It owns MetaSchema, ViewDefinition, NodeDefinition, DatasourceDefinition, PermissionPolicy, schema validation, snapshot and migration DSL helpers, schema diff, SQL generation, version publishing, rollback, repository contracts, and the versioned meta definition registry.
 
 ## Responsibilities
 
 - Define table, field, relation, index, tenant, app, rule, and permission schema types.
 - Validate schemas before they are published.
-- Persist and retrieve versioned schemas through the Postgres repository.
+- Persist and retrieve versioned schemas through the repository port; concrete Postgres persistence lives in `@zhongmiao/meta-lc-kernel-adapter-postgres`.
 - Publish, retrieve, and diff versioned view, datasource, and permission policy definitions.
 - Generate schema SQL, migration SQL, API route manifests, and permission manifests.
 - Guard destructive migration statements and record migration audits.
@@ -18,7 +18,7 @@ English | [中文文档](./README_zh.md)
 ## Relationship With Other Packages
 
 - Upstream: `bff`, `runtime`, and `infra/scripts`.
-- Downstream: `meta_db`; kernel has no workspace package dependencies.
+- Downstream: repository implementations; kernel has no workspace package dependencies.
 - Migration lifecycle scripts reuse kernel migration compile and safety helpers from infra.
 - `bff` reads kernel registry definitions as a thin gateway and must not orchestrate metadata.
 - `query`, `permission`, `datasource`, `runtime`, `audit`, and `bff` must not become kernel dependencies.
@@ -47,8 +47,10 @@ pnpm --filter @zhongmiao/meta-lc-kernel test
 ## Boundary Notes
 
 - Kernel is the metadata source of truth and must stay independent from BFF orchestration.
-- DB access here is limited to meta-kernel persistence and migration audit responsibilities.
-- Kernel has no workspace package dependencies; Postgres access is limited to meta DB persistence.
+- The package root exposes `core` contracts and `application` APIs only; `domain` remains an internal semantic layer, not SDK public API.
+- SDK consumers must not deep import `src/domain` or `src/application` implementation files; package-local tests may do so only for internal coverage.
+- Kernel has no workspace package dependencies and no direct Postgres access.
+- Meta DB persistence is provided by repository ports and external adapters such as `@zhongmiao/meta-lc-kernel-adapter-postgres`.
 - Do not add HTTP, NestJS controller, runtime UI, or business execution logic here.
 - Do not execute runtime plans from meta registry APIs; registry only versions definitions.
 - Do not keep business demo registry seeds here; examples own their own seed metadata under `examples/*`.

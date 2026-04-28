@@ -45,9 +45,22 @@ pnpm --filter @zhongmiao/meta-lc-audit test
 
 The package root does not install or expose Postgres persistence by default. Consumers that import `@zhongmiao/meta-lc-audit/postgres` must install a compatible `pg` version in their composition root.
 
+```ts
+import {
+  PostgresRuntimeAuditSinkFactory,
+  createPostgresRuntimeAuditSink
+} from "@zhongmiao/meta-lc-audit/postgres";
+
+const sink = createPostgresRuntimeAuditSink(config);
+const sinkFromClassFactory = new PostgresRuntimeAuditSinkFactory().create(config);
+```
+
+Factory-first rule: composition roots should use `createPostgresRuntimeAuditSink` or `PostgresRuntimeAuditSinkFactory`. `PostgresRuntimeAuditSink` remains exported as an advanced API for low-level integration and package-local tests, but application wiring must not directly `new PostgresRuntimeAuditSink()`.
+
 ## Boundary Notes
 
 - Keep audit persistence pluggable through `AuditSink`.
 - Import Postgres persistence from `@zhongmiao/meta-lc-audit/postgres`, not the package root.
+- Do not deep import `src/postgres/*` from application code.
 - Keep runtime observability optional and non-blocking.
 - Do not couple this package to NestJS controllers or concrete BFF request handling.

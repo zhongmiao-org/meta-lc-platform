@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
+- docs(sdk): 补充 SDK consumer 禁止 deep import kernel domain/application 的约束。
+- chore(public-api): application 不再导出 services barrel，并通过 facade 包装 migration safety。
+- feat(core): 新增 MetaKernel repository factory contract，供 adapter implementation 实现。
+- chore(public-api): 通过 application facade 转发 migration safety，并将 package root 固定为仅导出 `core + application`。
 - chore(public-api): 将 package root 收窄为 core contract 以及明确的 kernel service、generator、migration safety API。
 - refactor(meta): 从 kernel 移除 orders demo registry seeds，并将 example-owned metadata 迁入 `examples/orders-demo`。
 - docs(readme): 补充 kernel 元数据归属与 meta_db 持久化的上下游关系说明。

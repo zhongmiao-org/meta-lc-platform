@@ -17,6 +17,12 @@ test('allows current explicit pg edge files', () => {
       peerDependencies: { pg: '^8.13.1' },
       peerDependenciesMeta: { pg: { optional: true } }
     }),
+    'packages/kernel-adapter-postgres/package.json': packageJson({
+      dependencies: { '@zhongmiao/meta-lc-kernel': 'workspace:*' },
+      devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
+    }),
     'packages/datasource/src/postgres/postgres.adapter.ts': 'import { Pool } from "pg";\n',
     'packages/datasource/src/postgres/postgres-org-scope.adapter.ts': 'import { Pool } from "pg";\n',
     'packages/audit/src/postgres/postgres-runtime-audit.sink.ts': 'import { Pool } from "pg";\n'
@@ -34,12 +40,12 @@ test('rejects pg declarations in non-db-boundary package manifests', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/query/package.json: pg is forbidden in dependencies outside audit/datasource/infra-persistence packages.',
-    'packages/query/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/infra-persistence packages.'
+    'packages/query/package.json: pg is forbidden in dependencies outside audit/datasource/kernel-adapter-postgres packages.',
+    'packages/query/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/kernel-adapter-postgres packages.'
   ]);
 });
 
-test('keeps audit and datasource pg dependencies as optional peers', () => {
+test('keeps postgres adapter package pg dependencies as optional peers', () => {
   const workspace = createWorkspace({
     'packages/datasource/package.json': packageJson({
       dependencies: { pg: '^8.13.1' },
@@ -48,14 +54,24 @@ test('keeps audit and datasource pg dependencies as optional peers', () => {
     'packages/audit/package.json': packageJson({
       devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
       peerDependencies: { pg: '^8.13.1' }
+    }),
+    'packages/kernel-adapter-postgres/package.json': packageJson({
+      dependencies: {
+        '@zhongmiao/meta-lc-kernel': 'workspace:*',
+        pg: '^8.13.1'
+      },
+      devDependencies: { '@types/pg': '^8.11.10' }
     })
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/audit/package.json: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.',
-    'packages/datasource/package.json: pg must be an optional peerDependency for postgres secondary entries, not a dependency.',
-    'packages/datasource/package.json: postgres secondary entry packages must declare pg in peerDependencies.',
-    'packages/datasource/package.json: postgres secondary entry packages must mark peerDependenciesMeta.pg.optional as true.'
+    'packages/audit/package.json: postgres adapter packages must mark peerDependenciesMeta.pg.optional as true.',
+    'packages/datasource/package.json: pg must be an optional peerDependency for postgres adapter packages, not a dependency.',
+    'packages/datasource/package.json: postgres adapter packages must declare pg in peerDependencies.',
+    'packages/datasource/package.json: postgres adapter packages must mark peerDependenciesMeta.pg.optional as true.',
+    'packages/kernel-adapter-postgres/package.json: pg must be an optional peerDependency for postgres adapter packages, not a dependency.',
+    'packages/kernel-adapter-postgres/package.json: postgres adapter packages must declare pg in peerDependencies.',
+    'packages/kernel-adapter-postgres/package.json: postgres adapter packages must mark peerDependenciesMeta.pg.optional as true.'
   ]);
 });
 
@@ -65,7 +81,7 @@ test('rejects pg imports outside db-boundary packages', () => {
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
-    'packages/runtime/src/index.ts: direct pg import is forbidden outside audit/datasource/infra-persistence packages.'
+    'packages/runtime/src/index.ts: direct pg import is forbidden outside audit/datasource/kernel-adapter-postgres packages.'
   ]);
 });
 
@@ -76,23 +92,25 @@ test('rejects unapproved pg imports inside db-boundary packages', () => {
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/bff/src/random-db-helper.ts: unsupported BFF top-level source file.',
-    'packages/bff/src/random-db-helper.ts: direct pg import is forbidden outside audit/datasource/infra-persistence packages.',
+    'packages/bff/src/random-db-helper.ts: direct pg import is forbidden outside audit/datasource/kernel-adapter-postgres packages.',
     'packages/bff/src/random-db-helper.ts: BFF cannot depend on pg.'
   ]);
 });
 
-test('allows infra-persistence as the only kernel postgres integration edge', () => {
+test('allows kernel-adapter-postgres as the only kernel postgres integration edge', () => {
   const allowed = createWorkspace({
-    'packages/infra-persistence/package.json': packageJson({
+    'packages/kernel-adapter-postgres/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-kernel': 'workspace:*',
-        pg: '^8.13.1'
+        '@zhongmiao/meta-lc-kernel': 'workspace:*'
       },
       devDependencies: {
+        pg: '^8.13.1',
         '@types/pg': '^8.11.10'
-      }
+      },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
-    'packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts': [
+    'packages/kernel-adapter-postgres/src/postgres/utils/postgres-pool.util.ts': [
       'import { Pool } from "pg";',
       'import type { MetaKernelRepositoryPort } from "@zhongmiao/meta-lc-kernel";'
     ].join('\n')
@@ -106,20 +124,23 @@ test('allows infra-persistence as the only kernel postgres integration edge', ()
       }
     }),
     'packages/kernel/src/infra/postgres.ts': 'import { Pool } from "pg";\n',
-    'packages/infra-persistence/package.json': packageJson({
+    'packages/kernel-adapter-postgres/package.json': packageJson({
       dependencies: {
         '@zhongmiao/meta-lc-kernel': 'workspace:*',
         '@zhongmiao/meta-lc-runtime': 'workspace:*'
-      }
+      },
+      devDependencies: { pg: '^8.13.1', '@types/pg': '^8.11.10' },
+      peerDependencies: { pg: '^8.13.1' },
+      peerDependenciesMeta: { pg: { optional: true } }
     }),
-    'packages/infra-persistence/src/bad.ts': 'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";\n'
+    'packages/kernel-adapter-postgres/src/bad.ts': 'import { RuntimeExecutor } from "@zhongmiao/meta-lc-runtime";\n'
   });
 
   assert.deepEqual(checkWorkspace(rejected), [
-    'packages/infra-persistence/package.json: infra-persistence dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
-    'packages/infra-persistence/src/bad.ts: infra-persistence cannot depend on @zhongmiao/meta-lc-runtime.',
-    'packages/kernel/package.json: pg is forbidden in dependencies outside audit/datasource/infra-persistence packages.',
-    'packages/kernel/src/infra/postgres.ts: direct pg import is forbidden outside audit/datasource/infra-persistence packages.'
+    'packages/kernel/package.json: pg is forbidden in dependencies outside audit/datasource/kernel-adapter-postgres packages.',
+    'packages/kernel/src/infra/postgres.ts: direct pg import is forbidden outside audit/datasource/kernel-adapter-postgres packages.',
+    'packages/kernel-adapter-postgres/package.json: kernel-adapter-postgres dependency "@zhongmiao/meta-lc-runtime" is forbidden in dependencies.',
+    'packages/kernel-adapter-postgres/src/bad.ts: kernel-adapter-postgres cannot depend on @zhongmiao/meta-lc-runtime.'
   ]);
 });
 
@@ -150,7 +171,8 @@ test('rejects package deep imports while allowing approved secondary entries', (
     'apps/bff-server/src/main.ts': [
       'import { createPostgresDatasourceAdapter } from "@zhongmiao/meta-lc-datasource/postgres";',
       'import { PostgresRuntimeAuditSink } from "@zhongmiao/meta-lc-audit/postgres";'
-    ].join('\n')
+    ].join('\n'),
+    'packages/bff/src/controller/ws/runtime/event.type.ts': 'import type { RuntimeManagerExecutedEvent } from "@zhongmiao/meta-lc-runtime/core";\n'
   });
   assert.deepEqual(checkWorkspace(allowed), []);
 
@@ -173,6 +195,18 @@ test('keeps package exports limited to approved public entrypoints', () => {
         '.': {
           types: './dist/index.d.ts',
           default: './dist/index.js'
+        }
+      }
+    }),
+    'packages/runtime/package.json': packageJson({
+      exports: {
+        '.': {
+          types: './dist/index.d.ts',
+          default: './dist/index.js'
+        },
+        './core': {
+          types: './dist/core/index.d.ts',
+          default: './dist/core/index.js'
         }
       }
     }),
@@ -221,26 +255,36 @@ test('rejects removed transitional packages and references', () => {
     'packages/contracts/package.json': packageJson({
       dependencies: {}
     }),
+    'packages/infra-persistence/package.json': packageJson({
+      dependencies: {}
+    }),
     'packages/shared/src/index.ts': 'export const shared = true;\n',
     'packages/runtime/package.json': packageJson({
       dependencies: {
         '@zhongmiao/meta-lc-contracts': 'workspace:*',
         '@zhongmiao/meta-lc-shared': 'workspace:*',
         '@zhongmiao/meta-lc-platform': 'workspace:*',
-        '@zhongmiao/meta-lc-migration': 'workspace:*'
+        '@zhongmiao/meta-lc-migration': 'workspace:*',
+        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
       }
     }),
-    'packages/runtime/src/bad.ts': 'import type { ViewDefinition } from "@zhongmiao/meta-lc-contracts";\n'
+    'packages/runtime/src/bad.ts': [
+      'import type { ViewDefinition } from "@zhongmiao/meta-lc-contracts";',
+      'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";'
+    ].join('\n')
   });
 
   assert.deepEqual(checkWorkspace(workspace), [
     'packages/contracts: forbidden transitional package directory.',
     'packages/shared: forbidden transitional package directory.',
+    'packages/infra-persistence: forbidden transitional package directory.',
     'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-contracts" in dependencies.',
     'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-shared" in dependencies.',
     'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-platform" in dependencies.',
     'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-migration" in dependencies.',
-    'packages/runtime/src/bad.ts: forbidden transitional package reference "@zhongmiao/meta-lc-contracts".'
+    'packages/runtime/package.json: forbidden transitional dependency "@zhongmiao/meta-lc-infra-persistence" in dependencies.',
+    'packages/runtime/src/bad.ts: forbidden transitional package reference "@zhongmiao/meta-lc-contracts".',
+    'packages/runtime/src/bad.ts: forbidden transitional package reference "@zhongmiao/meta-lc-infra-persistence".'
   ]);
 });
 
@@ -361,7 +405,7 @@ test('enforces common package core/domain/application boundaries', () => {
     'packages/kernel/src/core/types/bad.ts: core files must not import domain/application/infra (../../domain/schema-diff).',
     'packages/kernel/src/domain/schema-diff.ts: implementation files must not export interface declarations.',
     'packages/kernel/src/index.ts: package root must not export infra.',
-    'packages/kernel/src/index.ts: kernel root may only export-star ./core.',
+    'packages/kernel/src/index.ts: kernel root may only export-star ./application, ./core.',
     'packages/query/src/domain/bad.ts: domain files must not depend on @zhongmiao/meta-lc-runtime.',
     'packages/query/src/domain/bad.ts: domain files must not import infra (../infra/query.adapter).',
     'packages/query/src/domain/bad.ts: query cannot depend on @zhongmiao/meta-lc-runtime.',
@@ -399,12 +443,7 @@ test('keeps kernel query and permission root public APIs narrow', () => {
   const allowed = createWorkspace({
     'packages/kernel/src/index.ts': [
       'export * from "./core";',
-      'export { MetaKernelService } from "./application/services/meta-kernel.service";',
-      'export { createInMemoryMetaKernelService } from "./application/factories/in-memory-meta-kernel.factory";',
-      'export { compileApiRoutes } from "./application/generators/api-generator";',
-      'export { compilePermissionManifest } from "./application/generators/permission-generator";',
-      'export { compileSchemaSql } from "./application/generators/sql-generator";',
-      'export { assertMigrationSafety, createMigrationSafetyReport } from "./domain/migration-safety";'
+      'export * from "./application";'
     ].join('\n'),
     'packages/query/src/index.ts': [
       'export * from "./core";',
@@ -437,7 +476,7 @@ test('keeps kernel query and permission root public APIs narrow', () => {
   });
 
   assert.deepEqual(checkWorkspace(rejected), [
-    'packages/kernel/src/index.ts: kernel root may only export-star ./core.',
+    'packages/kernel/src/index.ts: kernel root may only export-star ./application, ./core.',
     'packages/kernel/src/index.ts: kernel root export "validateSchema" is not public API.',
     'packages/permission/src/index.ts: permission root may only export-star ./core.',
     'packages/permission/src/index.ts: permission root export "buildPermissionAst" is not public API.',
@@ -446,13 +485,41 @@ test('keeps kernel query and permission root public APIs narrow', () => {
   ]);
 });
 
+test('keeps kernel application public API facade-first', () => {
+  const allowed = createWorkspace({
+    'packages/kernel/src/application/index.ts': [
+      'export * from "./facades";',
+      'export * from "./factories";',
+      'export * from "./generators/api-generator";',
+      'export * from "./generators/permission-generator";',
+      'export * from "./generators/sql-generator";'
+    ].join('\n'),
+    'packages/kernel/src/application/facades/migration-safety.facade.ts': [
+      'import { assertMigrationSafety as assertMigrationSafetyDomain } from "../../domain/migration-safety";',
+      'export function assertMigrationSafety() { return assertMigrationSafetyDomain([], {}); }'
+    ].join('\n')
+  });
+  assert.deepEqual(checkWorkspace(allowed), []);
+
+  const rejected = createWorkspace({
+    'packages/kernel/src/application/index.ts': [
+      'export * from "./facades";',
+      'export * from "./services";'
+    ].join('\n'),
+    'packages/kernel/src/application/facades/migration-safety.facade.ts': 'export { assertMigrationSafety, createMigrationSafetyReport } from "../../domain/migration-safety";\n'
+  });
+
+  assert.deepEqual(checkWorkspace(rejected), [
+    'packages/kernel/src/application/facades/migration-safety.facade.ts: migration safety facade must wrap domain functions instead of re-exporting them.',
+    'packages/kernel/src/application/index.ts: kernel application public API must not export services barrel.'
+  ]);
+});
+
 test('enforces common package file semantic purity', () => {
   const allowed = createWorkspace({
     'packages/runtime/src/core/index.ts': 'export * from "./types";\nexport * from "./interfaces";\n',
     'packages/runtime/src/index.ts': [
-      'export * from "./core";',
-      'export { executeRuntimeGatewayView, executeRuntimeView } from "./application/facades/runtime-view.facade";',
-      'export { executeRuntimeInteractionPlan, createRecordingRuntimeInteractionPort } from "./application/facades/runtime-interaction.facade";'
+      'export * from "./application/facades";'
     ].join('\n'),
     'packages/runtime/src/core/interfaces/runtime.interface.ts': 'import type { RuntimeContext } from "../types";\nexport interface RuntimePort { run(context: RuntimeContext): void; }\n',
     'packages/runtime/src/core/types/runtime.type.ts': 'import type { RuntimePort } from "../interfaces";\nexport type RuntimeContext = Record<string, unknown>;\nexport type RuntimePortLike = RuntimePort;\n',
@@ -468,7 +535,6 @@ test('enforces common package file semantic purity', () => {
     'packages/kernel/src/core/types/migration-safety.types.ts': 'export interface MigrationGuardOptions {}\n',
     'packages/runtime/src/index.ts': [
       'export * from "./core";',
-      'export * from "./application";',
       'export { RuntimeExecutor } from "./application/executor/runtime-executor";'
     ].join('\n'),
     'packages/runtime/src/domain/graph/bad.ts': 'import { x } from "../../core";\n',
@@ -496,7 +562,7 @@ test('enforces common package file semantic purity', () => {
     'packages/query/src/core/types/bad.type.ts: core types files may not export interface declarations.',
     'packages/runtime/src/core/types/bad.ts: core types files may not export runtime values.',
     'packages/runtime/src/domain/graph/bad.ts: package-internal source must not import the core root barrel (../../core).',
-    'packages/runtime/src/index.ts: runtime root may only export-star ./core.',
+    'packages/runtime/src/index.ts: runtime root may only export-star ./application/facades.',
     'packages/runtime/src/index.ts: runtime root export "RuntimeExecutor" is not public API.'
   ]);
 });
@@ -643,10 +709,10 @@ test('rejects BFF data dependencies while allowing thin controller-to-infra dele
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-query" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-audit" is forbidden in dependencies.',
     'packages/bff/package.json: BFF dependency "pg" is forbidden in dependencies.',
-    'packages/bff/package.json: pg is forbidden in dependencies outside audit/datasource/infra-persistence packages.',
+    'packages/bff/package.json: pg is forbidden in dependencies outside audit/datasource/kernel-adapter-postgres packages.',
     'packages/bff/package.json: BFF dependency "@types/pg" is forbidden in devDependencies.',
-    'packages/bff/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/infra-persistence packages.',
-    'packages/bff/src/controller/http/bad.ts: direct pg import is forbidden outside audit/datasource/infra-persistence packages.',
+    'packages/bff/package.json: @types/pg is forbidden in devDependencies outside audit/datasource/kernel-adapter-postgres packages.',
+    'packages/bff/src/controller/http/bad.ts: direct pg import is forbidden outside audit/datasource/kernel-adapter-postgres packages.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-datasource.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-permission.',
     'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-query.',
@@ -725,19 +791,19 @@ test('rejects final app and package dependency direction violations', () => {
   ]);
 });
 
-test('keeps infra-persistence composition-only for packages while allowing apps', () => {
+test('keeps kernel-adapter-postgres composition-only for packages while allowing apps', () => {
   const allowed = createWorkspace({
     'apps/bff-server/package.json': packageJson({
       dependencies: {
         '@zhongmiao/meta-lc-bff': 'workspace:*',
         '@zhongmiao/meta-lc-datasource': 'workspace:*',
         '@zhongmiao/meta-lc-audit': 'workspace:*',
-        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+        '@zhongmiao/meta-lc-kernel-adapter-postgres': 'workspace:*'
       }
     }),
     'apps/bff-server/src/main.ts': [
       'import { startBffServer } from "@zhongmiao/meta-lc-bff";',
-      'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";'
+      'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";'
     ].join('\n')
   });
   assert.deepEqual(checkWorkspace(allowed), []);
@@ -745,67 +811,67 @@ test('keeps infra-persistence composition-only for packages while allowing apps'
   const workspace = createWorkspace({
     'packages/kernel/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+        '@zhongmiao/meta-lc-kernel-adapter-postgres': 'workspace:*'
       }
     }),
-    'packages/kernel/src/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/kernel/src/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";\n',
     'packages/runtime/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+        '@zhongmiao/meta-lc-kernel-adapter-postgres': 'workspace:*'
       }
     }),
-    'packages/runtime/src/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/runtime/src/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";\n',
     'packages/bff/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+        '@zhongmiao/meta-lc-kernel-adapter-postgres': 'workspace:*'
       }
     }),
-    'packages/bff/src/controller/http/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/bff/src/controller/http/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";\n',
     'packages/query/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+        '@zhongmiao/meta-lc-kernel-adapter-postgres': 'workspace:*'
       }
     }),
-    'packages/query/src/domain/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/query/src/domain/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";\n',
     'packages/permission/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+        '@zhongmiao/meta-lc-kernel-adapter-postgres': 'workspace:*'
       }
     }),
-    'packages/permission/src/domain/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/permission/src/domain/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";\n',
     'packages/datasource/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+        '@zhongmiao/meta-lc-kernel-adapter-postgres': 'workspace:*'
       },
       peerDependencies: { pg: '^8.13.1' },
       peerDependenciesMeta: { pg: { optional: true } }
     }),
-    'packages/datasource/src/infra/adapters/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n',
+    'packages/datasource/src/infra/adapters/bad.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";\n',
     'packages/audit/package.json': packageJson({
       dependencies: {
-        '@zhongmiao/meta-lc-infra-persistence': 'workspace:*'
+        '@zhongmiao/meta-lc-kernel-adapter-postgres': 'workspace:*'
       },
       peerDependencies: { pg: '^8.13.1' },
       peerDependenciesMeta: { pg: { optional: true } }
     }),
-    'packages/audit/src/application/services/bad.service.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-infra-persistence";\n'
+    'packages/audit/src/application/services/bad.service.ts': 'import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";\n'
   });
 
   assert.deepEqual(checkWorkspace(workspace).sort(), [
-    'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
-    'packages/audit/src/application/services/bad.service.ts: audit cannot depend on @zhongmiao/meta-lc-infra-persistence.',
-    'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
-    'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-infra-persistence.',
-    'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
-    'packages/datasource/src/infra/adapters/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-infra-persistence.',
-    'packages/kernel/package.json: kernel dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
-    'packages/kernel/src/bad.ts: kernel cannot depend on @zhongmiao/meta-lc-infra-persistence.',
-    'packages/permission/package.json: permission dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
-    'packages/permission/src/domain/bad.ts: permission cannot depend on @zhongmiao/meta-lc-infra-persistence.',
-    'packages/query/package.json: query dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
-    'packages/query/src/domain/bad.ts: query cannot depend on @zhongmiao/meta-lc-infra-persistence.',
-    'packages/runtime/package.json: runtime dependency "@zhongmiao/meta-lc-infra-persistence" is forbidden in dependencies.',
-    'packages/runtime/src/bad.ts: runtime cannot depend on @zhongmiao/meta-lc-infra-persistence.'
+    'packages/audit/package.json: audit dependency "@zhongmiao/meta-lc-kernel-adapter-postgres" is forbidden in dependencies.',
+    'packages/audit/src/application/services/bad.service.ts: audit cannot depend on @zhongmiao/meta-lc-kernel-adapter-postgres.',
+    'packages/bff/package.json: BFF dependency "@zhongmiao/meta-lc-kernel-adapter-postgres" is forbidden in dependencies.',
+    'packages/bff/src/controller/http/bad.ts: BFF cannot depend on @zhongmiao/meta-lc-kernel-adapter-postgres.',
+    'packages/datasource/package.json: datasource dependency "@zhongmiao/meta-lc-kernel-adapter-postgres" is forbidden in dependencies.',
+    'packages/datasource/src/infra/adapters/bad.ts: datasource cannot depend on @zhongmiao/meta-lc-kernel-adapter-postgres.',
+    'packages/kernel/package.json: kernel dependency "@zhongmiao/meta-lc-kernel-adapter-postgres" is forbidden in dependencies.',
+    'packages/kernel/src/bad.ts: kernel cannot depend on @zhongmiao/meta-lc-kernel-adapter-postgres.',
+    'packages/permission/package.json: permission dependency "@zhongmiao/meta-lc-kernel-adapter-postgres" is forbidden in dependencies.',
+    'packages/permission/src/domain/bad.ts: permission cannot depend on @zhongmiao/meta-lc-kernel-adapter-postgres.',
+    'packages/query/package.json: query dependency "@zhongmiao/meta-lc-kernel-adapter-postgres" is forbidden in dependencies.',
+    'packages/query/src/domain/bad.ts: query cannot depend on @zhongmiao/meta-lc-kernel-adapter-postgres.',
+    'packages/runtime/package.json: runtime dependency "@zhongmiao/meta-lc-kernel-adapter-postgres" is forbidden in dependencies.',
+    'packages/runtime/src/bad.ts: runtime cannot depend on @zhongmiao/meta-lc-kernel-adapter-postgres.'
   ].sort());
 });
 

@@ -14,7 +14,9 @@ import {
 import { HttpException } from "@nestjs/common";
 import {
   RuntimeGatewayRequestError,
-  RuntimeViewNotFoundError,
+  RuntimeViewNotFoundError
+} from "@zhongmiao/meta-lc-runtime/core";
+import {
   executeRuntimeGatewayView
 } from "@zhongmiao/meta-lc-runtime";
 import { BFF_RUNTIME_GATEWAY_RUNNER } from "../../common/constants/gateway-provider.constant";

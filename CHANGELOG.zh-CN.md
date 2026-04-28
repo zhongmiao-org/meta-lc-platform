@@ -2,7 +2,15 @@
 
 ## [Unreleased]
 
-- chore(boundaries): 加固 SDK export map、package deep import 守护与 infra-persistence composition-only 检查。
+## 0.2.0-beta.0 (2026-04-28)
+
+- docs(sdk): 新增 SDK 发布 checklist，用于 Beta 封板校验。
+- docs(sdk): 补充 factory-first adapter 使用、Postgres class advanced API 与业务方 deep import 约束。
+- chore(sdk): 收窄 runtime/kernel public API，并统一 Postgres adapter factory 策略。
+- feat(kernel): 新增 MetaKernel repository factory contract，并由 Postgres adapter 提供实现。
+- refactor(adapter): 将 kernel Postgres adapter 拆分为 repository、factory、schema、mapper、interface、type 与 utility 语义文件。
+- chore(sdk): 收口 kernel/runtime SDK root export，并重命名 Postgres kernel adapter 包。
+- chore(boundaries): 加固 SDK export map、package deep import 守护与 kernel-adapter-postgres composition-only 检查。
 - chore(sdk): 将 audit 与 datasource secondary entry 的 Postgres 支持调整为可选 peer dependency。
 - fix(ci): 在收窄 package public export 后，让 orders demo query gate 改为使用已构建的包入口运行。
 - chore(public-api): 将 kernel、query、permission package root export 收窄为明确的 SDK-facing 符号。

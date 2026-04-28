@@ -1,4 +1,4 @@
-import type { RuntimeManagerExecutedEvent } from "@zhongmiao/meta-lc-runtime";
+import type { RuntimeManagerExecutedEvent } from "@zhongmiao/meta-lc-runtime/core";
 import { createClient } from "redis";
 import { parseRuntimeManagerExecutedEvent } from "./replay.store";
 import type {

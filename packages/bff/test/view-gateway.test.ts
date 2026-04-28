@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { BadRequestException, InternalServerErrorException, NotFoundException } from "@nestjs/common";
-import { RuntimeGatewayRequestError, RuntimeViewNotFoundError } from "@zhongmiao/meta-lc-runtime";
+import { RuntimeGatewayRequestError, RuntimeViewNotFoundError } from "@zhongmiao/meta-lc-runtime/core";
 import { ViewController } from "../src/controller/http/view.controller";
 import type { ViewApiRequest } from "../src/controller/http/view.request.type";
 

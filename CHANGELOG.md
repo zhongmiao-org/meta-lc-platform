@@ -2,7 +2,15 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
-- chore(boundaries): harden SDK export maps, package deep-import guards, and infra-persistence composition-only checks.
+## 0.2.0-beta.0 (2026-04-28)
+
+- docs(sdk): add the SDK release checklist for beta freeze validation.
+- docs(sdk): document factory-first adapter usage, advanced Postgres classes, and consumer deep-import rules.
+- chore(sdk): narrow runtime/kernel public APIs and standardize Postgres adapter factories.
+- feat(kernel): add a MetaKernel repository factory contract with a Postgres adapter implementation.
+- refactor(adapter): split the kernel Postgres adapter into semantic repository, factory, schema, mapper, interface, type, and utility files.
+- chore(sdk): finalize kernel/runtime SDK root exports and rename the Postgres kernel adapter package.
+- chore(boundaries): harden SDK export maps, package deep-import guards, and kernel-adapter-postgres composition-only checks.
 - chore(sdk): make Postgres support an optional peer for audit and datasource secondary entries.
 - fix(ci): run the orders demo query gate against built package entrypoints after tightening package public exports.
 - chore(public-api): narrow kernel, query, and permission package root exports to explicit SDK-facing symbols.

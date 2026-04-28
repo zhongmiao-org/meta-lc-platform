@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
 - chore(public-api): 将 package root 收窄为 core contract 与明确的 permission engine 入口。
 - docs(readme): 明确 permission 上下游关系与仅 type-only 依赖 query AST/types 的边界。
 - fix(ci): 在 clean runner 的 permission package-local test 前先构建 query。

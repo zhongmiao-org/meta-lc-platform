@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import fs from "node:fs";
 
 const [baseSha, headSha] = process.argv.slice(2);
 if (!baseSha || !headSha) {
@@ -23,6 +24,9 @@ for (const file of changedFiles) {
 
   const packageMatch = file.match(/^packages\/([^/]+)\//);
   if (packageMatch) {
+    if (!fs.existsSync(`packages/${packageMatch[1]}`)) {
+      continue;
+    }
     required.add(`packages/${packageMatch[1]}/CHANGELOG.md`);
     required.add(`packages/${packageMatch[1]}/CHANGELOG.zh-CN.md`);
     continue;

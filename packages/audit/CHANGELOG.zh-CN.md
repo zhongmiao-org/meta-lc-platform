@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
+- docs(sdk): 明确 Postgres sink factory-first 使用方式，并将 sink class 标记为 advanced API。
+- feat(factory): 新增 audit sink factory contract，并提供 Postgres sink 函数式与 class factory。
 - chore(boundaries): 围绕 audit root 与 Postgres secondary entry 锁定 package exports 和 deep import 规则。
 - chore(sdk): 移除空的 utils root export，并将 Postgres sink 入口使用的 `pg` 调整为可选 peer。
 - refactor(public-api): 将 Postgres audit sink 移到 `@zhongmiao/meta-lc-audit/postgres` secondary entry。

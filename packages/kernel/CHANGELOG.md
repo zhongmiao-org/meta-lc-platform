@@ -2,6 +2,12 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
+- docs(sdk): document kernel domain/application deep-import constraints for SDK consumers.
+- chore(public-api): stop exporting the services barrel from application and wrap migration safety through a facade.
+- feat(core): add a MetaKernel repository factory contract for adapter implementations.
+- chore(public-api): expose migration safety through the application facade and make the package root `core + application` only.
 - chore(public-api): narrow the package root to core contracts and explicit kernel service, generator, and migration safety APIs.
 - refactor(meta): remove orders demo registry seeds from kernel and move example-owned metadata to `examples/orders-demo`.
 - docs(readme): add kernel upstream/downstream notes for metadata ownership and meta_db persistence.

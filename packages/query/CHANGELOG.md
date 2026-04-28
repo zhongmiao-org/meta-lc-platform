@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
 - chore(public-api): narrow the package root to core contracts and explicit query compiler entrypoints.
 - docs(readme): clarify query upstream/downstream relationships and AST-to-SQL compiler-only boundaries.
 - chore(boundaries): add final Nx layer tags and lock query as a dependency-free AST/SQL compiler package.

@@ -2,6 +2,11 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
+- docs(sdk): document runtime facade/core entry usage and internal implementation deep-import constraints.
+- chore(public-api): make the runtime root facade-only and expose runtime contracts through the `./core` subpath.
+- refactor(public-api): make the runtime package root export only `core` and the SDK-facing `application/facades` entry.
 - refactor(gateway): remove default orders demo seeds and mutation adapter wiring from the runtime gateway facade; demo wiring is now injected by `examples/orders-demo`.
 - refactor(public-api): narrow the runtime package root to core contracts and the runtime view facade.
 - chore(package): align runtime package output to `dist/index.js` and `dist/index.d.ts`.
