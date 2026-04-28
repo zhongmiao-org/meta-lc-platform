@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- fix(ci): consume the compatibility config parameter explicitly so the audit service passes zero-warning lint.
+
 ## 0.2.0 (2026-04-28)
 
 - docs(sdk): mark Postgres sink factories as factory-first and the sink class as advanced API.
