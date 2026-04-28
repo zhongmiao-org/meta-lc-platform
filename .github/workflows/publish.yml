@@ -7,6 +7,7 @@ on:
 
 env:
   PNPM_VERSION: 10.14.0
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   detect-release:
@@ -106,7 +107,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm run -s release:publish-packages -- --version "${{ needs.detect-release.outputs.version }}"
       - name: Publish GitHub release
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           RELEASE_TAG: ${{ needs.detect-release.outputs.tag }}
           RELEASE_VERSION: ${{ needs.detect-release.outputs.version }}
