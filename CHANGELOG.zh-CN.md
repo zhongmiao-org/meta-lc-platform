@@ -2,8 +2,7 @@
 
 ## [Unreleased]
 
-## 0.2.0 (2026-04-28)
-
+- fix(release): 将多包发布流程调整为基于 Unreleased 生成草稿、生成 release PR，并在 main 分支合并后发布。
 - docs(sdk): 新增 SDK 发布 checklist，用于 Beta 封板校验。
 - docs(sdk): 补充 factory-first adapter 使用、Postgres class advanced API 与业务方 deep import 约束。
 - chore(sdk): 收窄 runtime/kernel public API，并统一 Postgres adapter factory 策略。
@@ -62,7 +61,6 @@
 - feat(bff): 新增可配置的 Runtime WebSocket broadcast bus 与 Redis pub/sub fanout。
 - feat(bff): 新增 Runtime WebSocket 运维状态与健康检查可见性。
 - feat(bff): 新增 Runtime WebSocket 更新的 Redis Stream cursor replay。
-
 ## 0.1.0 (2026-04-18)
 
 - Meta-Driven middleware monorepo 的首个内部基线版本。

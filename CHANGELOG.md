@@ -2,8 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
-## 0.2.0 (2026-04-28)
-
+- fix(release): switch the multi-package release flow to Unreleased draft notes, generated release PRs, and main-branch publishing.
 - docs(sdk): add the SDK release checklist for beta freeze validation.
 - docs(sdk): document factory-first adapter usage, advanced Postgres classes, and consumer deep-import rules.
 - chore(sdk): narrow runtime/kernel public APIs and standardize Postgres adapter factories.
@@ -62,7 +61,6 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(bff): add a configurable Runtime WebSocket broadcast bus with Redis pub/sub fanout.
 - feat(bff): add Runtime WebSocket operations status and health visibility.
 - feat(bff): add Redis Stream cursor replay for Runtime WebSocket updates.
-
 ## 0.1.0 (2026-04-18)
 
 - Initial internal baseline for the Meta-Driven middleware monorepo.

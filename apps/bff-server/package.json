@@ -1,6 +1,6 @@
 {
   "name": "@zhongmiao/meta-lc-bff-server",
-  "version": "0.2.0",
+  "version": "0.1.1",
   "private": true,
   "type": "commonjs",
   "scripts": {
@@ -21,6 +21,8 @@
   "main": "dist/apps/bff-server/src/main.js",
   "types": "dist/apps/bff-server/src/main.d.ts",
   "nx": {
-    "tags": ["layer:app"]
+    "tags": [
+      "layer:app"
+    ]
   }
 }

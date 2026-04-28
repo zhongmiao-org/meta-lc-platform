@@ -11,7 +11,7 @@ env:
 
 jobs:
   changelog-gate:
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' && !startsWith(github.head_ref, 'chore/release-') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -59,84 +59,3 @@ jobs:
           LC_DB_AUDIT_NAME: ${{ vars.LC_DB_AUDIT_NAME }}
           LC_DB_SSL: ${{ vars.LC_DB_SSL || 'false' }}
         run: pnpm query-gate
-
-  draft-release:
-    if: ${{ github.event_name == 'push' }}
-    needs:
-      - build-test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          package-manager-cache: false
-      - run: corepack enable
-      - run: corepack prepare "pnpm@${PNPM_VERSION}" --activate
-      - run: pnpm install --frozen-lockfile
-      - name: Compose release draft
-        id: notes
-        run: |
-          set +e
-          NOTES="$(pnpm run -s release:draft-notes)"
-          EXIT_CODE="$?"
-          set -e
-
-          if [[ "${EXIT_CODE}" -ne 0 ]]; then
-            echo "skipped=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          VERSION="$(pnpm run -s release:next-version)"
-          TAG="v${VERSION}"
-          {
-            echo "skipped=false"
-            echo "tag=${TAG}"
-            echo "body<<EOF_BODY"
-            printf '%s\n' "${NOTES}"
-            echo "EOF_BODY"
-          } >> "$GITHUB_OUTPUT"
-      - name: Upsert draft release
-        if: ${{ steps.notes.outputs.skipped != 'true' }}
-        uses: actions/github-script@v7
-        env:
-          RELEASE_TAG: ${{ steps.notes.outputs.tag }}
-          RELEASE_BODY: ${{ steps.notes.outputs.body }}
-        with:
-          script: |
-            const tag = process.env.RELEASE_TAG;
-            const body = process.env.RELEASE_BODY || '';
-            const releases = await github.paginate(github.rest.repos.listReleases, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 100
-            });
-            const existing = releases.find((release) => release.tag_name === tag && release.draft);
-            if (existing) {
-              await github.rest.repos.updateRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: existing.id,
-                tag_name: tag,
-                target_commitish: 'main',
-                name: tag,
-                body,
-                draft: true,
-                prerelease: false
-              });
-            } else {
-              await github.rest.repos.createRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag_name: tag,
-                target_commitish: 'main',
-                name: tag,
-                body,
-                draft: true,
-                prerelease: false
-              });
-            }

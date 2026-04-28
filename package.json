@@ -1,6 +1,6 @@
 {
   "name": "meta-lc-platform",
-  "version": "0.2.0",
+  "version": "0.1.1",
   "private": true,
   "packageManager": "pnpm@10.14.0",
   "scripts": {
@@ -23,7 +23,10 @@
     "release:status": "changeset status --verbose",
     "release:draft-notes": "node scripts/release/compose-draft-from-unreleased.mjs",
     "release:draft-notes:json": "node scripts/release/compose-draft-from-unreleased.mjs --json",
+    "release:draft-notes:version": "node scripts/release/compose-draft-from-version.mjs",
     "release:finalize-unreleased": "node scripts/release/finalize-unreleased-changelogs.mjs",
+    "release:prepare-pr": "node scripts/release/prepare-release-pr.mjs",
+    "release:publish-packages": "node scripts/release/publish-selected-packages.mjs",
     "release:next-version": "node -p \"require('./package.json').version\"",
     "version:check": "node scripts/release/version-consistency.mjs",
     "changelog:gate": "node scripts/check-changelog-gate.mjs"
