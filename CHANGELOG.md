@@ -2,7 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - docs(sdk): add the SDK release checklist for beta freeze validation.
 - docs(sdk): document factory-first adapter usage, advanced Postgres classes, and consumer deep-import rules.

@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - docs(sdk): 明确 Postgres sink factory-first 使用方式，并将 sink class 标记为 advanced API。
 - feat(factory): 新增 audit sink factory contract，并提供 Postgres sink 函数式与 class factory。

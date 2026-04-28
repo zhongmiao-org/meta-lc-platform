@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - docs(sdk): 明确 Postgres datasource factory-first 使用方式，并将 adapter class 标记为 advanced API。
 - feat(factory): 新增 datasource adapter factory contract 与 Postgres adapter class factory。

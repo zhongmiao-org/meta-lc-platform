@@ -1,11 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
-import { readUnreleasedFromFile } from "./changelog-utils.mjs";
+import { readUnreleasedFromFile, readVersionFromFile } from "./changelog-utils.mjs";
 
 const ROOT = process.cwd();
 const PACKAGES_DIR = path.join(ROOT, "packages");
 
-export function loadWorkspacePackages() {
+function readReleaseNotes(filePath, version) {
+  return readUnreleasedFromFile(filePath) || readVersionFromFile(filePath, version);
+}
+
+export function loadWorkspacePackages(version = "") {
   return fs
     .readdirSync(PACKAGES_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -23,18 +27,18 @@ export function loadWorkspacePackages() {
         packageJsonPath: path.relative(ROOT, packageJsonPath),
         changelogPathEn: path.relative(ROOT, changelogPathEn),
         changelogPathZh: path.relative(ROOT, changelogPathZh),
-        unreleasedEn: readUnreleasedFromFile(changelogPathEn),
-        unreleasedZh: readUnreleasedFromFile(changelogPathZh)
+        unreleasedEn: readReleaseNotes(changelogPathEn, version),
+        unreleasedZh: readReleaseNotes(changelogPathZh, version)
       };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
-export function loadRootReleaseNotes() {
+export function loadRootReleaseNotes(version = "") {
   return {
     changelogPathEn: "CHANGELOG.md",
     changelogPathZh: "CHANGELOG.zh-CN.md",
-    unreleasedEn: readUnreleasedFromFile(path.join(ROOT, "CHANGELOG.md")),
-    unreleasedZh: readUnreleasedFromFile(path.join(ROOT, "CHANGELOG.zh-CN.md"))
+    unreleasedEn: readReleaseNotes(path.join(ROOT, "CHANGELOG.md"), version),
+    unreleasedZh: readReleaseNotes(path.join(ROOT, "CHANGELOG.zh-CN.md"), version)
   };
 }

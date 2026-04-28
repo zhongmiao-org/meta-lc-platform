@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - docs(sdk): 补充 runtime facade/core 入口用法与内部实现 deep import 约束。
 - chore(public-api): runtime root 收窄为仅 facade 入口，并通过 `./core` subpath 暴露 runtime contract。

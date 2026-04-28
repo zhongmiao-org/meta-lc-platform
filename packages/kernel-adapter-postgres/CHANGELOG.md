@@ -2,7 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - chore(package): make `pg` an optional peer dependency for the Postgres kernel adapter.
 - feat(factory): add a class-based Postgres MetaKernel repository factory implementing the kernel contract.
