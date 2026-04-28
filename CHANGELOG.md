@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- fix(release): remove draft-only wording from GitHub release notes and group notes by root/package sections.
 - fix(ci): fail PR and release lint checks when ESLint reports warnings.
 
 ## 0.2.0 (2026-04-28)
