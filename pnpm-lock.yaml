@@ -48,7 +48,7 @@ importers:
   apps/bff-server:
     dependencies:
       '@zhongmiao/meta-lc-bff':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../../packages/bff
       reflect-metadata:
         specifier: ^0.2.2
@@ -94,7 +94,7 @@ importers:
         specifier: ^10.4.22
         version: 10.4.22(@nestjs/common@10.4.22(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)(@nestjs/platform-socket.io@10.4.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@zhongmiao/meta-lc-runtime':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../runtime
       redis:
         specifier: ^4.7.1
@@ -140,7 +140,7 @@ importers:
   packages/kernel-adapter-postgres:
     dependencies:
       '@zhongmiao/meta-lc-kernel':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../kernel
     devDependencies:
       '@types/node':
@@ -159,7 +159,7 @@ importers:
   packages/permission:
     dependencies:
       '@zhongmiao/meta-lc-query':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../query
     devDependencies:
       '@types/node':
@@ -181,19 +181,19 @@ importers:
   packages/runtime:
     dependencies:
       '@zhongmiao/meta-lc-audit':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../audit
       '@zhongmiao/meta-lc-datasource':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../datasource
       '@zhongmiao/meta-lc-kernel':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../kernel
       '@zhongmiao/meta-lc-permission':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../permission
       '@zhongmiao/meta-lc-query':
-        specifier: 0.2.0
+        specifier: 0.2.1
         version: link:../query
     devDependencies:
       '@types/node':

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.2.1 (2026-04-28)
+
 - fix(ci): 移除未使用的 meta response 与 replay stripping 变量，让 gateway 代码通过零 warning lint。
 
 ## 0.2.0 (2026-04-28)
