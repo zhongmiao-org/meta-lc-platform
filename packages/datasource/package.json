@@ -1,7 +1,7 @@
 {
   "name": "@zhongmiao/meta-lc-datasource",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.2.0-beta.0",
+  "private": false,
   "type": "commonjs",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
@@ -40,5 +40,15 @@
       "require": "./dist/postgres/index.js",
       "default": "./dist/postgres/index.js"
     }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README_zh.md",
+    "CHANGELOG.md",
+    "CHANGELOG.zh-CN.md"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }

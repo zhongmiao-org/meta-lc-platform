@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
 - docs(sdk): 补充 SDK consumer 禁止 deep import kernel domain/application 的约束。
 - chore(public-api): application 不再导出 services barrel，并通过 facade 包装 migration safety。
 - feat(core): 新增 MetaKernel repository factory contract，供 adapter implementation 实现。

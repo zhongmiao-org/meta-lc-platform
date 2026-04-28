@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
 - docs(sdk): document kernel domain/application deep-import constraints for SDK consumers.
 - chore(public-api): stop exporting the services barrel from application and wrap migration safety through a facade.
 - feat(core): add a MetaKernel repository factory contract for adapter implementations.

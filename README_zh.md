@@ -141,3 +141,4 @@ pnpm test:examples:orders-demo
 - 可发布库身份使用 `@zhongmiao/meta-lc-*` scope。
 - 根 changelog 记录平台、runtime、service 级变化。
 - 子包 changelog 记录包内 API 与行为变化。
+- SDK Beta 封板门禁记录在 [SDK 发布 Checklist](./docs/sdk-release-checklist.md)。

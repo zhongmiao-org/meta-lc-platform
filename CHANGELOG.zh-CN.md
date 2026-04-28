@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## 0.2.0-beta.0 (2026-04-28)
+
+- docs(sdk): 新增 SDK 发布 checklist，用于 Beta 封板校验。
 - docs(sdk): 补充 factory-first adapter 使用、Postgres class advanced API 与业务方 deep import 约束。
 - chore(sdk): 收窄 runtime/kernel public API，并统一 Postgres adapter factory 策略。
 - feat(kernel): 新增 MetaKernel repository factory contract，并由 Postgres adapter 提供实现。

@@ -141,3 +141,4 @@ pnpm test:examples:orders-demo
 - Publishable library identities use the `@zhongmiao/meta-lc-*` scope.
 - Root changelogs record platform, runtime, and service-level changes.
 - Package changelogs record package-local API and behavior changes.
+- The SDK beta freeze gate is tracked in [SDK Release Checklist](./docs/sdk-release-checklist.md).
