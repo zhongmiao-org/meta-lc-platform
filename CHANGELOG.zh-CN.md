@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- fix(release): 将 main 分支发布限制为 generated release PR 合并触发，避免普通版本恢复误发布。
 - fix(release): 将多包发布流程调整为基于 Unreleased 生成草稿、生成 release PR，并在 main 分支合并后发布。
 - docs(sdk): 新增 SDK 发布 checklist，用于 Beta 封板校验。
 - docs(sdk): 补充 factory-first adapter 使用、Postgres class advanced API 与业务方 deep import 约束。

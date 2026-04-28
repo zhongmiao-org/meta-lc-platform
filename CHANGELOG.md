@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- fix(release): restrict main-branch publishing to generated release PR merges.
 - fix(release): switch the multi-package release flow to Unreleased draft notes, generated release PRs, and main-branch publishing.
 - docs(sdk): add the SDK release checklist for beta freeze validation.
 - docs(sdk): document factory-first adapter usage, advanced Postgres classes, and consumer deep-import rules.
