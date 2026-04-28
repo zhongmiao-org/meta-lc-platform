@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.1 (2026-04-28)
+
 - fix(ci): remove unused meta response and replay stripping variables so gateway code passes zero-warning lint.
 
 ## 0.2.0 (2026-04-28)

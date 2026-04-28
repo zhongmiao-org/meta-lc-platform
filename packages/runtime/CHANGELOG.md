@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.1 (2026-04-28)
+
 - fix(ci): remove unused runtime type imports and helpers so runtime passes the zero-warning lint gate.
 
 ## 0.2.0 (2026-04-28)

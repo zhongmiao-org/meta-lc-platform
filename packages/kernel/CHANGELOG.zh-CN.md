@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.2.1 (2026-04-28)
+
 - test(ci): 移除未使用的 migration 测试参数，让 kernel 包通过零 warning lint。
 
 ## 0.2.0 (2026-04-28)
