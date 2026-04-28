@@ -23,24 +23,24 @@ if (!rootNotes && packages.length === 0) {
 }
 
 const lines = [
-  `# Release Draft: ${rootPackage.name}@${version}`,
+  "## Release Summary",
   "",
-  "## Package Topology",
   `- root package: ${rootPackage.name}@${version}`,
   `- workspace packages: ${loadWorkspacePackages()
     .map((pkg) => pkg.name)
     .join(", ")}`,
+  `- packages with changelog entries: ${packages.length}`,
   ""
 ];
 
 if (rootNotes) {
-  lines.push("## Platform Notes", "", rootNotes, "");
+  lines.push("## Root Changelog", "", "### CHANGELOG.md", rootNotes, "");
 }
 
 if (packages.length > 0) {
-  lines.push("## Package Notes", "");
+  lines.push("## Package Changes", "");
   for (const pkg of packages) {
-    lines.push(`### ${pkg.name}`, "");
+    lines.push(`### ${pkg.name} -> ${version}`, "");
     if (pkg.versionNotesEn) {
       lines.push(pkg.versionNotesEn, "");
     } else {
