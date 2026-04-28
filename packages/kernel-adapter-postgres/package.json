@@ -1,6 +1,6 @@
 {
   "name": "@zhongmiao/meta-lc-kernel-adapter-postgres",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": false,
   "type": "commonjs",
   "scripts": {
@@ -9,7 +9,7 @@
     "lint": "echo lint:kernel-adapter-postgres"
   },
   "dependencies": {
-    "@zhongmiao/meta-lc-kernel": "workspace:*"
+    "@zhongmiao/meta-lc-kernel": "0.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

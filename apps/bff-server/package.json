@@ -1,6 +1,6 @@
 {
   "name": "@zhongmiao/meta-lc-bff-server",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "commonjs",
   "scripts": {
@@ -11,7 +11,7 @@
     "lint": "echo lint:bff-server"
   },
   "dependencies": {
-    "@zhongmiao/meta-lc-bff": "workspace:*",
+    "@zhongmiao/meta-lc-bff": "0.2.0",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {

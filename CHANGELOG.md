@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.0 (2026-04-28)
+
 - fix(ci): run JavaScript actions on Node.js 24 and update github-script actions.
 - fix(release): restrict main-branch publishing to generated release PR merges.
 - fix(release): switch the multi-package release flow to Unreleased draft notes, generated release PRs, and main-branch publishing.
@@ -63,6 +65,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(bff): add a configurable Runtime WebSocket broadcast bus with Redis pub/sub fanout.
 - feat(bff): add Runtime WebSocket operations status and health visibility.
 - feat(bff): add Redis Stream cursor replay for Runtime WebSocket updates.
+
 ## 0.1.0 (2026-04-18)
 
 - Initial internal baseline for the Meta-Driven middleware monorepo.

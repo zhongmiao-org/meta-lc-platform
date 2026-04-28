@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.2.0 (2026-04-28)
+
 - chore(public-api): BFF 改为从 `@zhongmiao/meta-lc-runtime/core` subpath 消费 runtime contract。
 - fix(ci): 让 orders demo gateway e2e 继续通过已构建的 package 入口运行。
 - fix(boundaries): 移除 BFF 残留 kernel 依赖，并将 meta registry 读取收紧为 provider-only。
@@ -37,6 +39,7 @@
 - feat(gateway): 新增可配置的 runtime WebSocket broadcast bus 与 Redis pub/sub fanout。
 - feat(gateway): 新增 runtime WebSocket 运维状态与健康检查可见性。
 - feat(gateway): 新增 runtime WebSocket 更新的 Redis Stream cursor replay。
+
 ## 0.1.0 (2026-04-18)
 
 - BFF query、mutation、bootstrap 与 audit 编排层的首个基线版本。
