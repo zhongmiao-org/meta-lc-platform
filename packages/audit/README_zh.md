@@ -55,11 +55,12 @@ const sink = createPostgresRuntimeAuditSink(config);
 const sinkFromClassFactory = new PostgresRuntimeAuditSinkFactory().create(config);
 ```
 
-composition root 优先使用函数式 factory 或 class factory。Postgres sink class 仍作为 advanced API 导出，供测试和低层集成使用，但应用装配应走 factory。
+Factory-first 规则：composition root 应使用 `createPostgresRuntimeAuditSink` 或 `PostgresRuntimeAuditSinkFactory`。`PostgresRuntimeAuditSink` 仍作为 advanced API 导出，供低层集成和包内测试使用，但应用装配不得直接 `new PostgresRuntimeAuditSink()`。
 
 ## 边界约束
 
 - 通过 `AuditSink` 保持 audit persistence 可插拔。
 - Postgres persistence 必须从 `@zhongmiao/meta-lc-audit/postgres` 导入，而不是包根。
+- 应用代码不得 deep import `src/postgres/*`。
 - runtime observability 必须保持可选、非阻塞。
 - 不把本包耦合到 NestJS controller 或具体 BFF request handling。

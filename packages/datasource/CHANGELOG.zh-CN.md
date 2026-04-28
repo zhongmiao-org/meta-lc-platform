@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(sdk): 明确 Postgres datasource factory-first 使用方式，并将 adapter class 标记为 advanced API。
 - feat(factory): 新增 datasource adapter factory contract 与 Postgres adapter class factory。
 - chore(boundaries): 围绕 datasource root 与 Postgres secondary entry 锁定 package exports 和 deep import 规则。
 - chore(sdk): 将 Postgres adapter secondary entry 使用的 `pg` 调整为可选 peer dependency。

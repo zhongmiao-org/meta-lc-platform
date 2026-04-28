@@ -57,12 +57,13 @@ const adapter = createPostgresDatasourceAdapter(config);
 const adapterFromClassFactory = new PostgresDatasourceAdapterFactory().create(config);
 ```
 
-Prefer the function or class factory from composition roots. The Postgres adapter class remains exported for advanced tests and low-level integration, but application wiring should use factories.
+Factory-first rule: composition roots should use `createPostgresDatasourceAdapter` or `PostgresDatasourceAdapterFactory`. `PostgresDatasourceAdapter` remains exported as an advanced API for low-level integration and package-local tests, but application wiring must not directly `new PostgresDatasourceAdapter()`.
 
 ## Boundary Notes
 
 - Keep adapter code focused on database execution and lifecycle.
 - Import Postgres implementation from `@zhongmiao/meta-lc-datasource/postgres`, not the package root.
+- Do not deep import `src/postgres/*` from application code.
 - Receives compiled request / SQL command.
 - Must not compile Query AST.
 - Must not depend on query / permission / runtime.

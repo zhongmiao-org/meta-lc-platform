@@ -73,6 +73,14 @@ SDK 按 `7 个核心包 + N 个 adapter 包` 组织。
 | --- | --- | --- |
 | `packages/kernel-adapter-postgres` | kernel repository port 的 Postgres 实现，供 app/example composition root 装配使用。 | [English](./packages/kernel-adapter-postgres/README.md) \| [中文文档](./packages/kernel-adapter-postgres/README_zh.md) |
 
+## SDK 使用约束
+
+- 业务方只能从 package root 或已批准的 secondary entry 导入，例如 `@zhongmiao/meta-lc-runtime/core`、`@zhongmiao/meta-lc-datasource/postgres`、`@zhongmiao/meta-lc-audit/postgres`。
+- 禁止 deep import package 内部路径，例如 `@zhongmiao/meta-lc-*` 包下的 `src/*` 子路径、`*/domain/*`、`*/application/*`、`*/infra/*` 或具体实现文件路径。
+- `@zhongmiao/meta-lc-runtime` 只用于 runtime facade 函数；runtime contract、error、constant 与 event type 从 `@zhongmiao/meta-lc-runtime/core` 导入。
+- Postgres adapter 只允许在 app/example composition root 或 infra script 中装配。核心包与 BFF 不得直接装配具体 Postgres adapter。
+- 包内测试中出现的 `../src/domain` 或 `../src/application` 相对导入只代表内部测试覆盖，不是 SDK consumer 示例。
+
 ## 依赖方向
 
 - `runtime`、`kernel`、`query`、`permission`、`datasource`、`bff`、`audit` 是最终 7 个核心架构包。

@@ -48,6 +48,7 @@ pnpm --filter @zhongmiao/meta-lc-kernel test
 
 - Kernel 是元数据结构真源，必须独立于 BFF 编排。
 - 包根入口只暴露 `core` contract 与 `application` API；`domain` 是内部语义层，不作为 SDK public API。
+- SDK consumer 不得 deep import `src/domain` 或 `src/application` 实现文件；包内测试仅可为内部覆盖使用这些路径。
 - Kernel 不依赖任何 workspace package，也不直接访问 Postgres。
 - Meta DB persistence 由 repository port 和外部 adapter 提供，例如 `@zhongmiao/meta-lc-kernel-adapter-postgres`。
 - 不在这里加入 HTTP、NestJS controller、runtime UI 或业务执行逻辑。

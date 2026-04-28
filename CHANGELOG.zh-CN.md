@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(sdk): 补充 factory-first adapter 使用、Postgres class advanced API 与业务方 deep import 约束。
 - chore(sdk): 收窄 runtime/kernel public API，并统一 Postgres adapter factory 策略。
 - feat(kernel): 新增 MetaKernel repository factory contract，并由 Postgres adapter 提供实现。
 - refactor(adapter): 将 kernel Postgres adapter 拆分为 repository、factory、schema、mapper、interface、type 与 utility 语义文件。

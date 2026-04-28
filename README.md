@@ -73,6 +73,14 @@ The SDK is organized as `7 core packages + N adapter packages`.
 | --- | --- | --- |
 | `packages/kernel-adapter-postgres` | Postgres implementation of the kernel repository port for app/example composition roots. | [English](./packages/kernel-adapter-postgres/README.md) \| [中文文档](./packages/kernel-adapter-postgres/README_zh.md) |
 
+## SDK Consumer Rules
+
+- Import only from package roots or approved secondary entries such as `@zhongmiao/meta-lc-runtime/core`, `@zhongmiao/meta-lc-datasource/postgres`, and `@zhongmiao/meta-lc-audit/postgres`.
+- Do not deep import package internals such as `src/*` subpaths under `@zhongmiao/meta-lc-*` packages, `*/domain/*`, `*/application/*`, `*/infra/*`, or implementation file paths.
+- Use `@zhongmiao/meta-lc-runtime` only for runtime facade functions; import runtime contracts, errors, constants, and event types from `@zhongmiao/meta-lc-runtime/core`.
+- Compose Postgres adapters only in app/example composition roots or infra scripts. Core packages and BFF must not directly wire concrete Postgres adapters.
+- Treat package-local tests that import `../src/domain` or `../src/application` as internal test coverage only; they are not SDK consumer examples.
+
 ## Dependency Direction
 
 - `runtime`, `kernel`, `query`, `permission`, `datasource`, `bff`, and `audit` are the seven core architecture packages.

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- docs(sdk): 补充 SDK consumer 禁止 deep import kernel domain/application 的约束。
 - chore(public-api): application 不再导出 services barrel，并通过 facade 包装 migration safety。
 - feat(core): 新增 MetaKernel repository factory contract，供 adapter implementation 实现。
 - chore(public-api): 通过 application facade 转发 migration safety，并将 package root 固定为仅导出 `core + application`。

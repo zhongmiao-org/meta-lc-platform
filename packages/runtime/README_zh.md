@@ -58,3 +58,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - Runtime audit observer 必须保持可选、非阻塞；observer 失败不得影响 plan execution。
 - 不要把默认业务 demo wiring 加回 runtime facade。
 - 包根入口只暴露 `application/facades`；契约/错误/常量通过 `@zhongmiao/meta-lc-runtime/core` 暴露。compiler、executor、service 模块属于内部实现面。
+- SDK consumer 不得 deep import runtime executor、compiler、service、domain 或 infra 文件；包内测试仅可为内部覆盖使用这些路径。

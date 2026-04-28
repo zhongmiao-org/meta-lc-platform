@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(sdk): mark Postgres datasource factories as factory-first and the adapter class as advanced API.
 - feat(factory): add a datasource adapter factory contract and Postgres adapter class factory.
 - chore(boundaries): lock package exports and deep-import rules around the datasource root and Postgres secondary entry.
 - chore(sdk): make `pg` an optional peer dependency for the Postgres adapter secondary entry.

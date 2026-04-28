@@ -58,3 +58,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - Runtime audit observers are optional and non-blocking; observer failures must not affect plan execution.
 - Do not add default business demo wiring to the runtime facade.
 - The package root only exposes `application/facades`; contracts/errors/constants are exposed from `@zhongmiao/meta-lc-runtime/core`. Compiler, executor, and service modules are internal implementation surfaces.
+- SDK consumers must not deep import runtime executor, compiler, service, domain, or infra files; package-local tests may do so only for internal coverage.

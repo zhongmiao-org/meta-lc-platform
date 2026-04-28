@@ -48,6 +48,7 @@ pnpm --filter @zhongmiao/meta-lc-kernel test
 
 - Kernel is the metadata source of truth and must stay independent from BFF orchestration.
 - The package root exposes `core` contracts and `application` APIs only; `domain` remains an internal semantic layer, not SDK public API.
+- SDK consumers must not deep import `src/domain` or `src/application` implementation files; package-local tests may do so only for internal coverage.
 - Kernel has no workspace package dependencies and no direct Postgres access.
 - Meta DB persistence is provided by repository ports and external adapters such as `@zhongmiao/meta-lc-kernel-adapter-postgres`.
 - Do not add HTTP, NestJS controller, runtime UI, or business execution logic here.

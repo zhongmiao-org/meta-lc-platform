@@ -57,12 +57,13 @@ const adapter = createPostgresDatasourceAdapter(config);
 const adapterFromClassFactory = new PostgresDatasourceAdapterFactory().create(config);
 ```
 
-composition root 优先使用函数式 factory 或 class factory。Postgres adapter class 仍作为 advanced API 导出，供测试和低层集成使用，但应用装配应走 factory。
+Factory-first 规则：composition root 应使用 `createPostgresDatasourceAdapter` 或 `PostgresDatasourceAdapterFactory`。`PostgresDatasourceAdapter` 仍作为 advanced API 导出，供低层集成和包内测试使用，但应用装配不得直接 `new PostgresDatasourceAdapter()`。
 
 ## 边界约束
 
 - adapter 代码只关注数据库执行与生命周期。
 - Postgres implementation 必须从 `@zhongmiao/meta-lc-datasource/postgres` 导入，而不是包根。
+- 应用代码不得 deep import `src/postgres/*`。
 - 接收 compiled request 或 SQL command；不在此包编译 Query AST。
 - 不依赖 `query`、`permission` 或 `runtime`。
 - 业务 demo adapter 必须放在 `examples/*`，不能进入本包。

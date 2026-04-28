@@ -2,6 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+- docs(sdk): document factory-first adapter usage, advanced Postgres classes, and consumer deep-import rules.
 - chore(sdk): narrow runtime/kernel public APIs and standardize Postgres adapter factories.
 - feat(kernel): add a MetaKernel repository factory contract with a Postgres adapter implementation.
 - refactor(adapter): split the kernel Postgres adapter into semantic repository, factory, schema, mapper, interface, type, and utility files.
