@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.0 (2026-04-28)
+
 - chore(public-api): consume runtime contracts from the `@zhongmiao/meta-lc-runtime/core` subpath.
 - fix(ci): keep the orders demo gateway e2e path running from built package entrypoints.
 - fix(boundaries): remove the stale kernel dependency from BFF and make meta registry reads provider-only.
@@ -37,6 +39,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - feat(gateway): add a configurable runtime WebSocket broadcast bus with Redis pub/sub fanout.
 - feat(gateway): add runtime WebSocket operations status and health visibility.
 - feat(gateway): add Redis Stream cursor replay for runtime WebSocket updates.
+
 ## 0.1.0 (2026-04-18)
 
 - Initial middleware orchestration baseline for BFF query, mutation, bootstrap, and audit flows.

@@ -2,6 +2,8 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
+## 0.2.0 (2026-04-28)
+
 - chore(public-api): narrow the package root to core contracts and explicit permission engine entrypoints.
 - docs(readme): clarify permission upstream/downstream relationships and type-only query AST boundary.
 - fix(ci): build query before permission package-local tests on clean runners.
@@ -11,6 +13,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 - refactor(package-structure): reorganize src into layered domain/application/infra/interface/types/utils directories and update public entrypoints.
 - docs(readme): add bilingual package README and minimal architecture flow.
 - chore(package): adopt the `@zhongmiao/meta-lc-permission` scoped package identity for release governance.
+
 ## 0.1.0 (2026-04-18)
 
 - Initial permission baseline for tenant, role, and org-scope enforcement.

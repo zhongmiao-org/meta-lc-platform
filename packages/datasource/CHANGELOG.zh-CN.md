@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.2.0 (2026-04-28)
+
 - docs(sdk): 明确 Postgres datasource factory-first 使用方式，并将 adapter class 标记为 advanced API。
 - feat(factory): 新增 datasource adapter factory contract 与 Postgres adapter class factory。
 - chore(boundaries): 围绕 datasource root 与 Postgres secondary entry 锁定 package exports 和 deep import 规则。
@@ -15,6 +17,7 @@
 - refactor(package-structure): 将 src 重整为 domain/application/infra/interface/types/utils 分层目录，并同步更新对外入口。
 - docs(readme): 新增双语子包 README 与最小架构流程图。
 - chore(package): 为 release 治理切换到 `@zhongmiao/meta-lc-datasource` 正式包名。
+
 ## 0.1.0 (2026-04-18)
 
 - PostgreSQL 数据执行适配层的首个基线版本。
