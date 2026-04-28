@@ -1,6 +1,6 @@
 {
   "name": "@zhongmiao/meta-lc-permission",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": false,
   "type": "commonjs",
   "scripts": {
@@ -9,7 +9,7 @@
     "lint": "echo lint:permission"
   },
   "dependencies": {
-    "@zhongmiao/meta-lc-query": "workspace:*"
+    "@zhongmiao/meta-lc-query": "0.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
