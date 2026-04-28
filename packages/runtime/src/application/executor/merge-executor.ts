@@ -129,10 +129,6 @@ function getNestedValue(source: Record<string, unknown>, path: string): unknown 
   }, source);
 }
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function isRecordLike(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }

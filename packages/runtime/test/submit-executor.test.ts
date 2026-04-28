@@ -8,8 +8,7 @@ import {
   type MutationDatasourceAdapter,
   type NodeExecutorDependencies,
   type RuntimeContext,
-  type RuntimeExecutorDependencies,
-  type RuntimeStateStore
+  type RuntimeExecutorDependencies
 } from "./runtime-test-api";
 import type { MutationNodeDefinition } from "@zhongmiao/meta-lc-kernel";
 

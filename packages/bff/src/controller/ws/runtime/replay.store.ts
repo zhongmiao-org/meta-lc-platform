@@ -200,7 +200,8 @@ function parseRuntimeManagerExecutedStreamEntry(entry: RedisRuntimeWsStreamEntry
 }
 
 function stripReplayId(event: RuntimeManagerExecutedEvent): RuntimeManagerExecutedEvent {
-  const { replayId: _replayId, ...eventWithoutReplayId } = event;
+  const eventWithoutReplayId: RuntimeManagerExecutedEvent = { ...event };
+  delete eventWithoutReplayId.replayId;
   return eventWithoutReplayId;
 }
 

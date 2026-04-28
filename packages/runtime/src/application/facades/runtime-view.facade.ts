@@ -11,7 +11,6 @@ import type {
   RuntimeExecutorDependencies,
   RuntimeGatewayViewOptions,
   RuntimeGatewayViewRequest,
-  RuntimeOrgScopeResolver,
   RuntimeStateStore,
   RuntimeViewExecutorDependencies,
   SubmitExecutionResult
