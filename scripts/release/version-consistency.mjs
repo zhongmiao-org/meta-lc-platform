@@ -8,6 +8,12 @@ const violations = [];
 const rootPackage = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
 const rootVersion = rootPackage.version;
 const workspacePackageNames = new Set();
+const rootChangelog = fs.existsSync(path.join(ROOT, "CHANGELOG.md"))
+  ? fs.readFileSync(path.join(ROOT, "CHANGELOG.md"), "utf8").replace(/\r\n/g, "\n")
+  : "";
+const isReleaseManifestState = new RegExp(`^## ${rootVersion.replaceAll(".", "\\.")} \\(\\d{4}-\\d{2}-\\d{2}\\)`, "m").test(
+  rootChangelog
+);
 
 for (const baseDir of packageDirs) {
   const base = path.join(ROOT, baseDir);
@@ -43,11 +49,15 @@ for (const baseDir of packageDirs) {
     if (pkg.version !== rootVersion) {
       violations.push(`${path.relative(ROOT, packageJsonPath)} must use root version ${rootVersion}.`);
     }
-    for (const [peerName, peerVersion] of Object.entries(pkg.peerDependencies ?? {})) {
-      if (workspacePackageNames.has(peerName) && peerVersion !== rootVersion) {
-        violations.push(
-          `${path.relative(ROOT, packageJsonPath)} must pin internal peerDependency ${peerName} to ${rootVersion}.`
-        );
+    if (isReleaseManifestState) {
+      for (const dependencyField of ["dependencies", "peerDependencies", "optionalDependencies", "devDependencies"]) {
+        for (const [dependencyName, dependencyVersion] of Object.entries(pkg[dependencyField] ?? {})) {
+          if (workspacePackageNames.has(dependencyName) && dependencyVersion !== rootVersion) {
+            violations.push(
+              `${path.relative(ROOT, packageJsonPath)} must pin internal ${dependencyField} ${dependencyName} to ${rootVersion}.`
+            );
+          }
+        }
       }
     }
     if (baseDir === "packages" && pkg.private !== true) {

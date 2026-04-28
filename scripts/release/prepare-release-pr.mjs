@@ -27,10 +27,13 @@ const internalPackageNames = new Set(
 function updateManifestVersion(filePath) {
   const pkg = JSON.parse(fs.readFileSync(filePath, "utf8"));
   pkg.version = version;
-  if (pkg.peerDependencies && typeof pkg.peerDependencies === "object") {
-    for (const peerName of Object.keys(pkg.peerDependencies)) {
-      if (internalPackageNames.has(peerName)) {
-        pkg.peerDependencies[peerName] = version;
+  for (const dependencyField of ["dependencies", "peerDependencies", "optionalDependencies", "devDependencies"]) {
+    if (!pkg[dependencyField] || typeof pkg[dependencyField] !== "object") {
+      continue;
+    }
+    for (const dependencyName of Object.keys(pkg[dependencyField])) {
+      if (internalPackageNames.has(dependencyName)) {
+        pkg[dependencyField][dependencyName] = version;
       }
     }
   }
