@@ -38,8 +38,8 @@
       "@zhongmiao/meta-lc-bff": [
         "packages/bff/src"
       ],
-      "@zhongmiao/meta-lc-infra-persistence": [
-        "packages/infra-persistence/src"
+      "@zhongmiao/meta-lc-kernel-adapter-postgres": [
+        "packages/kernel-adapter-postgres/src"
       ]
     }
   }

@@ -2,13 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'infra-persistence']);
+const DB_DRIVER_PACKAGES = new Set(['audit', 'datasource', 'kernel-adapter-postgres']);
 const DB_DRIVER_DEPENDENCIES = new Set(['pg', '@types/pg']);
 const POSTGRES_SECONDARY_ENTRY_PACKAGES = new Set(['audit', 'datasource']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/postgres/postgres.adapter.ts',
   'packages/datasource/src/postgres/postgres-org-scope.adapter.ts',
-  'packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts',
+  'packages/kernel-adapter-postgres/src/postgres/postgres-meta-kernel-repository.ts',
   'packages/audit/src/postgres/postgres-runtime-audit.sink.ts'
 ]);
 const ALLOWED_SECONDARY_IMPORTS = new Set([
@@ -23,13 +23,15 @@ const FORBIDDEN_PACKAGE_DIRS = [
   'packages/contracts',
   'packages/shared',
   'packages/platform',
-  'packages/migration'
+  'packages/migration',
+  'packages/infra-persistence'
 ];
 const FORBIDDEN_PACKAGE_REFS = [
   '@zhongmiao/meta-lc-contracts',
   '@zhongmiao/meta-lc-shared',
   '@zhongmiao/meta-lc-platform',
-  '@zhongmiao/meta-lc-migration'
+  '@zhongmiao/meta-lc-migration',
+  '@zhongmiao/meta-lc-infra-persistence'
 ];
 const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-runtime',
@@ -38,7 +40,7 @@ const FORBIDDEN_KERNEL_DEPS = [
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-audit',
-  '@zhongmiao/meta-lc-infra-persistence'
+  '@zhongmiao/meta-lc-kernel-adapter-postgres'
 ];
 const FORBIDDEN_QUERY_DEPS = [
   '@zhongmiao/meta-lc-runtime',
@@ -46,14 +48,14 @@ const FORBIDDEN_QUERY_DEPS = [
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-audit',
-  '@zhongmiao/meta-lc-infra-persistence'
+  '@zhongmiao/meta-lc-kernel-adapter-postgres'
 ];
 const FORBIDDEN_PERMISSION_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-datasource',
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-audit',
-  '@zhongmiao/meta-lc-infra-persistence'
+  '@zhongmiao/meta-lc-kernel-adapter-postgres'
 ];
 const FORBIDDEN_DATASOURCE_DEPS = [
   '@zhongmiao/meta-lc-runtime',
@@ -61,7 +63,7 @@ const FORBIDDEN_DATASOURCE_DEPS = [
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-audit',
-  '@zhongmiao/meta-lc-infra-persistence'
+  '@zhongmiao/meta-lc-kernel-adapter-postgres'
 ];
 const FORBIDDEN_AUDIT_DEPS = [
   '@zhongmiao/meta-lc-runtime',
@@ -69,7 +71,7 @@ const FORBIDDEN_AUDIT_DEPS = [
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-datasource',
-  '@zhongmiao/meta-lc-infra-persistence'
+  '@zhongmiao/meta-lc-kernel-adapter-postgres'
 ];
 const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-kernel',
@@ -77,16 +79,16 @@ const FORBIDDEN_BFF_DEPS = [
   '@zhongmiao/meta-lc-permission',
   '@zhongmiao/meta-lc-query',
   '@zhongmiao/meta-lc-audit',
-  '@zhongmiao/meta-lc-infra-persistence',
+  '@zhongmiao/meta-lc-kernel-adapter-postgres',
   'pg',
   '@types/pg'
 ];
 const FORBIDDEN_RUNTIME_DEPS = [
-  '@zhongmiao/meta-lc-infra-persistence',
+  '@zhongmiao/meta-lc-kernel-adapter-postgres',
   '@zhongmiao/meta-lc-datasource/postgres',
   '@zhongmiao/meta-lc-audit/postgres'
 ];
-const FORBIDDEN_INFRA_PERSISTENCE_DEPS = [
+const FORBIDDEN_KERNEL_ADAPTER_POSTGRES_DEPS = [
   '@zhongmiao/meta-lc-runtime',
   '@zhongmiao/meta-lc-bff',
   '@zhongmiao/meta-lc-query',
@@ -99,7 +101,7 @@ const ALLOWED_APP_DEPS = {
     '@zhongmiao/meta-lc-bff',
     '@zhongmiao/meta-lc-datasource',
     '@zhongmiao/meta-lc-audit',
-    '@zhongmiao/meta-lc-infra-persistence'
+    '@zhongmiao/meta-lc-kernel-adapter-postgres'
   ])
 };
 const BFF_TOP_LEVEL_DIRS = new Set([
@@ -200,25 +202,12 @@ const COMMON_LAYER_PACKAGES = new Set([
 ]);
 const ROOT_PUBLIC_API_RULES = {
   runtime: {
-    starExports: new Set(['./core']),
-    namedExports: new Map([
-      ['executeRuntimeGatewayView', './application/facades/runtime-view.facade'],
-      ['executeRuntimeView', './application/facades/runtime-view.facade'],
-      ['executeRuntimeInteractionPlan', './application/facades/runtime-interaction.facade'],
-      ['createRecordingRuntimeInteractionPort', './application/facades/runtime-interaction.facade']
-    ])
+    starExports: new Set(['./core', './application/facades']),
+    namedExports: new Map()
   },
   kernel: {
-    starExports: new Set(['./core']),
-    namedExports: new Map([
-      ['MetaKernelService', './application/services/meta-kernel.service'],
-      ['createInMemoryMetaKernelService', './application/factories/in-memory-meta-kernel.factory'],
-      ['compileApiRoutes', './application/generators/api-generator'],
-      ['compilePermissionManifest', './application/generators/permission-generator'],
-      ['compileSchemaSql', './application/generators/sql-generator'],
-      ['assertMigrationSafety', './domain/migration-safety'],
-      ['createMigrationSafetyReport', './domain/migration-safety']
-    ])
+    starExports: new Set(['./core', './application']),
+    namedExports: new Map()
   },
   query: {
     starExports: new Set(['./core']),
@@ -354,7 +343,7 @@ function checkSourceFile(file, root, violations) {
   if (importsPg(content)) {
     const packageName = getPackageName(rel);
     if (!DB_DRIVER_PACKAGES.has(packageName)) {
-        violations.push(`${rel}: direct pg import is forbidden outside audit/datasource/infra-persistence packages.`);
+        violations.push(`${rel}: direct pg import is forbidden outside audit/datasource/kernel-adapter-postgres packages.`);
     } else if (!ALLOWED_PG_IMPORT_FILES.has(rel)) {
       violations.push(`${rel}: direct pg import is not allowed here.`);
     }
@@ -363,42 +352,42 @@ function checkSourceFile(file, root, violations) {
   // Kernel must not depend on bff/query/datasource implementation.
   if (rel.startsWith('packages/kernel/')) {
     for (const dep of FORBIDDEN_KERNEL_DEPS) {
-      if (content.includes(dep)) {
+      if (hasPackageReference(content, dep)) {
         violations.push(`${rel}: kernel cannot depend on ${dep}.`);
       }
     }
   }
   if (rel.startsWith('packages/query/')) {
     for (const dep of FORBIDDEN_QUERY_DEPS) {
-      if (content.includes(dep)) {
+      if (hasPackageReference(content, dep)) {
         violations.push(`${rel}: query cannot depend on ${dep}.`);
       }
     }
   }
   if (rel.startsWith('packages/permission/')) {
     for (const dep of FORBIDDEN_PERMISSION_DEPS) {
-      if (content.includes(dep)) {
+      if (hasPackageReference(content, dep)) {
         violations.push(`${rel}: permission cannot depend on ${dep}.`);
       }
     }
   }
   if (rel.startsWith('packages/datasource/')) {
     for (const dep of FORBIDDEN_DATASOURCE_DEPS) {
-      if (content.includes(dep)) {
+      if (hasPackageReference(content, dep)) {
         violations.push(`${rel}: datasource cannot depend on ${dep}.`);
       }
     }
   }
   if (rel.startsWith('packages/audit/')) {
     for (const dep of FORBIDDEN_AUDIT_DEPS) {
-      if (content.includes(dep)) {
+      if (hasPackageReference(content, dep)) {
         violations.push(`${rel}: audit cannot depend on ${dep}.`);
       }
     }
   }
   if (rel.startsWith('packages/bff/')) {
     for (const dep of FORBIDDEN_BFF_DEPS) {
-      if (content.includes(dep)) {
+      if (hasPackageReference(content, dep)) {
         violations.push(`${rel}: BFF cannot depend on ${dep}.`);
       }
     }
@@ -408,7 +397,7 @@ function checkSourceFile(file, root, violations) {
   }
   if (rel.startsWith('packages/runtime/')) {
     for (const dep of FORBIDDEN_RUNTIME_DEPS) {
-      if (content.includes(dep)) {
+      if (hasPackageReference(content, dep)) {
         violations.push(`${rel}: runtime cannot depend on ${dep}.`);
       }
     }
@@ -422,10 +411,10 @@ function checkSourceFile(file, root, violations) {
   if (rel.match(/^packages\/(?:kernel|query|permission|runtime)\/src\/index\.ts$/)) {
     checkPackageRootPublicApi(rel, content, violations);
   }
-  if (rel.startsWith('packages/infra-persistence/')) {
-    for (const dep of FORBIDDEN_INFRA_PERSISTENCE_DEPS) {
-      if (content.includes(dep)) {
-        violations.push(`${rel}: infra-persistence cannot depend on ${dep}.`);
+  if (rel.startsWith('packages/kernel-adapter-postgres/')) {
+    for (const dep of FORBIDDEN_KERNEL_ADAPTER_POSTGRES_DEPS) {
+      if (hasPackageReference(content, dep)) {
+        violations.push(`${rel}: kernel-adapter-postgres cannot depend on ${dep}.`);
       }
     }
   }
@@ -440,9 +429,9 @@ function checkSourceFile(file, root, violations) {
       '@zhongmiao/meta-lc-permission',
       '@zhongmiao/meta-lc-datasource',
       '@zhongmiao/meta-lc-audit',
-      '@zhongmiao/meta-lc-infra-persistence'
+      '@zhongmiao/meta-lc-kernel-adapter-postgres'
     ]) {
-      if (content.includes(dep) && !ALLOWED_APP_DEPS['bff-server'].has(dep)) {
+      if (hasPackageReference(content, dep) && !ALLOWED_APP_DEPS['bff-server'].has(dep)) {
         violations.push(`${rel}: bff-server app can only depend on approved composition packages.`);
       }
     }
@@ -499,7 +488,7 @@ function checkCommonPackageSourceLayout(rel, content, file, root, violations) {
   if (rel === `packages/${packageName}/src/index.ts` && exportsInfra(content)) {
     violations.push(`${rel}: package root must not export infra.`);
   }
-  if (rel === `packages/${packageName}/src/index.ts` && exportsPostgres(content) && packageName !== 'infra-persistence') {
+  if (rel === `packages/${packageName}/src/index.ts` && exportsPostgres(content) && packageName !== 'kernel-adapter-postgres') {
     violations.push(`${rel}: package root must not export postgres implementation.`);
   }
 
@@ -617,7 +606,7 @@ function checkPureTypeFile(rel, content, violations) {
 
 function checkCommonDomainFile(rel, content, file, root, violations) {
   for (const dep of ['@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-datasource']) {
-    if (content.includes(dep)) {
+    if (hasPackageReference(content, dep)) {
       violations.push(`${rel}: domain files must not depend on ${dep}.`);
     }
   }
@@ -733,7 +722,7 @@ function checkBffMetaRegistryGateway(rel, content, violations) {
   if (rel !== 'packages/bff/src/infra/integration/meta-registry.service.ts') return;
 
   for (const dep of ['@zhongmiao/meta-lc-kernel', '@zhongmiao/meta-lc-runtime', '@zhongmiao/meta-lc-query', '@zhongmiao/meta-lc-datasource', '@zhongmiao/meta-lc-permission', '@zhongmiao/meta-lc-audit', 'pg']) {
-    if (content.includes(dep)) {
+    if (hasPackageReference(content, dep)) {
       violations.push(`${rel}: BFF meta registry gateway must use injected providers and must not import workspace packages.`);
     }
   }
@@ -794,10 +783,15 @@ function checkContractDeclarations(rel, content, violations, names, label, owner
 
 function checkForbiddenPackageRefs(rel, content, violations) {
   for (const ref of FORBIDDEN_PACKAGE_REFS) {
-    if (content.includes(ref)) {
+    if (hasPackageReference(content, ref)) {
       violations.push(`${rel}: forbidden transitional package reference "${ref}".`);
     }
   }
+}
+
+function hasPackageReference(content, packageName) {
+  const escaped = packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^\\w@/-])${escaped}(?![A-Za-z0-9_-])`).test(content);
 }
 
 function hasTypeOrInterfaceDeclaration(content) {
@@ -828,11 +822,12 @@ function checkPackageRootPublicApi(rel, content, violations) {
   const packageName = getPackageName(rel);
   const rule = ROOT_PUBLIC_API_RULES[packageName];
   if (!rule) return;
+  const allowedStarExports = [...rule.starExports].sort().join(', ');
   const starExportPattern = /^\s*export\s+\*\s+from\s+["']([^"']+)["'];?/gm;
   let starMatch;
   while ((starMatch = starExportPattern.exec(content)) !== null) {
     if (!rule.starExports.has(starMatch[1])) {
-      violations.push(`${rel}: ${packageName} root may only export-star ./core.`);
+      violations.push(`${rel}: ${packageName} root may only export-star ${allowedStarExports}.`);
     }
   }
 
@@ -963,8 +958,8 @@ function checkPackageManifest(file, root, violations) {
       if (packageName === 'audit' && FORBIDDEN_AUDIT_DEPS.includes(dependencyName)) {
         violations.push(`${rel}: audit dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
-      if (packageName === 'infra-persistence' && FORBIDDEN_INFRA_PERSISTENCE_DEPS.includes(dependencyName)) {
-        violations.push(`${rel}: infra-persistence dependency "${dependencyName}" is forbidden in ${blockName}.`);
+      if (packageName === 'kernel-adapter-postgres' && FORBIDDEN_KERNEL_ADAPTER_POSTGRES_DEPS.includes(dependencyName)) {
+        violations.push(`${rel}: kernel-adapter-postgres dependency "${dependencyName}" is forbidden in ${blockName}.`);
       }
       if (
         POSTGRES_SECONDARY_ENTRY_PACKAGES.has(packageName) &&
@@ -979,7 +974,7 @@ function checkPackageManifest(file, root, violations) {
       if (!DB_DRIVER_DEPENDENCIES.has(dependencyName)) continue;
       if (!DB_DRIVER_PACKAGES.has(packageName)) {
         violations.push(
-          `${rel}: ${dependencyName} is forbidden in ${blockName} outside audit/datasource/infra-persistence packages.`
+          `${rel}: ${dependencyName} is forbidden in ${blockName} outside audit/datasource/kernel-adapter-postgres packages.`
         );
       }
     }

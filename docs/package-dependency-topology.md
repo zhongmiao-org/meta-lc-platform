@@ -22,15 +22,15 @@ flowchart TD
   audit["@zhongmiao/meta-lc-audit<br/>packages/audit"]
   bff["@zhongmiao/meta-lc-bff<br/>packages/bff"]
   datasource["@zhongmiao/meta-lc-datasource<br/>packages/datasource"]
-  infra_persistence["@zhongmiao/meta-lc-infra-persistence<br/>packages/infra-persistence"]
   kernel["@zhongmiao/meta-lc-kernel<br/>packages/kernel"]
+  kernel_adapter_postgres["@zhongmiao/meta-lc-kernel-adapter-postgres<br/>packages/kernel-adapter-postgres"]
   permission["@zhongmiao/meta-lc-permission<br/>packages/permission"]
   query["@zhongmiao/meta-lc-query<br/>packages/query"]
   runtime["@zhongmiao/meta-lc-runtime<br/>packages/runtime"]
 
   bff --> runtime
   bff_server --> bff
-  infra_persistence --> kernel
+  kernel_adapter_postgres --> kernel
   permission --> query
   runtime --> audit
   runtime --> datasource
@@ -49,15 +49,15 @@ flowchart TD
   audit["@zhongmiao/meta-lc-audit<br/>packages/audit"]
   bff["@zhongmiao/meta-lc-bff<br/>packages/bff"]
   datasource["@zhongmiao/meta-lc-datasource<br/>packages/datasource"]
-  infra_persistence["@zhongmiao/meta-lc-infra-persistence<br/>packages/infra-persistence"]
   kernel["@zhongmiao/meta-lc-kernel<br/>packages/kernel"]
+  kernel_adapter_postgres["@zhongmiao/meta-lc-kernel-adapter-postgres<br/>packages/kernel-adapter-postgres"]
   permission["@zhongmiao/meta-lc-permission<br/>packages/permission"]
   query["@zhongmiao/meta-lc-query<br/>packages/query"]
   runtime["@zhongmiao/meta-lc-runtime<br/>packages/runtime"]
 
   bff --> runtime
   bff_server --> bff
-  infra_persistence --> kernel
+  kernel_adapter_postgres --> kernel
   permission -->|"type-only"| query
   runtime -->|"type-only"| audit
   runtime -->|"type-only"| datasource
@@ -78,9 +78,9 @@ flowchart TD
   - value: `packages/bff/src/controller/ws/runtime/ws.gateway.ts`
 - `@zhongmiao/meta-lc-bff-server` -> `@zhongmiao/meta-lc-bff`
   - value: `apps/bff-server/src/main.ts`
-- `@zhongmiao/meta-lc-infra-persistence` -> `@zhongmiao/meta-lc-kernel`
-  - value: `packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts`
-  - type-only: `packages/infra-persistence/src/postgres/postgres-meta-kernel-repository.ts`
+- `@zhongmiao/meta-lc-kernel-adapter-postgres` -> `@zhongmiao/meta-lc-kernel`
+  - value: `packages/kernel-adapter-postgres/src/postgres/postgres-meta-kernel-repository.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/postgres-meta-kernel-repository.ts`
 - `@zhongmiao/meta-lc-permission` -> `@zhongmiao/meta-lc-query` (type-only)
   - type-only: `packages/permission/src/domain/permission-ast-transform.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-audit` (type-only)

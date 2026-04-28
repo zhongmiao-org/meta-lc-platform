@@ -128,7 +128,16 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/infra-persistence:
+  packages/kernel:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.17
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/kernel-adapter-postgres:
     dependencies:
       '@zhongmiao/meta-lc-kernel':
         specifier: workspace:*
@@ -143,15 +152,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.10
         version: 8.20.0
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
-  packages/kernel:
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.19.17
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

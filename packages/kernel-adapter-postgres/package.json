@@ -1,12 +1,12 @@
 {
-  "name": "@zhongmiao/meta-lc-infra-persistence",
+  "name": "@zhongmiao/meta-lc-kernel-adapter-postgres",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
-    "test": "pnpm --filter @zhongmiao/meta-lc-infra-persistence... build && rm -rf dist-test && tsc -p tsconfig.test.json && node --test \"dist-test/test/*.test.js\"",
-    "lint": "echo lint:infra-persistence"
+    "test": "pnpm --filter @zhongmiao/meta-lc-kernel-adapter-postgres... build && rm -rf dist-test && tsc -p tsconfig.test.json && node --test \"dist-test/test/*.test.js\"",
+    "lint": "echo lint:kernel-adapter-postgres"
   },
   "dependencies": {
     "@zhongmiao/meta-lc-kernel": "workspace:*",
@@ -21,7 +21,7 @@
   "types": "dist/index.d.ts",
   "nx": {
     "tags": [
-      "layer:infra-persistence"
+      "layer:kernel-adapter-postgres"
     ]
   },
   "exports": {

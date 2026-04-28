@@ -6,7 +6,7 @@
 
 `runtime` 是唯一执行核心。它拥有 `RuntimeExecutor`、执行契约、runtime context、DAG/state execution、runtime gateway execution wiring、interaction execution helper、expression evaluation 与 websocket event helper。
 
-`RuntimeExecutor.execute()` 是唯一底层执行入口。`runtime-view.facade.ts` 是页面/view 高层 facade，`runtime-interaction.facade.ts` 是 interaction/WebSocket 高层 facade；两个 facade 的执行语义最终都进入 runtime 拥有的 executor 层。
+`RuntimeExecutor.execute()` 是唯一底层执行入口。`application/facades` 是 SDK-facing runtime 入口：`runtime-view.facade.ts` 负责页面/view 执行，`runtime-interaction.facade.ts` 负责 interaction/WebSocket 执行；两个 facade 的执行语义最终都进入 runtime 拥有的 executor 层。
 
 ## 核心职责
 
@@ -57,4 +57,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - Runtime query execution 不能注入 SQL permission clause；必须在 SQL 编译前调用 permission AST transform。
 - Runtime audit observer 必须保持可选、非阻塞；observer 失败不得影响 plan execution。
 - 不要把默认业务 demo wiring 加回 runtime facade。
-- 包根入口只暴露 `core` 契约/错误/常量与 runtime view facade；compiler、executor、service 模块属于实现面。
+- 包根入口只暴露 `core` 契约/错误/常量与 `application/facades`；compiler、executor、service 模块属于内部实现面。

@@ -6,7 +6,7 @@ English | [中文文档](./README_zh.md)
 
 `runtime` is the single execution core. It owns `RuntimeExecutor`, execution contracts, runtime context, DAG/state execution, runtime gateway execution wiring, interaction execution helpers, expression evaluation, and websocket event helpers.
 
-`RuntimeExecutor.execute()` is the only bottom execution entry. `runtime-view.facade.ts` is the high-level page/view facade, and `runtime-interaction.facade.ts` is the high-level interaction/WebSocket facade; both facades eventually route execution semantics through the runtime-owned executor layer.
+`RuntimeExecutor.execute()` is the only bottom execution entry. `application/facades` is the SDK-facing runtime entry: `runtime-view.facade.ts` handles page/view execution, and `runtime-interaction.facade.ts` handles interaction/WebSocket execution. Both facades eventually route execution semantics through the runtime-owned executor layer.
 
 ## Responsibilities
 
@@ -57,4 +57,4 @@ pnpm --filter @zhongmiao/meta-lc-runtime test
 - Runtime query execution must not inject SQL permission clauses; it calls the permission AST transform before SQL compilation.
 - Runtime audit observers are optional and non-blocking; observer failures must not affect plan execution.
 - Do not add default business demo wiring to the runtime facade.
-- The package root only exposes `core` contracts/errors/constants and the runtime view facade; compiler, executor, and service modules are implementation surfaces.
+- The package root only exposes `core` contracts/errors/constants and `application/facades`; compiler, executor, and service modules are internal implementation surfaces.
