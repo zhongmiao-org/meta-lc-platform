@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- fix(ci): 当 ESLint 报告 warning 时，让 PR 与 release lint 检查失败。
+
 ## 0.2.0 (2026-04-28)
 
 - fix(ci): 将 JavaScript actions 切到 Node.js 24，并升级 github-script action。
