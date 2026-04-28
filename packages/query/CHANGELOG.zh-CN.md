@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - chore(public-api): 将 package root 收窄为 core contract 与明确的 query compiler 入口。
 - docs(readme): 明确 query 上下游关系与只负责 AST-to-SQL 编译的边界。

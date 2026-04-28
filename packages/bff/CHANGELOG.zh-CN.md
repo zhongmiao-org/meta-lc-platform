@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - chore(public-api): BFF 改为从 `@zhongmiao/meta-lc-runtime/core` subpath 消费 runtime contract。
 - fix(ci): 让 orders demo gateway e2e 继续通过已构建的 package 入口运行。

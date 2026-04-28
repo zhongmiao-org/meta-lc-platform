@@ -2,7 +2,7 @@ English | [中文文档](CHANGELOG.zh-CN.md)
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - docs(sdk): mark Postgres sink factories as factory-first and the sink class as advanced API.
 - feat(factory): add an audit sink factory contract plus Postgres sink function and class factories.

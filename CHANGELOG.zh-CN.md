@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## 0.2.0-beta.0 (2026-04-28)
+## 0.2.0 (2026-04-28)
 
 - docs(sdk): 新增 SDK 发布 checklist，用于 Beta 封板校验。
 - docs(sdk): 补充 factory-first adapter 使用、Postgres class advanced API 与业务方 deep import 约束。

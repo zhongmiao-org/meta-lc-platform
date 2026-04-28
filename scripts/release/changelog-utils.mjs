@@ -6,13 +6,13 @@ export function readFile(filePath) {
   return fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
 }
 
-export function extractUnreleased(content) {
+function extractSection(content, isTargetHeader) {
   const lines = content.replace(/\r\n/g, "\n").split("\n");
   const buffer = [];
   let inSection = false;
 
   for (const line of lines) {
-    if (line.trim() === UNRELEASED_HEADER) {
+    if (isTargetHeader(line.trim())) {
       inSection = true;
       continue;
     }
@@ -27,11 +27,26 @@ export function extractUnreleased(content) {
   return buffer.join("\n").trim();
 }
 
+export function extractUnreleased(content) {
+  return extractSection(content, (line) => line === UNRELEASED_HEADER);
+}
+
+export function extractVersion(content, version) {
+  return extractSection(content, (line) => line === `## ${version}` || line.startsWith(`## ${version} (`));
+}
+
 export function readUnreleasedFromFile(filePath) {
   if (!fs.existsSync(filePath)) {
     return "";
   }
   return extractUnreleased(readFile(filePath));
+}
+
+export function readVersionFromFile(filePath, version) {
+  if (!version || !fs.existsSync(filePath)) {
+    return "";
+  }
+  return extractVersion(readFile(filePath), version);
 }
 
 export function finalizeUnreleasedSection(filePath, version, date) {
