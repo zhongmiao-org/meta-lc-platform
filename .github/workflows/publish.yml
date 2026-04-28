@@ -23,6 +23,7 @@ jobs:
         id: detect
         env:
           BEFORE_SHA: ${{ github.event.before }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           set -euo pipefail
 
@@ -45,8 +46,15 @@ jobs:
             exit 0
           fi
 
+          RELEASE_MARKER="chore(release): prepare ${VERSION}"
+          if [[ "${HEAD_MESSAGE}" != *"${RELEASE_MARKER}"* ]]; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "Root version changed from ${OLD_VERSION:-unknown} to ${VERSION}, but this push is not a generated release PR merge (${RELEASE_MARKER}); skipping publish."
+            exit 0
+          fi
+
           if ! grep -Eq "^## ${VERSION} \\([0-9]{4}-[0-9]{2}-[0-9]{2}\\)" CHANGELOG.md; then
-            echo "Root version changed to ${VERSION}, but CHANGELOG.md has no matching release section."
+            echo "Generated release PR merge detected for ${VERSION}, but CHANGELOG.md has no matching release section."
             exit 1
           fi
 
