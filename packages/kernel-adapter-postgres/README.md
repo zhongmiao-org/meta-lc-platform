@@ -12,10 +12,11 @@ English | [中文文档](./README_zh.md)
 import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";
 ```
 
-The package may export Postgres implementation classes and factories because its whole purpose is the kernel Postgres adapter surface.
+The package root exports only the aggregate repository, its factory, and the public migration execution context type. Internal SQL schema, mappers, row interfaces, pool utilities, and sub-repositories are implementation details.
 
 ## Boundary Notes
 
 - Depends on `@zhongmiao/meta-lc-kernel` contracts and `pg`.
 - Must not depend on runtime, BFF, query, permission, datasource, or audit.
 - Should be imported only from app/example composition roots or infra scripts.
+- Keep interface, type, factory, class, mapper, schema, and util files split by semantic suffix.

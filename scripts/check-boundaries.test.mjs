@@ -92,7 +92,7 @@ test('allows kernel-adapter-postgres as the only kernel postgres integration edg
         '@types/pg': '^8.11.10'
       }
     }),
-    'packages/kernel-adapter-postgres/src/postgres/postgres-meta-kernel-repository.ts': [
+    'packages/kernel-adapter-postgres/src/postgres/utils/postgres-pool.util.ts': [
       'import { Pool } from "pg";',
       'import type { MetaKernelRepositoryPort } from "@zhongmiao/meta-lc-kernel";'
     ].join('\n')

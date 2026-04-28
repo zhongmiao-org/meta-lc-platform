@@ -12,10 +12,11 @@
 import { createPostgresMetaKernelRepository } from "@zhongmiao/meta-lc-kernel-adapter-postgres";
 ```
 
-该包可以导出 Postgres implementation class 与 factory，因为它本身就是 kernel Postgres adapter surface。
+包根入口只导出聚合 repository、factory 与公开 migration execution context type。内部 SQL schema、mapper、row interface、pool util 与子 repository 都是实现细节。
 
 ## 边界约束
 
 - 只依赖 `@zhongmiao/meta-lc-kernel` contract 与 `pg`。
 - 不依赖 runtime、BFF、query、permission、datasource 或 audit。
 - 只应由 app/example composition root 或 infra script 引入。
+- interface、type、factory、class、mapper、schema 与 util 文件按语义后缀拆分。

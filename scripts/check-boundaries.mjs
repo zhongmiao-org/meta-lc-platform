@@ -8,7 +8,7 @@ const POSTGRES_SECONDARY_ENTRY_PACKAGES = new Set(['audit', 'datasource']);
 const ALLOWED_PG_IMPORT_FILES = new Set([
   'packages/datasource/src/postgres/postgres.adapter.ts',
   'packages/datasource/src/postgres/postgres-org-scope.adapter.ts',
-  'packages/kernel-adapter-postgres/src/postgres/postgres-meta-kernel-repository.ts',
+  'packages/kernel-adapter-postgres/src/postgres/utils/postgres-pool.util.ts',
   'packages/audit/src/postgres/postgres-runtime-audit.sink.ts'
 ]);
 const ALLOWED_SECONDARY_IMPORTS = new Set([

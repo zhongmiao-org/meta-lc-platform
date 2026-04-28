@@ -21,8 +21,9 @@ flowchart LR
   Kernel["packages/kernel<br/>Structure source of truth<br/>Meta registry / ViewDefinition / Schema / Version"]
   Query["packages/query<br/>Query compiler<br/>AST to SQL"]
   Permission["packages/permission<br/>Permission engine<br/>AST transform + data scope"]
-  Datasource["packages/datasource<br/>Datasource adapter<br/>Postgres / mutation / org-scope adapters"]
+  Datasource["packages/datasource<br/>Datasource contracts<br/>Execution / mutation / org-scope ports"]
   Audit["packages/audit<br/>Observability events<br/>Runtime audit sink"]
+  KernelPg["packages/kernel-adapter-postgres<br/>Adapter package<br/>Kernel repository Postgres implementation"]
   InfraScripts["infra/scripts<br/>migrate.ts / seed.ts"]
   MetaDb[("meta_db")]
   BusinessDb[("business_db")]
@@ -35,9 +36,10 @@ flowchart LR
   Runtime --> Query
   Runtime --> Datasource
   Runtime --> Audit
+  KernelPg --> Kernel
   Permission -->|"AST transform / query types"| Query
   Query -->|"compiled request"| Datasource
-  Kernel --> MetaDb
+  KernelPg --> MetaDb
   Datasource --> BusinessDb
   Audit --> AuditDb
   InfraScripts --> MetaDb
@@ -45,7 +47,15 @@ flowchart LR
   InfraScripts --> AuditDb
 ```
 
-## 子包索引
+## 包模型
+
+SDK 按 `7 个核心包 + N 个 adapter 包` 组织。
+
+- 核心包拥有稳定 contract、domain/application 行为、gateway 代码与 runtime orchestration。
+- Adapter 包拥有具体技术绑定，例如数据库 driver。它们可以依赖核心包和外部 driver，但核心包不能依赖 adapter。
+- 当前 adapter 包为 `packages/kernel-adapter-postgres`。后续 adapter 应遵循 `*-adapter-*` 形态，并保持在七个核心包之外。
+
+## 核心包索引
 
 | Package | 定位 | 文档 |
 | --- | --- | --- |
@@ -53,13 +63,20 @@ flowchart LR
 | `packages/kernel` | 结构元数据契约、MetaSchema 校验、definition registry、diff 与 migration SQL helper。 | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
 | `packages/query` | Query AST / DSL 到 SQL 编译。 | [English](./packages/query/README.md) \| [中文文档](./packages/query/README_zh.md) |
 | `packages/permission` | RBAC 与组织数据域决策。 | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
-| `packages/datasource` | Postgres datasource 配置与执行 adapter。 | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
+| `packages/datasource` | 稳定 datasource execution contract；具体实现位于 root 或 secondary adapter 入口之后。 | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
 | `packages/audit` | 审计契约与可选、非阻塞 runtime observability sink。 | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
 | `packages/bff` | NestJS IO Gateway，持有 HTTP/WS DTO、runtime controller 入口、request-id 与错误映射。 | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
 
+## Adapter 包索引
+
+| Package | 定位 | 文档 |
+| --- | --- | --- |
+| `packages/kernel-adapter-postgres` | kernel repository port 的 Postgres 实现，供 app/example composition root 装配使用。 | [English](./packages/kernel-adapter-postgres/README.md) \| [中文文档](./packages/kernel-adapter-postgres/README_zh.md) |
+
 ## 依赖方向
 
-- `runtime`、`kernel`、`query`、`permission`、`datasource`、`bff`、`audit` 是最终 7 个架构层包。
+- `runtime`、`kernel`、`query`、`permission`、`datasource`、`bff`、`audit` 是最终 7 个核心架构包。
+- Adapter 包明确不属于核心包集合；它们是由 composition root、app、example 或 infra script 消费的实现绑定。
 - migration lifecycle scripts 下沉到 `infra/`；`packages/migration` 已被删除。
 - contract 由所属包拥有；`contracts`、`shared`、`platform`、`migration` 包已被删除。
 - 最终 workspace 依赖锁定为：app -> bff；bff -> runtime；runtime -> kernel/query/permission/datasource/audit；permission -> query。
@@ -68,6 +85,7 @@ flowchart LR
 - `query` 只负责 AST 到 SQL 编译，禁止依赖 `datasource`、`runtime` 或 `permission`。
 - `bff` 只作为 gateway，不拥有 runtime orchestration、datasource wiring、permission decision、audit wiring 或 DB access。
 - `bff` 禁止依赖 `kernel`；`/meta/*` 可以使用注入的 meta registry provider，任何 kernel-backed provider 都必须在 BFF package 外部装配。
+- 核心包禁止导入 `@zhongmiao/meta-lc-kernel-adapter-postgres`；只有 composition root 可以装配它。
 - 禁止 deep import，跨包引用必须通过 package entrypoint。
 
 ### 编译 / 执行边界

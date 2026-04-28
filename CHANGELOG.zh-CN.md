@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(adapter): 将 kernel Postgres adapter 拆分为 repository、factory、schema、mapper、interface、type 与 utility 语义文件。
 - chore(sdk): 收口 kernel/runtime SDK root export，并重命名 Postgres kernel adapter 包。
 - chore(boundaries): 加固 SDK export map、package deep import 守护与 kernel-adapter-postgres composition-only 检查。
 - chore(sdk): 将 audit 与 datasource secondary entry 的 Postgres 支持调整为可选 peer dependency。

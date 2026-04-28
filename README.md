@@ -21,8 +21,9 @@ flowchart LR
   Kernel["packages/kernel<br/>Structure source of truth<br/>Meta registry / ViewDefinition / Schema / Version"]
   Query["packages/query<br/>Query compiler<br/>AST to SQL"]
   Permission["packages/permission<br/>Permission engine<br/>AST transform + data scope"]
-  Datasource["packages/datasource<br/>Datasource adapter<br/>Postgres / mutation / org-scope adapters"]
+  Datasource["packages/datasource<br/>Datasource contracts<br/>Execution / mutation / org-scope ports"]
   Audit["packages/audit<br/>Observability events<br/>Runtime audit sink"]
+  KernelPg["packages/kernel-adapter-postgres<br/>Adapter package<br/>Kernel repository Postgres implementation"]
   InfraScripts["infra/scripts<br/>migrate.ts / seed.ts"]
   MetaDb[("meta_db")]
   BusinessDb[("business_db")]
@@ -35,9 +36,10 @@ flowchart LR
   Runtime --> Query
   Runtime --> Datasource
   Runtime --> Audit
+  KernelPg --> Kernel
   Permission -->|"AST transform / query types"| Query
   Query -->|"compiled request"| Datasource
-  Kernel --> MetaDb
+  KernelPg --> MetaDb
   Datasource --> BusinessDb
   Audit --> AuditDb
   InfraScripts --> MetaDb
@@ -45,7 +47,15 @@ flowchart LR
   InfraScripts --> AuditDb
 ```
 
-## Package Index
+## Package Model
+
+The SDK is organized as `7 core packages + N adapter packages`.
+
+- Core packages own stable contracts, domain/application behavior, gateway code, and runtime orchestration.
+- Adapter packages own concrete technology bindings such as database drivers. They may depend on a core package plus external drivers, but core packages must not depend on adapters.
+- Current adapter packages: `packages/kernel-adapter-postgres`. Future adapters should follow the `*-adapter-*` shape and stay outside the seven core packages.
+
+## Core Package Index
 
 | Package | Role | Docs |
 | --- | --- | --- |
@@ -53,13 +63,20 @@ flowchart LR
 | `packages/kernel` | Structural metadata contracts, MetaSchema validation, definition registry, diff, and migration SQL helpers. | [English](./packages/kernel/README.md) \| [中文文档](./packages/kernel/README_zh.md) |
 | `packages/query` | Query AST / DSL to SQL compilation. | [English](./packages/query/README.md) \| [中文文档](./packages/query/README_zh.md) |
 | `packages/permission` | RBAC and organization data-scope decisions. | [English](./packages/permission/README.md) \| [中文文档](./packages/permission/README_zh.md) |
-| `packages/datasource` | Postgres datasource configuration and execution adapter. | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
+| `packages/datasource` | Stable datasource execution contracts; concrete implementations live behind root or secondary adapter entries. | [English](./packages/datasource/README.md) \| [中文文档](./packages/datasource/README_zh.md) |
 | `packages/audit` | Audit contracts and optional non-blocking runtime observability sinks. | [English](./packages/audit/README.md) \| [中文文档](./packages/audit/README_zh.md) |
 | `packages/bff` | NestJS IO Gateway for HTTP/WS DTOs, runtime controller entrypoints, request-id, and error mapping. | [English](./packages/bff/README.md) \| [中文文档](./packages/bff/README_zh.md) |
 
+## Adapter Package Index
+
+| Package | Role | Docs |
+| --- | --- | --- |
+| `packages/kernel-adapter-postgres` | Postgres implementation of the kernel repository port for app/example composition roots. | [English](./packages/kernel-adapter-postgres/README.md) \| [中文文档](./packages/kernel-adapter-postgres/README_zh.md) |
+
 ## Dependency Direction
 
-- `runtime`, `kernel`, `query`, `permission`, `datasource`, `bff`, and `audit` are the seven final architecture packages.
+- `runtime`, `kernel`, `query`, `permission`, `datasource`, `bff`, and `audit` are the seven core architecture packages.
+- Adapter packages are intentionally outside the core set; they are implementation bindings consumed by composition roots, apps, examples, or infra scripts.
 - Migration lifecycle scripts live under `infra/`; `packages/migration` is intentionally removed.
 - Contracts live in the owning package; `contracts`, `shared`, `platform`, and `migration` packages are intentionally removed.
 - Final workspace dependencies are locked as: app -> bff; bff -> runtime; runtime -> kernel/query/permission/datasource/audit; permission -> query.
@@ -68,6 +85,7 @@ flowchart LR
 - `query` compiles AST to SQL and must not depend on `datasource`, `runtime`, or `permission`.
 - `bff` remains a gateway and must not own runtime orchestration, datasource wiring, permission decisions, audit wiring, or DB access.
 - `bff` must not depend on `kernel`; `/meta/*` may use an injected meta registry provider, and any kernel-backed provider must be composed outside the BFF package.
+- Core packages must not import `@zhongmiao/meta-lc-kernel-adapter-postgres`; only composition roots may wire it.
 - Deep cross-package imports are forbidden; import through package entrypoints.
 
 ### Compiler / Execution Boundaries

@@ -79,8 +79,17 @@ flowchart TD
 - `@zhongmiao/meta-lc-bff-server` -> `@zhongmiao/meta-lc-bff`
   - value: `apps/bff-server/src/main.ts`
 - `@zhongmiao/meta-lc-kernel-adapter-postgres` -> `@zhongmiao/meta-lc-kernel`
-  - value: `packages/kernel-adapter-postgres/src/postgres/postgres-meta-kernel-repository.ts`
-  - type-only: `packages/kernel-adapter-postgres/src/postgres/postgres-meta-kernel-repository.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/factory/postgres-meta-kernel-repository.factory.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/interfaces/meta-definition-version-row.interface.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/interfaces/meta-version-row.interface.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/mapper/meta-definition-version.mapper.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/mapper/meta-version.mapper.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/repository/postgres-meta-definition.repository.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/repository/postgres-meta-kernel.repository.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/repository/postgres-meta-version.repository.ts`
+  - value: `packages/kernel-adapter-postgres/src/postgres/repository/postgres-migration-audit.repository.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/repository/postgres-migration-audit.repository.ts`
+  - type-only: `packages/kernel-adapter-postgres/src/postgres/utils/postgres-pool.util.ts`
 - `@zhongmiao/meta-lc-permission` -> `@zhongmiao/meta-lc-query` (type-only)
   - type-only: `packages/permission/src/domain/permission-ast-transform.ts`
 - `@zhongmiao/meta-lc-runtime` -> `@zhongmiao/meta-lc-audit` (type-only)
