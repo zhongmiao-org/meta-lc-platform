@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.2.1 (2026-04-28)
+
 - fix(release): 移除 GitHub release notes 中的 draft-only 文案，并按 root/package 分组展示发布说明。
 - fix(ci): 当 ESLint 报告 warning 时，让 PR 与 release lint 检查失败。
 

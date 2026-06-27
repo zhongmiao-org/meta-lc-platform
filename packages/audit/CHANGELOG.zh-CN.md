@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.2.1 (2026-04-28)
+
 - fix(ci): 显式消费兼容配置参数，让 audit service 通过零 warning lint。
 
 ## 0.2.0 (2026-04-28)

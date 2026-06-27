@@ -1,6 +1,6 @@
 {
   "name": "@zhongmiao/meta-lc-bff",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "commonjs",
   "scripts": {
@@ -15,7 +15,7 @@
     "@nestjs/platform-express": "^10.4.22",
     "@nestjs/platform-socket.io": "^10.4.22",
     "@nestjs/websockets": "^10.4.22",
-    "@zhongmiao/meta-lc-runtime": "0.2.0",
+    "@zhongmiao/meta-lc-runtime": "0.2.1",
     "redis": "^4.7.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"

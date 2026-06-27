@@ -1,6 +1,6 @@
 {
   "name": "@zhongmiao/meta-lc-runtime",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "type": "commonjs",
   "scripts": {
@@ -9,11 +9,11 @@
     "lint": "echo lint:runtime"
   },
   "dependencies": {
-    "@zhongmiao/meta-lc-audit": "0.2.0",
-    "@zhongmiao/meta-lc-datasource": "0.2.0",
-    "@zhongmiao/meta-lc-kernel": "0.2.0",
-    "@zhongmiao/meta-lc-permission": "0.2.0",
-    "@zhongmiao/meta-lc-query": "0.2.0"
+    "@zhongmiao/meta-lc-audit": "0.2.1",
+    "@zhongmiao/meta-lc-datasource": "0.2.1",
+    "@zhongmiao/meta-lc-kernel": "0.2.1",
+    "@zhongmiao/meta-lc-permission": "0.2.1",
+    "@zhongmiao/meta-lc-query": "0.2.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
